@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es5", "es6", "es6.array"],
+    "target": "es5"
+  }
+}

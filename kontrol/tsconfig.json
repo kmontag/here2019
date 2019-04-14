@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es2015", "es2017"],
+    "outDir": "dist",
+    "strictNullChecks": true,
+    "target": "es5"
+  }
+}
