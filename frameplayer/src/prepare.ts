@@ -1,15 +1,13 @@
-import { Readable, Writable } from 'stream';
+import { Readable } from 'stream';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import getPixels from 'get-pixels';
 import path from 'path';
 import tmp from 'tmp';
-import promiseCallbacks from 'promise-callbacks';
+import ndarray from 'ndarray';
 
 // TODO: figure out a better directory structure
-import { vidopc as vidopcProto } from './proto'
-
-const deferred = promiseCallbacks.deferred;
+import { frameplayer as frameplayerProto } from './proto'
 
 interface ProgressEvent {
   frames: number,
@@ -20,7 +18,7 @@ interface ProgressEvent {
   percent: number,
 }
 
-interface TargetConfig {
+interface ChannelConfig {
   // scale input to this many pixels before sampling
   height: number,
   width: number,
@@ -33,10 +31,8 @@ interface AnimationConfig {
   fps: number,
 
   // OPC targets, represented by arrays of pixels to sample
-  targets: {
-    // value elements are [x, y] pairs, and must be within the
-    // scaled height/width
-    [name: string]: TargetConfig,
+  channel: {
+    [id: number]: ChannelConfig,
   }
 }
 
@@ -53,32 +49,40 @@ interface PrepareOptions {
   onProcessFrame?: (processed: number, total: number) => any,
 }
 
-export default async (input: string | Readable,
-                      output: string | Buffer,
-                      config: AnimationConfig,
-                      opts?: PrepareOptions) => {
-  const tmpDirPromise = deferred({variadic: true});
-  tmp.dir(tmpDirPromise.defer());
-  const [tmpDir, doneCallback] = await tmpDirPromise;
+export default async function(
+  input: string | Readable,
+  output: string | Buffer,
+  config: AnimationConfig,
+  opts: PrepareOptions = {}
+) {
+  const [tmpDir, doneCallback] = await new Promise<[string, () => void]>((resolve, reject) => {
+    tmp.dir((err, path, cleanupCallback) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve([path, cleanupCallback]);
+      }
+    });
+  });
 
   return new Promise(async (resolve: Function, reject: Function) => {
 
-    let animation = new vidopcProto.protobuf.Animation();
+    let animation = new frameplayerProto.protobuf.Animation();
     animation.fps = config.fps;
 
-    let framesByTarget: {[name: string]: vidopcProto.protobuf.Frame[]} = {};
-    for (let key in config.targets) {
-      framesByTarget[key] = [];
+    let framesByChannel: {[name: string]: frameplayerProto.protobuf.Frame[]} = {};
+    for (let key in config.channel) {
+      framesByChannel[key] = [];
     }
 
-    for (let targetName in config.targets) {
-      let target = config.targets[targetName];
-      await fs.promises.mkdir(`${tmpDir}/${targetName}`);
+    for (let channelName in config.channel) {
+      let target = config.channel[channelName];
+      await fs.promises.mkdir(`${tmpDir}/${channelName}`);
 
       let exec = new Promise(async (resolveLocal: Function, rejectLocal: Function) => {
-        let command = ffmpeg()
+        ffmpeg()
           .input(input)
-          .output(`${tmpDir}/${targetName}/%09d.png`)
+          .output(`${tmpDir}/${channelName}/%09d.png`)
           .fps(config.fps)
           .outputOption('-pix_fmt rgb24')
           .size(`${target.width}x${target.height}`)
@@ -98,7 +102,7 @@ export default async (input: string | Readable,
             if (opts.onStderr) {
               opts.onStderr(stderr);
             }
-          }).on('error', (error: Error, stdout: string, stderr, string) => {
+          }).on('error', (error: Error, stdout: string, stderr: string) => {
             if (opts.onError) {
               opts.onError(error, stdout, stderr);
             }
@@ -109,37 +113,43 @@ export default async (input: string | Readable,
                 opts.onEnd(stdout, stderr);
               }
 
-              const files: Array<string> = await fs.promises.readdir(`${tmpDir}/${targetName}`);
+              const files: Array<string> = await fs.promises.readdir(`${tmpDir}/${channelName}`);
 
               let processedCount = 0;
 
 
               for (let file of files.sort()) {
-                file = path.join(tmpDir, targetName, file);
+                file = path.join(tmpDir, channelName, file);
                 let contents: Buffer = await fs.promises.readFile(file);
 
-                const getPixelsPromise = deferred();
-                getPixels(contents, 'image/png', getPixelsPromise.defer());
-                let pixels = await getPixelsPromise;
+                const pixels = await new Promise<ndarray>((resolve, reject) => {
+                  getPixels(contents, 'image/png', (err, pixels) => {
+                    if (err) {
+                      reject(err);
+                    } else {
+                      resolve(pixels!);
+                    }
+                  });
+                });
 
-                let frame: vidopcProto.protobuf.Frame = new vidopcProto.protobuf.Frame();
+                let frame: frameplayerProto.protobuf.Frame = new frameplayerProto.protobuf.Frame();
                 for (let pixelCoordinates of target.pixels) {
                   if (pixelCoordinates) {
                     let [x, y] = pixelCoordinates;
-                    frame.pixels.push(new vidopcProto.protobuf.Pixel({
+                    frame.pixels.push(new frameplayerProto.protobuf.Pixel({
                       r: pixels.get(x, y, 0),
                       g: pixels.get(x, y, 1),
                       b: pixels.get(x, y, 2),
                     }));
                   } else {
                     // null case, just push a blank pixel.
-                    frame.pixels.push(new vidopcProto.protobuf.Pixel({
+                    frame.pixels.push(new frameplayerProto.protobuf.Pixel({
                       r: 0, g: 0, b: 0,
                     }));
                   }
                 }
 
-                framesByTarget[targetName].push(frame);
+                framesByChannel[channelName].push(frame);
 
                 processedCount += 1;
                 if (opts.onProcessFrame) {
@@ -148,7 +158,7 @@ export default async (input: string | Readable,
 
                 await fs.promises.unlink(file);
               }
-              await fs.promises.rmdir(`${tmpDir}/${targetName}`);
+              await fs.promises.rmdir(`${tmpDir}/${channelName}`);
               resolveLocal();
             } catch (e) {
               rejectLocal(e);
@@ -161,15 +171,15 @@ export default async (input: string | Readable,
     }
 
 
-    for (let targetName in framesByTarget) {
-      animation.framesByTarget[targetName] =
-        new vidopcProto.protobuf.Frames({frames: framesByTarget[targetName]});
+    for (let channelName in framesByChannel) {
+      animation.framesByChannel[channelName] =
+        new frameplayerProto.protobuf.Frames({frames: framesByChannel[channelName]});
     }
 
 
-    vidopcProto.protobuf.Animation.encode(animation);
+    frameplayerProto.protobuf.Animation.encode(animation);
     const writeFilePromise = deferred();
-    fs.writeFile(output, vidopcProto.protobuf.Animation.encode(animation).finish(), writeFilePromise.defer());
+    fs.writeFile(output, frameplayerProto.protobuf.Animation.encode(animation).finish(), writeFilePromise.defer());
     await writeFilePromise;
 
     doneCallback();

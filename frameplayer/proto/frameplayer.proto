@@ -1,0 +1,42 @@
+syntax = "proto3";
+package frameplayer.protobuf;
+
+message Pixel {
+  int32 r = 1;
+  int32 g = 2;
+  int32 b = 3;
+}
+
+message Frame {
+  repeated Pixel pixels = 1;
+}
+
+message Frames {
+  repeated Frame frames = 1;
+}
+
+/**
+ * A multi-channel animation, consisting of a series of frames for
+ * each channel.
+ */
+message Animation {
+  float fps = 1;
+  map<uint32, Frames> framesByChannel = 2;
+}
+
+/**
+ * File format parsed by the library to play animations. Video files
+ * are converted to this format via `prepare` in the CLI.
+ */
+message FrameplayerFile {
+  /**
+   * Magic number defined in the application, used to sanity check
+   * file contents.
+   */
+  int32 magic = 1;
+
+  /**
+   * Actual animation contents.
+   */
+  Animation animation = 2;
+}

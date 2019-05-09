@@ -1,0 +1,42 @@
+{
+  "name": "frameplayer",
+  "version": "0.0.0-dev",
+  "description": "Stream pixel data from video files",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "build": "pbjs -t static-module -w es6 -o src/proto.js proto/*.proto && pbts -o src/proto.d.ts src/proto.js && tsc",
+    "prepare": "require-self",
+    "prepare-example": "npm run-script build && dist/cli.js prepare examples/input.mp4 -o examples/output.vpc -c examples/vidopc.json",
+    "preview-example": "npm run-script build && dist/cli.js preview examples/output.vpc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "frameplayer": "lib/cli.js"
+  },
+  "author": "Kevin Montag <kmontag@cs.stanford.edu>",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "commander": "^2.20.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "get-pixels": "^3.3.2",
+    "progress": "^2.0.3",
+    "promise-callbacks": "^3.3.0",
+    "protobufjs": "~6.8.8",
+    "strict-event-emitter-types": "^2.0.0",
+    "tmp": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/fluent-ffmpeg": "^2.1.9",
+    "@types/google-protobuf": "^3.2.7",
+    "@types/ndarray": "^1.0.7",
+    "@types/node": "^10.14.4",
+    "@types/progress": "^2.0.3",
+    "@types/tmp": "^0.1.0",
+    "require-self": "^0.2.1",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.15.0",
+    "typescript": "^3.4.3"
+  }
+}

@@ -1,6 +1,4 @@
 /node_modules/
-/lib/
-/src/proto.js
-/src/proto.d.ts
+/dist/
 
 /examples/output.vpc
