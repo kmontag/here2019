@@ -197,91 +197,91 @@ export namespace frameplayer {
             public toJSON(): { [k: string]: any };
         }
 
-        /** Properties of a Frames. */
-        interface IFrames {
+        /** Properties of a Channel. */
+        interface IChannel {
 
-            /** Frames frames */
+            /** Channel frames */
             frames?: (frameplayer.protobuf.IFrame[]|null);
         }
 
-        /** Represents a Frames. */
-        class Frames implements IFrames {
+        /** Represents a Channel. */
+        class Channel implements IChannel {
 
             /**
-             * Constructs a new Frames.
+             * Constructs a new Channel.
              * @param [properties] Properties to set
              */
-            constructor(properties?: frameplayer.protobuf.IFrames);
+            constructor(properties?: frameplayer.protobuf.IChannel);
 
-            /** Frames frames. */
+            /** Channel frames. */
             public frames: frameplayer.protobuf.IFrame[];
 
             /**
-             * Creates a new Frames instance using the specified properties.
+             * Creates a new Channel instance using the specified properties.
              * @param [properties] Properties to set
-             * @returns Frames instance
+             * @returns Channel instance
              */
-            public static create(properties?: frameplayer.protobuf.IFrames): frameplayer.protobuf.Frames;
+            public static create(properties?: frameplayer.protobuf.IChannel): frameplayer.protobuf.Channel;
 
             /**
-             * Encodes the specified Frames message. Does not implicitly {@link frameplayer.protobuf.Frames.verify|verify} messages.
-             * @param message Frames message or plain object to encode
+             * Encodes the specified Channel message. Does not implicitly {@link frameplayer.protobuf.Channel.verify|verify} messages.
+             * @param message Channel message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: frameplayer.protobuf.IFrames, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: frameplayer.protobuf.IChannel, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified Frames message, length delimited. Does not implicitly {@link frameplayer.protobuf.Frames.verify|verify} messages.
-             * @param message Frames message or plain object to encode
+             * Encodes the specified Channel message, length delimited. Does not implicitly {@link frameplayer.protobuf.Channel.verify|verify} messages.
+             * @param message Channel message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: frameplayer.protobuf.IFrames, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: frameplayer.protobuf.IChannel, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Decodes a Frames message from the specified reader or buffer.
+             * Decodes a Channel message from the specified reader or buffer.
              * @param reader Reader or buffer to decode from
              * @param [length] Message length if known beforehand
-             * @returns Frames
+             * @returns Channel
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): frameplayer.protobuf.Frames;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): frameplayer.protobuf.Channel;
 
             /**
-             * Decodes a Frames message from the specified reader or buffer, length delimited.
+             * Decodes a Channel message from the specified reader or buffer, length delimited.
              * @param reader Reader or buffer to decode from
-             * @returns Frames
+             * @returns Channel
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): frameplayer.protobuf.Frames;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): frameplayer.protobuf.Channel;
 
             /**
-             * Verifies a Frames message.
+             * Verifies a Channel message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
             public static verify(message: { [k: string]: any }): (string|null);
 
             /**
-             * Creates a Frames message from a plain object. Also converts values to their respective internal types.
+             * Creates a Channel message from a plain object. Also converts values to their respective internal types.
              * @param object Plain object
-             * @returns Frames
+             * @returns Channel
              */
-            public static fromObject(object: { [k: string]: any }): frameplayer.protobuf.Frames;
+            public static fromObject(object: { [k: string]: any }): frameplayer.protobuf.Channel;
 
             /**
-             * Creates a plain object from a Frames message. Also converts values to other types if specified.
-             * @param message Frames
+             * Creates a plain object from a Channel message. Also converts values to other types if specified.
+             * @param message Channel
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: frameplayer.protobuf.Frames, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: frameplayer.protobuf.Channel, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
-             * Converts this Frames to JSON.
+             * Converts this Channel to JSON.
              * @returns JSON object
              */
             public toJSON(): { [k: string]: any };
@@ -293,8 +293,8 @@ export namespace frameplayer {
             /** Animation fps */
             fps?: (number|null);
 
-            /** Animation framesByChannel */
-            framesByChannel?: ({ [k: string]: frameplayer.protobuf.IFrames }|null);
+            /** Animation channels */
+            channels?: ({ [k: string]: frameplayer.protobuf.IChannel }|null);
         }
 
         /**
@@ -312,8 +312,8 @@ export namespace frameplayer {
             /** Animation fps. */
             public fps: number;
 
-            /** Animation framesByChannel. */
-            public framesByChannel: { [k: string]: frameplayer.protobuf.IFrames };
+            /** Animation channels. */
+            public channels: { [k: string]: frameplayer.protobuf.IChannel };
 
             /**
              * Creates a new Animation instance using the specified properties.
@@ -386,12 +386,12 @@ export namespace frameplayer {
             public toJSON(): { [k: string]: any };
         }
 
-        /** Properties of a FrameplayerFile. */
-        interface IFrameplayerFile {
+        /** Properties of a FrameplayerBuffer. */
+        interface IFrameplayerBuffer {
 
             /**
              * Magic number defined in the application, used to sanity check
-             * file contents.
+             * buffer contents.
              */
             magic?: (number|null);
 
@@ -400,20 +400,21 @@ export namespace frameplayer {
         }
 
         /**
-         * File format parsed by the library to play animations. Video files
-         * are converted to this format via `prepare` in the CLI.
+         * Defines a binary file format parsed by the library to play
+         * animations. Video files are converted to this format via `prepare`
+         * in the CLI.
          */
-        class FrameplayerFile implements IFrameplayerFile {
+        class FrameplayerBuffer implements IFrameplayerBuffer {
 
             /**
-             * Constructs a new FrameplayerFile.
+             * Constructs a new FrameplayerBuffer.
              * @param [properties] Properties to set
              */
-            constructor(properties?: frameplayer.protobuf.IFrameplayerFile);
+            constructor(properties?: frameplayer.protobuf.IFrameplayerBuffer);
 
             /**
              * Magic number defined in the application, used to sanity check
-             * file contents.
+             * buffer contents.
              */
             public magic: number;
 
@@ -421,71 +422,71 @@ export namespace frameplayer {
             public animation?: (frameplayer.protobuf.IAnimation|null);
 
             /**
-             * Creates a new FrameplayerFile instance using the specified properties.
+             * Creates a new FrameplayerBuffer instance using the specified properties.
              * @param [properties] Properties to set
-             * @returns FrameplayerFile instance
+             * @returns FrameplayerBuffer instance
              */
-            public static create(properties?: frameplayer.protobuf.IFrameplayerFile): frameplayer.protobuf.FrameplayerFile;
+            public static create(properties?: frameplayer.protobuf.IFrameplayerBuffer): frameplayer.protobuf.FrameplayerBuffer;
 
             /**
-             * Encodes the specified FrameplayerFile message. Does not implicitly {@link frameplayer.protobuf.FrameplayerFile.verify|verify} messages.
-             * @param message FrameplayerFile message or plain object to encode
+             * Encodes the specified FrameplayerBuffer message. Does not implicitly {@link frameplayer.protobuf.FrameplayerBuffer.verify|verify} messages.
+             * @param message FrameplayerBuffer message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: frameplayer.protobuf.IFrameplayerFile, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: frameplayer.protobuf.IFrameplayerBuffer, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified FrameplayerFile message, length delimited. Does not implicitly {@link frameplayer.protobuf.FrameplayerFile.verify|verify} messages.
-             * @param message FrameplayerFile message or plain object to encode
+             * Encodes the specified FrameplayerBuffer message, length delimited. Does not implicitly {@link frameplayer.protobuf.FrameplayerBuffer.verify|verify} messages.
+             * @param message FrameplayerBuffer message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: frameplayer.protobuf.IFrameplayerFile, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: frameplayer.protobuf.IFrameplayerBuffer, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Decodes a FrameplayerFile message from the specified reader or buffer.
+             * Decodes a FrameplayerBuffer message from the specified reader or buffer.
              * @param reader Reader or buffer to decode from
              * @param [length] Message length if known beforehand
-             * @returns FrameplayerFile
+             * @returns FrameplayerBuffer
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): frameplayer.protobuf.FrameplayerFile;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): frameplayer.protobuf.FrameplayerBuffer;
 
             /**
-             * Decodes a FrameplayerFile message from the specified reader or buffer, length delimited.
+             * Decodes a FrameplayerBuffer message from the specified reader or buffer, length delimited.
              * @param reader Reader or buffer to decode from
-             * @returns FrameplayerFile
+             * @returns FrameplayerBuffer
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): frameplayer.protobuf.FrameplayerFile;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): frameplayer.protobuf.FrameplayerBuffer;
 
             /**
-             * Verifies a FrameplayerFile message.
+             * Verifies a FrameplayerBuffer message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
             public static verify(message: { [k: string]: any }): (string|null);
 
             /**
-             * Creates a FrameplayerFile message from a plain object. Also converts values to their respective internal types.
+             * Creates a FrameplayerBuffer message from a plain object. Also converts values to their respective internal types.
              * @param object Plain object
-             * @returns FrameplayerFile
+             * @returns FrameplayerBuffer
              */
-            public static fromObject(object: { [k: string]: any }): frameplayer.protobuf.FrameplayerFile;
+            public static fromObject(object: { [k: string]: any }): frameplayer.protobuf.FrameplayerBuffer;
 
             /**
-             * Creates a plain object from a FrameplayerFile message. Also converts values to other types if specified.
-             * @param message FrameplayerFile
+             * Creates a plain object from a FrameplayerBuffer message. Also converts values to other types if specified.
+             * @param message FrameplayerBuffer
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: frameplayer.protobuf.FrameplayerFile, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: frameplayer.protobuf.FrameplayerBuffer, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
-             * Converts this FrameplayerFile to JSON.
+             * Converts this FrameplayerBuffer to JSON.
              * @returns JSON object
              */
             public toJSON(): { [k: string]: any };

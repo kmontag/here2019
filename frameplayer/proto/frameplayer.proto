@@ -11,7 +11,7 @@ message Frame {
   repeated Pixel pixels = 1;
 }
 
-message Frames {
+message Channel {
   repeated Frame frames = 1;
 }
 
@@ -21,17 +21,18 @@ message Frames {
  */
 message Animation {
   float fps = 1;
-  map<uint32, Frames> framesByChannel = 2;
+  map<uint32, Channel> channels = 2;
 }
 
 /**
- * File format parsed by the library to play animations. Video files
- * are converted to this format via `prepare` in the CLI.
+ * Defines a binary file format parsed by the library to play
+ * animations. Video files are converted to this format via `prepare`
+ * in the CLI.
  */
-message FrameplayerFile {
+message FrameplayerBuffer {
   /**
    * Magic number defined in the application, used to sanity check
-   * file contents.
+   * buffer contents.
    */
   int32 magic = 1;
 

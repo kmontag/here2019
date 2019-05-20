@@ -1,3 +1,3 @@
 import prepare from './prepare';
-import Animation from './animation';
-export { prepare as prepare, Animation as Animation };
+import Frameplayer from './Frameplayer';
+export { prepare as prepare, Frameplayer as Frameplayer }

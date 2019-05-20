@@ -8,12 +8,14 @@ type Channel = {
   readonly frames: ReadonlyArray<ReadonlyArray<Pixel>>,
 };
 
-type FrameEvent = {
-  readonly [channel: number]: {
-    readonly currFrame: number,
-    readonly totalFrames: number,
-    readonly pixels: ReadonlyArray<Pixel>,
-  },
+interface FrameEvent {
+  readonly channels: {
+    [channel: number]: {
+      readonly currFrame: number,
+      readonly totalFrames: number,
+      readonly pixels: ReadonlyArray<Pixel>,
+    }
+  };
 };
 
 type Pixel = {
@@ -65,14 +67,10 @@ export default class Frameplayer {
   constructor(source: Buffer) {
     this.eventEmitter = new EventEmitter();
 
-    clearTimeout
-    const t = setTimeout(() => {}, 100);
-    t
-
     const invalidErrMsg = 'invalid frameplayer source';
-    const frameplayerFile = frameplayer.protobuf.FrameplayerFile.decode(source);
+    const frameplayerFile = frameplayer.protobuf.FrameplayerBuffer.decode(source);
     if (frameplayerFile.magic !== magic) {
-      throw new Error(invalidErrMsg);
+      throw new Error(`${invalidErrMsg} - incorrect header`);
     }
 
     // Presence helper.
@@ -84,9 +82,9 @@ export default class Frameplayer {
 
     const channels: Channel[] = [];
 
-    for (const channelId in animationMsg.framesByChannel) {
-      const frames: ReadonlyArray<Pixel>[] = [];
-      const framesMsg = p(animationMsg.framesByChannel[channelId].frames);
+    for (const channelId in animationMsg.channels) {
+      const frames: Pixel[][] = [];
+      const framesMsg = p(animationMsg.channels[channelId].frames);
 
       for (const frameMsg of framesMsg) {
         const pixels: Pixel[] = [];
@@ -99,6 +97,8 @@ export default class Frameplayer {
             b: p(pixelMsg.b),
           });
         }
+
+        frames.push(pixels);
       }
 
       if (!/[0-9]+/.test(channelId)) {
@@ -134,16 +134,22 @@ export default class Frameplayer {
     this.playIntervalId = undefined;
   }
 
-  on(
-    event: Parameters<FrameplayerEventEmitter['on']>[0],
-    callback: Parameters<FrameplayerEventEmitter['on']>[1],
-  ) {
-    return this.eventEmitter.on(event, callback);
+  on<K extends keyof Events>(
+    event: K,
+    callback: (arg: Events[K]) => any
+  ): this {
+    // The typings here are weird because of the generic, however we
+    // know the signature matches.
+
+    // @ts-ignore
+    this.eventEmitter.on(event, callback);
+
+    return this;
   }
 
-  off(
-    event: Parameters<FrameplayerEventEmitter['off']>[0],
-    callback: Parameters<FrameplayerEventEmitter['off']>[1],
+  off<K extends keyof Events>(
+    event: K,
+    callback: (arg: Events[K]) => any
   ) {
     return this.eventEmitter.off(event, callback);
   }
@@ -152,18 +158,18 @@ export default class Frameplayer {
     this.setNotPlaying();
     this.playIntervalId = setInterval(() => {
       // https://stackoverflow.com/questions/42999983/typescript-removing-readonly-modifier
-      const frameEvent: { -readonly [P in keyof FrameEvent]-?: FrameEvent[P] } = {};
+      const frameEventChannels: { -readonly [P in keyof FrameEvent['channels']]-?: FrameEvent['channels'][P] } = {};
 
       // Build the event.
       for (const channel of this.channels) {
         const channelFrame = this.currFrame % channel.frames.length;
-        frameEvent[channel.id] = {
+        frameEventChannels[channel.id] = {
           currFrame: channelFrame,
           totalFrames: channel.frames.length,
           pixels: channel.frames[channelFrame],
         }
       }
-      this.eventEmitter.emit('frame', frameEvent);
+      this.eventEmitter.emit('frame', { channels: frameEventChannels });
 
       this.currFrame += 1;
 

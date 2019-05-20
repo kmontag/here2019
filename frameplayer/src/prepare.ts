@@ -1,13 +1,14 @@
 import { Readable } from 'stream';
-import ffmpeg from 'fluent-ffmpeg';
-import fs from 'fs';
-import getPixels from 'get-pixels';
-import path from 'path';
-import tmp from 'tmp';
-import ndarray from 'ndarray';
+import * as ffmpeg from 'fluent-ffmpeg';
+import * as fs from 'fs';
+import getPixels = require('get-pixels');
+import * as path from 'path';
+import * as tmp from 'tmp';
+import * as ndarray from 'ndarray';
+import magic from './magic';
 
-// TODO: figure out a better directory structure
 import { frameplayer as frameplayerProto } from './proto'
+import { Record, Number, Tuple, Dictionary, Static, Array as RuntypesArray } from 'runtypes';
 
 interface ProgressEvent {
   frames: number,
@@ -18,25 +19,25 @@ interface ProgressEvent {
   percent: number,
 }
 
-interface ChannelConfig {
-  // scale input to this many pixels before sampling
-  height: number,
-  width: number,
+const ChannelConfig = Record({
+  // Scale input to this many pixels before sampling.
+  height: Number,
+  width: Number,
 
-  pixels: (([number, number]|null)[]),
-}
+  // Sample these pixels after scaling the input.
+  pixels: RuntypesArray(Tuple(Number, Number)),
+});
 
-interface AnimationConfig {
-  // sample framerate
-  fps: number,
+export const AnimationConfig = Record({
+  // Sample framerate.
+  fps: Number,
 
-  // OPC targets, represented by arrays of pixels to sample
-  channel: {
-    [id: number]: ChannelConfig,
-  }
-}
+  // Animation is just a set of channels.
+  channels: Dictionary(ChannelConfig, 'number'),
+});
+export type AnimationConfig = Static<typeof AnimationConfig>;
 
-interface PrepareOptions {
+export interface PrepareOptions {
   // ffmpeg callbacks
   onStart?: (commandLine: string) => any,
   onCodecData?: (codecData: object) => any,
@@ -51,10 +52,11 @@ interface PrepareOptions {
 
 export default async function(
   input: string | Readable,
-  output: string | Buffer,
   config: AnimationConfig,
   opts: PrepareOptions = {}
-) {
+): Promise<Buffer> {
+  config = AnimationConfig.check(config);
+
   const [tmpDir, doneCallback] = await new Promise<[string, () => void]>((resolve, reject) => {
     tmp.dir((err, path, cleanupCallback) => {
       if (err) {
@@ -65,27 +67,23 @@ export default async function(
     });
   });
 
-  return new Promise(async (resolve: Function, reject: Function) => {
+  return new Promise<Buffer>(async (resolve, reject) => {
+    const animation = new frameplayerProto.protobuf.Animation();
+    const fps = config.fps;
+    animation.fps = fps;
 
-    let animation = new frameplayerProto.protobuf.Animation();
-    animation.fps = config.fps;
+    for (const channelId in config.channels) {
+      const channel = config.channels[channelId];
+      const channelMsg = new frameplayerProto.protobuf.Channel();
+      await fs.promises.mkdir(`${tmpDir}/${channelId}`);
 
-    let framesByChannel: {[name: string]: frameplayerProto.protobuf.Frame[]} = {};
-    for (let key in config.channel) {
-      framesByChannel[key] = [];
-    }
-
-    for (let channelName in config.channel) {
-      let target = config.channel[channelName];
-      await fs.promises.mkdir(`${tmpDir}/${channelName}`);
-
-      let exec = new Promise(async (resolveLocal: Function, rejectLocal: Function) => {
+      const exec = new Promise<void>(async (resolveLocal: Function, rejectLocal: Function) => {
         ffmpeg()
           .input(input)
-          .output(`${tmpDir}/${channelName}/%09d.png`)
-          .fps(config.fps)
+          .output(`${tmpDir}/${channelId}/%09d.png`)
+          .fps(fps)
           .outputOption('-pix_fmt rgb24')
-          .size(`${target.width}x${target.height}`)
+          .size(`${channel.width}x${channel.height}`)
           .on('start', (commandLine: string) => {
             if (opts.onStart) {
               opts.onStart(commandLine);
@@ -113,14 +111,14 @@ export default async function(
                 opts.onEnd(stdout, stderr);
               }
 
-              const files: Array<string> = await fs.promises.readdir(`${tmpDir}/${channelName}`);
+              const files: Array<string> = await fs.promises.readdir(`${tmpDir}/${channelId}`);
 
               let processedCount = 0;
 
 
-              for (let file of files.sort()) {
-                file = path.join(tmpDir, channelName, file);
-                let contents: Buffer = await fs.promises.readFile(file);
+              for (const file of files.sort()) {
+                const fullFile = path.join(tmpDir, channelId, file);
+                let contents: Buffer = await fs.promises.readFile(fullFile);
 
                 const pixels = await new Promise<ndarray>((resolve, reject) => {
                   getPixels(contents, 'image/png', (err, pixels) => {
@@ -132,10 +130,10 @@ export default async function(
                   });
                 });
 
-                let frame: frameplayerProto.protobuf.Frame = new frameplayerProto.protobuf.Frame();
-                for (let pixelCoordinates of target.pixels) {
+                const frame: frameplayerProto.protobuf.Frame = new frameplayerProto.protobuf.Frame();
+                for (const pixelCoordinates of channel.pixels) {
                   if (pixelCoordinates) {
-                    let [x, y] = pixelCoordinates;
+                    const [x, y] = pixelCoordinates;
                     frame.pixels.push(new frameplayerProto.protobuf.Pixel({
                       r: pixels.get(x, y, 0),
                       g: pixels.get(x, y, 1),
@@ -149,16 +147,17 @@ export default async function(
                   }
                 }
 
-                framesByChannel[channelName].push(frame);
+                channelMsg.frames.push(frame);
 
                 processedCount += 1;
                 if (opts.onProcessFrame) {
                   opts.onProcessFrame(processedCount, files.length);
                 }
 
-                await fs.promises.unlink(file);
+                await fs.promises.unlink(fullFile);
               }
-              await fs.promises.rmdir(`${tmpDir}/${channelName}`);
+              animation.channels[channelId] = channelMsg;
+              await fs.promises.rmdir(`${tmpDir}/${channelId}`);
               resolveLocal();
             } catch (e) {
               rejectLocal(e);
@@ -170,19 +169,16 @@ export default async function(
       await exec;
     }
 
+    const buffer = new frameplayerProto.protobuf.FrameplayerBuffer({
+      animation: animation,
+      magic,
+    });
+    const result = frameplayerProto.protobuf.FrameplayerBuffer.encode(buffer).finish();
 
-    for (let channelName in framesByChannel) {
-      animation.framesByChannel[channelName] =
-        new frameplayerProto.protobuf.Frames({frames: framesByChannel[channelName]});
-    }
-
-
-    frameplayerProto.protobuf.Animation.encode(animation);
-    const writeFilePromise = deferred();
-    fs.writeFile(output, frameplayerProto.protobuf.Animation.encode(animation).finish(), writeFilePromise.defer());
-    await writeFilePromise;
+    // console.log(buffer.toJSON());
+    // console.log(buffer!.animation!.channels![0]);
 
     doneCallback();
-    resolve();
+    resolve(Buffer.from(result));
   });
 }

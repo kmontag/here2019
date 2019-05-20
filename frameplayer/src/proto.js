@@ -465,24 +465,24 @@ export const frameplayer = $root.frameplayer = (() => {
             return Frame;
         })();
 
-        protobuf.Frames = (function() {
+        protobuf.Channel = (function() {
 
             /**
-             * Properties of a Frames.
+             * Properties of a Channel.
              * @memberof frameplayer.protobuf
-             * @interface IFrames
-             * @property {Array.<frameplayer.protobuf.IFrame>|null} [frames] Frames frames
+             * @interface IChannel
+             * @property {Array.<frameplayer.protobuf.IFrame>|null} [frames] Channel frames
              */
 
             /**
-             * Constructs a new Frames.
+             * Constructs a new Channel.
              * @memberof frameplayer.protobuf
-             * @classdesc Represents a Frames.
-             * @implements IFrames
+             * @classdesc Represents a Channel.
+             * @implements IChannel
              * @constructor
-             * @param {frameplayer.protobuf.IFrames=} [properties] Properties to set
+             * @param {frameplayer.protobuf.IChannel=} [properties] Properties to set
              */
-            function Frames(properties) {
+            function Channel(properties) {
                 this.frames = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -491,35 +491,35 @@ export const frameplayer = $root.frameplayer = (() => {
             }
 
             /**
-             * Frames frames.
+             * Channel frames.
              * @member {Array.<frameplayer.protobuf.IFrame>} frames
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @instance
              */
-            Frames.prototype.frames = $util.emptyArray;
+            Channel.prototype.frames = $util.emptyArray;
 
             /**
-             * Creates a new Frames instance using the specified properties.
+             * Creates a new Channel instance using the specified properties.
              * @function create
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
-             * @param {frameplayer.protobuf.IFrames=} [properties] Properties to set
-             * @returns {frameplayer.protobuf.Frames} Frames instance
+             * @param {frameplayer.protobuf.IChannel=} [properties] Properties to set
+             * @returns {frameplayer.protobuf.Channel} Channel instance
              */
-            Frames.create = function create(properties) {
-                return new Frames(properties);
+            Channel.create = function create(properties) {
+                return new Channel(properties);
             };
 
             /**
-             * Encodes the specified Frames message. Does not implicitly {@link frameplayer.protobuf.Frames.verify|verify} messages.
+             * Encodes the specified Channel message. Does not implicitly {@link frameplayer.protobuf.Channel.verify|verify} messages.
              * @function encode
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
-             * @param {frameplayer.protobuf.IFrames} message Frames message or plain object to encode
+             * @param {frameplayer.protobuf.IChannel} message Channel message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            Frames.encode = function encode(message, writer) {
+            Channel.encode = function encode(message, writer) {
                 if (!writer)
                     writer = $Writer.create();
                 if (message.frames != null && message.frames.length)
@@ -529,33 +529,33 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Encodes the specified Frames message, length delimited. Does not implicitly {@link frameplayer.protobuf.Frames.verify|verify} messages.
+             * Encodes the specified Channel message, length delimited. Does not implicitly {@link frameplayer.protobuf.Channel.verify|verify} messages.
              * @function encodeDelimited
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
-             * @param {frameplayer.protobuf.IFrames} message Frames message or plain object to encode
+             * @param {frameplayer.protobuf.IChannel} message Channel message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            Frames.encodeDelimited = function encodeDelimited(message, writer) {
+            Channel.encodeDelimited = function encodeDelimited(message, writer) {
                 return this.encode(message, writer).ldelim();
             };
 
             /**
-             * Decodes a Frames message from the specified reader or buffer.
+             * Decodes a Channel message from the specified reader or buffer.
              * @function decode
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
              * @param {number} [length] Message length if known beforehand
-             * @returns {frameplayer.protobuf.Frames} Frames
+             * @returns {frameplayer.protobuf.Channel} Channel
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            Frames.decode = function decode(reader, length) {
+            Channel.decode = function decode(reader, length) {
                 if (!(reader instanceof $Reader))
                     reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.frameplayer.protobuf.Frames();
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.frameplayer.protobuf.Channel();
                 while (reader.pos < end) {
                     let tag = reader.uint32();
                     switch (tag >>> 3) {
@@ -573,30 +573,30 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Decodes a Frames message from the specified reader or buffer, length delimited.
+             * Decodes a Channel message from the specified reader or buffer, length delimited.
              * @function decodeDelimited
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {frameplayer.protobuf.Frames} Frames
+             * @returns {frameplayer.protobuf.Channel} Channel
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            Frames.decodeDelimited = function decodeDelimited(reader) {
+            Channel.decodeDelimited = function decodeDelimited(reader) {
                 if (!(reader instanceof $Reader))
                     reader = new $Reader(reader);
                 return this.decode(reader, reader.uint32());
             };
 
             /**
-             * Verifies a Frames message.
+             * Verifies a Channel message.
              * @function verify
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
              * @param {Object.<string,*>} message Plain object to verify
              * @returns {string|null} `null` if valid, otherwise the reason why it is not
              */
-            Frames.verify = function verify(message) {
+            Channel.verify = function verify(message) {
                 if (typeof message !== "object" || message === null)
                     return "object expected";
                 if (message.frames != null && message.hasOwnProperty("frames")) {
@@ -612,24 +612,24 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Creates a Frames message from a plain object. Also converts values to their respective internal types.
+             * Creates a Channel message from a plain object. Also converts values to their respective internal types.
              * @function fromObject
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
              * @param {Object.<string,*>} object Plain object
-             * @returns {frameplayer.protobuf.Frames} Frames
+             * @returns {frameplayer.protobuf.Channel} Channel
              */
-            Frames.fromObject = function fromObject(object) {
-                if (object instanceof $root.frameplayer.protobuf.Frames)
+            Channel.fromObject = function fromObject(object) {
+                if (object instanceof $root.frameplayer.protobuf.Channel)
                     return object;
-                let message = new $root.frameplayer.protobuf.Frames();
+                let message = new $root.frameplayer.protobuf.Channel();
                 if (object.frames) {
                     if (!Array.isArray(object.frames))
-                        throw TypeError(".frameplayer.protobuf.Frames.frames: array expected");
+                        throw TypeError(".frameplayer.protobuf.Channel.frames: array expected");
                     message.frames = [];
                     for (let i = 0; i < object.frames.length; ++i) {
                         if (typeof object.frames[i] !== "object")
-                            throw TypeError(".frameplayer.protobuf.Frames.frames: object expected");
+                            throw TypeError(".frameplayer.protobuf.Channel.frames: object expected");
                         message.frames[i] = $root.frameplayer.protobuf.Frame.fromObject(object.frames[i]);
                     }
                 }
@@ -637,15 +637,15 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Creates a plain object from a Frames message. Also converts values to other types if specified.
+             * Creates a plain object from a Channel message. Also converts values to other types if specified.
              * @function toObject
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @static
-             * @param {frameplayer.protobuf.Frames} message Frames
+             * @param {frameplayer.protobuf.Channel} message Channel
              * @param {$protobuf.IConversionOptions} [options] Conversion options
              * @returns {Object.<string,*>} Plain object
              */
-            Frames.toObject = function toObject(message, options) {
+            Channel.toObject = function toObject(message, options) {
                 if (!options)
                     options = {};
                 let object = {};
@@ -660,17 +660,17 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Converts this Frames to JSON.
+             * Converts this Channel to JSON.
              * @function toJSON
-             * @memberof frameplayer.protobuf.Frames
+             * @memberof frameplayer.protobuf.Channel
              * @instance
              * @returns {Object.<string,*>} JSON object
              */
-            Frames.prototype.toJSON = function toJSON() {
+            Channel.prototype.toJSON = function toJSON() {
                 return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
             };
 
-            return Frames;
+            return Channel;
         })();
 
         protobuf.Animation = (function() {
@@ -680,7 +680,7 @@ export const frameplayer = $root.frameplayer = (() => {
              * @memberof frameplayer.protobuf
              * @interface IAnimation
              * @property {number|null} [fps] Animation fps
-             * @property {Object.<string,frameplayer.protobuf.IFrames>|null} [framesByChannel] Animation framesByChannel
+             * @property {Object.<string,frameplayer.protobuf.IChannel>|null} [channels] Animation channels
              */
 
             /**
@@ -693,7 +693,7 @@ export const frameplayer = $root.frameplayer = (() => {
              * @param {frameplayer.protobuf.IAnimation=} [properties] Properties to set
              */
             function Animation(properties) {
-                this.framesByChannel = {};
+                this.channels = {};
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -709,12 +709,12 @@ export const frameplayer = $root.frameplayer = (() => {
             Animation.prototype.fps = 0;
 
             /**
-             * Animation framesByChannel.
-             * @member {Object.<string,frameplayer.protobuf.IFrames>} framesByChannel
+             * Animation channels.
+             * @member {Object.<string,frameplayer.protobuf.IChannel>} channels
              * @memberof frameplayer.protobuf.Animation
              * @instance
              */
-            Animation.prototype.framesByChannel = $util.emptyObject;
+            Animation.prototype.channels = $util.emptyObject;
 
             /**
              * Creates a new Animation instance using the specified properties.
@@ -742,10 +742,10 @@ export const frameplayer = $root.frameplayer = (() => {
                     writer = $Writer.create();
                 if (message.fps != null && message.hasOwnProperty("fps"))
                     writer.uint32(/* id 1, wireType 5 =*/13).float(message.fps);
-                if (message.framesByChannel != null && message.hasOwnProperty("framesByChannel"))
-                    for (let keys = Object.keys(message.framesByChannel), i = 0; i < keys.length; ++i) {
+                if (message.channels != null && message.hasOwnProperty("channels"))
+                    for (let keys = Object.keys(message.channels), i = 0; i < keys.length; ++i) {
                         writer.uint32(/* id 2, wireType 2 =*/18).fork().uint32(/* id 1, wireType 0 =*/8).uint32(keys[i]);
-                        $root.frameplayer.protobuf.Frames.encode(message.framesByChannel[keys[i]], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim().ldelim();
+                        $root.frameplayer.protobuf.Channel.encode(message.channels[keys[i]], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim().ldelim();
                     }
                 return writer;
             };
@@ -786,11 +786,11 @@ export const frameplayer = $root.frameplayer = (() => {
                         break;
                     case 2:
                         reader.skip().pos++;
-                        if (message.framesByChannel === $util.emptyObject)
-                            message.framesByChannel = {};
+                        if (message.channels === $util.emptyObject)
+                            message.channels = {};
                         key = reader.uint32();
                         reader.pos++;
-                        message.framesByChannel[key] = $root.frameplayer.protobuf.Frames.decode(reader, reader.uint32());
+                        message.channels[key] = $root.frameplayer.protobuf.Channel.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -830,17 +830,17 @@ export const frameplayer = $root.frameplayer = (() => {
                 if (message.fps != null && message.hasOwnProperty("fps"))
                     if (typeof message.fps !== "number")
                         return "fps: number expected";
-                if (message.framesByChannel != null && message.hasOwnProperty("framesByChannel")) {
-                    if (!$util.isObject(message.framesByChannel))
-                        return "framesByChannel: object expected";
-                    let key = Object.keys(message.framesByChannel);
+                if (message.channels != null && message.hasOwnProperty("channels")) {
+                    if (!$util.isObject(message.channels))
+                        return "channels: object expected";
+                    let key = Object.keys(message.channels);
                     for (let i = 0; i < key.length; ++i) {
                         if (!$util.key32Re.test(key[i]))
-                            return "framesByChannel: integer key{k:uint32} expected";
+                            return "channels: integer key{k:uint32} expected";
                         {
-                            let error = $root.frameplayer.protobuf.Frames.verify(message.framesByChannel[key[i]]);
+                            let error = $root.frameplayer.protobuf.Channel.verify(message.channels[key[i]]);
                             if (error)
-                                return "framesByChannel." + error;
+                                return "channels." + error;
                         }
                     }
                 }
@@ -861,14 +861,14 @@ export const frameplayer = $root.frameplayer = (() => {
                 let message = new $root.frameplayer.protobuf.Animation();
                 if (object.fps != null)
                     message.fps = Number(object.fps);
-                if (object.framesByChannel) {
-                    if (typeof object.framesByChannel !== "object")
-                        throw TypeError(".frameplayer.protobuf.Animation.framesByChannel: object expected");
-                    message.framesByChannel = {};
-                    for (let keys = Object.keys(object.framesByChannel), i = 0; i < keys.length; ++i) {
-                        if (typeof object.framesByChannel[keys[i]] !== "object")
-                            throw TypeError(".frameplayer.protobuf.Animation.framesByChannel: object expected");
-                        message.framesByChannel[keys[i]] = $root.frameplayer.protobuf.Frames.fromObject(object.framesByChannel[keys[i]]);
+                if (object.channels) {
+                    if (typeof object.channels !== "object")
+                        throw TypeError(".frameplayer.protobuf.Animation.channels: object expected");
+                    message.channels = {};
+                    for (let keys = Object.keys(object.channels), i = 0; i < keys.length; ++i) {
+                        if (typeof object.channels[keys[i]] !== "object")
+                            throw TypeError(".frameplayer.protobuf.Animation.channels: object expected");
+                        message.channels[keys[i]] = $root.frameplayer.protobuf.Channel.fromObject(object.channels[keys[i]]);
                     }
                 }
                 return message;
@@ -888,16 +888,16 @@ export const frameplayer = $root.frameplayer = (() => {
                     options = {};
                 let object = {};
                 if (options.objects || options.defaults)
-                    object.framesByChannel = {};
+                    object.channels = {};
                 if (options.defaults)
                     object.fps = 0;
                 if (message.fps != null && message.hasOwnProperty("fps"))
                     object.fps = options.json && !isFinite(message.fps) ? String(message.fps) : message.fps;
                 let keys2;
-                if (message.framesByChannel && (keys2 = Object.keys(message.framesByChannel)).length) {
-                    object.framesByChannel = {};
+                if (message.channels && (keys2 = Object.keys(message.channels)).length) {
+                    object.channels = {};
                     for (let j = 0; j < keys2.length; ++j)
-                        object.framesByChannel[keys2[j]] = $root.frameplayer.protobuf.Frames.toObject(message.framesByChannel[keys2[j]], options);
+                        object.channels[keys2[j]] = $root.frameplayer.protobuf.Channel.toObject(message.channels[keys2[j]], options);
                 }
                 return object;
             };
@@ -916,27 +916,28 @@ export const frameplayer = $root.frameplayer = (() => {
             return Animation;
         })();
 
-        protobuf.FrameplayerFile = (function() {
+        protobuf.FrameplayerBuffer = (function() {
 
             /**
-             * Properties of a FrameplayerFile.
+             * Properties of a FrameplayerBuffer.
              * @memberof frameplayer.protobuf
-             * @interface IFrameplayerFile
+             * @interface IFrameplayerBuffer
              * @property {number|null} [magic] Magic number defined in the application, used to sanity check
-             * file contents.
+             * buffer contents.
              * @property {frameplayer.protobuf.IAnimation|null} [animation] Actual animation contents.
              */
 
             /**
-             * Constructs a new FrameplayerFile.
+             * Constructs a new FrameplayerBuffer.
              * @memberof frameplayer.protobuf
-             * @classdesc File format parsed by the library to play animations. Video files
-             * are converted to this format via `prepare` in the CLI.
-             * @implements IFrameplayerFile
+             * @classdesc Defines a binary file format parsed by the library to play
+             * animations. Video files are converted to this format via `prepare`
+             * in the CLI.
+             * @implements IFrameplayerBuffer
              * @constructor
-             * @param {frameplayer.protobuf.IFrameplayerFile=} [properties] Properties to set
+             * @param {frameplayer.protobuf.IFrameplayerBuffer=} [properties] Properties to set
              */
-            function FrameplayerFile(properties) {
+            function FrameplayerBuffer(properties) {
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -945,43 +946,43 @@ export const frameplayer = $root.frameplayer = (() => {
 
             /**
              * Magic number defined in the application, used to sanity check
-             * file contents.
+             * buffer contents.
              * @member {number} magic
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @instance
              */
-            FrameplayerFile.prototype.magic = 0;
+            FrameplayerBuffer.prototype.magic = 0;
 
             /**
              * Actual animation contents.
              * @member {frameplayer.protobuf.IAnimation|null|undefined} animation
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @instance
              */
-            FrameplayerFile.prototype.animation = null;
+            FrameplayerBuffer.prototype.animation = null;
 
             /**
-             * Creates a new FrameplayerFile instance using the specified properties.
+             * Creates a new FrameplayerBuffer instance using the specified properties.
              * @function create
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
-             * @param {frameplayer.protobuf.IFrameplayerFile=} [properties] Properties to set
-             * @returns {frameplayer.protobuf.FrameplayerFile} FrameplayerFile instance
+             * @param {frameplayer.protobuf.IFrameplayerBuffer=} [properties] Properties to set
+             * @returns {frameplayer.protobuf.FrameplayerBuffer} FrameplayerBuffer instance
              */
-            FrameplayerFile.create = function create(properties) {
-                return new FrameplayerFile(properties);
+            FrameplayerBuffer.create = function create(properties) {
+                return new FrameplayerBuffer(properties);
             };
 
             /**
-             * Encodes the specified FrameplayerFile message. Does not implicitly {@link frameplayer.protobuf.FrameplayerFile.verify|verify} messages.
+             * Encodes the specified FrameplayerBuffer message. Does not implicitly {@link frameplayer.protobuf.FrameplayerBuffer.verify|verify} messages.
              * @function encode
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
-             * @param {frameplayer.protobuf.IFrameplayerFile} message FrameplayerFile message or plain object to encode
+             * @param {frameplayer.protobuf.IFrameplayerBuffer} message FrameplayerBuffer message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            FrameplayerFile.encode = function encode(message, writer) {
+            FrameplayerBuffer.encode = function encode(message, writer) {
                 if (!writer)
                     writer = $Writer.create();
                 if (message.magic != null && message.hasOwnProperty("magic"))
@@ -992,33 +993,33 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Encodes the specified FrameplayerFile message, length delimited. Does not implicitly {@link frameplayer.protobuf.FrameplayerFile.verify|verify} messages.
+             * Encodes the specified FrameplayerBuffer message, length delimited. Does not implicitly {@link frameplayer.protobuf.FrameplayerBuffer.verify|verify} messages.
              * @function encodeDelimited
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
-             * @param {frameplayer.protobuf.IFrameplayerFile} message FrameplayerFile message or plain object to encode
+             * @param {frameplayer.protobuf.IFrameplayerBuffer} message FrameplayerBuffer message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            FrameplayerFile.encodeDelimited = function encodeDelimited(message, writer) {
+            FrameplayerBuffer.encodeDelimited = function encodeDelimited(message, writer) {
                 return this.encode(message, writer).ldelim();
             };
 
             /**
-             * Decodes a FrameplayerFile message from the specified reader or buffer.
+             * Decodes a FrameplayerBuffer message from the specified reader or buffer.
              * @function decode
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
              * @param {number} [length] Message length if known beforehand
-             * @returns {frameplayer.protobuf.FrameplayerFile} FrameplayerFile
+             * @returns {frameplayer.protobuf.FrameplayerBuffer} FrameplayerBuffer
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            FrameplayerFile.decode = function decode(reader, length) {
+            FrameplayerBuffer.decode = function decode(reader, length) {
                 if (!(reader instanceof $Reader))
                     reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.frameplayer.protobuf.FrameplayerFile();
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.frameplayer.protobuf.FrameplayerBuffer();
                 while (reader.pos < end) {
                     let tag = reader.uint32();
                     switch (tag >>> 3) {
@@ -1037,30 +1038,30 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Decodes a FrameplayerFile message from the specified reader or buffer, length delimited.
+             * Decodes a FrameplayerBuffer message from the specified reader or buffer, length delimited.
              * @function decodeDelimited
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {frameplayer.protobuf.FrameplayerFile} FrameplayerFile
+             * @returns {frameplayer.protobuf.FrameplayerBuffer} FrameplayerBuffer
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            FrameplayerFile.decodeDelimited = function decodeDelimited(reader) {
+            FrameplayerBuffer.decodeDelimited = function decodeDelimited(reader) {
                 if (!(reader instanceof $Reader))
                     reader = new $Reader(reader);
                 return this.decode(reader, reader.uint32());
             };
 
             /**
-             * Verifies a FrameplayerFile message.
+             * Verifies a FrameplayerBuffer message.
              * @function verify
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
              * @param {Object.<string,*>} message Plain object to verify
              * @returns {string|null} `null` if valid, otherwise the reason why it is not
              */
-            FrameplayerFile.verify = function verify(message) {
+            FrameplayerBuffer.verify = function verify(message) {
                 if (typeof message !== "object" || message === null)
                     return "object expected";
                 if (message.magic != null && message.hasOwnProperty("magic"))
@@ -1075,37 +1076,37 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Creates a FrameplayerFile message from a plain object. Also converts values to their respective internal types.
+             * Creates a FrameplayerBuffer message from a plain object. Also converts values to their respective internal types.
              * @function fromObject
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
              * @param {Object.<string,*>} object Plain object
-             * @returns {frameplayer.protobuf.FrameplayerFile} FrameplayerFile
+             * @returns {frameplayer.protobuf.FrameplayerBuffer} FrameplayerBuffer
              */
-            FrameplayerFile.fromObject = function fromObject(object) {
-                if (object instanceof $root.frameplayer.protobuf.FrameplayerFile)
+            FrameplayerBuffer.fromObject = function fromObject(object) {
+                if (object instanceof $root.frameplayer.protobuf.FrameplayerBuffer)
                     return object;
-                let message = new $root.frameplayer.protobuf.FrameplayerFile();
+                let message = new $root.frameplayer.protobuf.FrameplayerBuffer();
                 if (object.magic != null)
                     message.magic = object.magic | 0;
                 if (object.animation != null) {
                     if (typeof object.animation !== "object")
-                        throw TypeError(".frameplayer.protobuf.FrameplayerFile.animation: object expected");
+                        throw TypeError(".frameplayer.protobuf.FrameplayerBuffer.animation: object expected");
                     message.animation = $root.frameplayer.protobuf.Animation.fromObject(object.animation);
                 }
                 return message;
             };
 
             /**
-             * Creates a plain object from a FrameplayerFile message. Also converts values to other types if specified.
+             * Creates a plain object from a FrameplayerBuffer message. Also converts values to other types if specified.
              * @function toObject
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @static
-             * @param {frameplayer.protobuf.FrameplayerFile} message FrameplayerFile
+             * @param {frameplayer.protobuf.FrameplayerBuffer} message FrameplayerBuffer
              * @param {$protobuf.IConversionOptions} [options] Conversion options
              * @returns {Object.<string,*>} Plain object
              */
-            FrameplayerFile.toObject = function toObject(message, options) {
+            FrameplayerBuffer.toObject = function toObject(message, options) {
                 if (!options)
                     options = {};
                 let object = {};
@@ -1121,17 +1122,17 @@ export const frameplayer = $root.frameplayer = (() => {
             };
 
             /**
-             * Converts this FrameplayerFile to JSON.
+             * Converts this FrameplayerBuffer to JSON.
              * @function toJSON
-             * @memberof frameplayer.protobuf.FrameplayerFile
+             * @memberof frameplayer.protobuf.FrameplayerBuffer
              * @instance
              * @returns {Object.<string,*>} JSON object
              */
-            FrameplayerFile.prototype.toJSON = function toJSON() {
+            FrameplayerBuffer.prototype.toJSON = function toJSON() {
                 return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
             };
 
-            return FrameplayerFile;
+            return FrameplayerBuffer;
         })();
 
         return protobuf;

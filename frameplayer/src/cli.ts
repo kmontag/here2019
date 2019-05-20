@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
-import commander from 'commander';
-import fs from 'fs';
-import ProgressBar from 'progress';
+import * as commander from 'commander';
+import * as fs from 'fs';
+import * as ProgressBar from 'progress';
+import * as readline from 'readline';
+import Frameplayer from './Frameplayer';
+import prepare, { PrepareOptions } from './prepare';
 
-const vidopc = require('vidopc');
-var validCmd:boolean = false;
+let validCmd:boolean = false;
 
 commander.version('0.0.1');
 
@@ -13,11 +15,11 @@ commander
   .command('prepare <input>')
   .option('-c, --config <config>', 'config file (see the AnimationConfig type for schema)')
   .option('-o, --output <output>', 'output target file')
-  .action((input: string, cmd) => {
+  .action(async (input: string, cmd) => {
     validCmd = true;
 
     let ffmpegProgressBar: ProgressBar;
-    let framesProgressBar: ProgressBar = undefined;
+    let framesProgressBar: ProgressBar | undefined = undefined;
 
     let cleanupFramesProgressBar = () => {
       if (framesProgressBar) {
@@ -26,7 +28,7 @@ commander
       framesProgressBar = undefined;
     }
 
-    let opts = {
+    let opts: PrepareOptions = {
       onStart: (commandLine: string) => {
         console.log(commandLine);
         ffmpegProgressBar = new ProgressBar('processing video...  [:bar] :percent ETA :etas', {total: 100});
@@ -45,8 +47,10 @@ commander
         framesProgressBar.update(processed / total);
       },
     }
-    let config = JSON.parse(fs.readFileSync(cmd.config));
-    vidopc.prepare(input, cmd.output, config, opts).then((() => framesProgressBar.terminate()));
+    let config = JSON.parse((await fs.promises.readFile(cmd.config)).toString('utf8'));
+    const result = await prepare(input, config, opts);
+    cleanupFramesProgressBar();
+    await fs.promises.writeFile(cmd.output, result);
   });
 
 commander
@@ -54,25 +58,25 @@ commander
   .action(async (input: string, cmd) => {
     validCmd = true;
 
-    let source = await fs.promises.readFile(input);
-    let animation = new vidopc.Animation(source);
+    const source = await fs.promises.readFile(input);
+    const player = new Frameplayer(source);
 
-    let linesToClear: number = undefined;
+    let linesToClear: number | undefined = undefined;
 
-    animation.play((frame, index) => {
+    player.on('frame', (frameEvent) => {
       // See
       // https://stackoverflow.com/questions/23774574/clear-all-lines-in-nodejs-stream/23777620#23777620
       // for cursor trickery.
       if (linesToClear !== undefined) {
-        process.stdout.moveCursor(0, -linesToClear);
-        process.stdout.clearLine();
+        readline.moveCursor(process.stdout, 0, -linesToClear);
+        readline.clearLine(process.stdout, 0);
       }
 
       linesToClear = 0;
-      for (let targetName in frame) {
-        process.stdout.cursorTo(0);
-        process.stdout.write(`${chalk.bold(targetName)}:\n`);
-        for (let pixel of frame[targetName]) {
+      for (const channelName in frameEvent.channels) {
+        readline.cursorTo(process.stdout, 0);
+        process.stdout.write(`${chalk.bold(channelName)}:\n`);
+        for (let pixel of frameEvent.channels[channelName].pixels) {
           process.stdout.write(chalk.rgb(pixel.r, pixel.g, pixel.b)('O'));
         }
         process.stdout.write("\n");
@@ -80,6 +84,11 @@ commander
         linesToClear += 2;
       }
     });
+    player.play();
+
+    // Just wait for SIGINT
+    await new Promise(() => { });
+    console.log('there');
   });
 
 commander.parse(process.argv);
