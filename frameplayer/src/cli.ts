@@ -88,7 +88,6 @@ commander
 
     // Just wait for SIGINT
     await new Promise(() => { });
-    console.log('there');
   });
 
 commander.parse(process.argv);

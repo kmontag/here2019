@@ -175,9 +175,6 @@ export default async function(
     });
     const result = frameplayerProto.protobuf.FrameplayerBuffer.encode(buffer).finish();
 
-    // console.log(buffer.toJSON());
-    // console.log(buffer!.animation!.channels![0]);
-
     doneCallback();
     resolve(Buffer.from(result));
   });
