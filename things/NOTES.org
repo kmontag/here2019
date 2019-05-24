@@ -1,0 +1,4 @@
+* Receivers
+  - 3-way switch for Off, Built-in, OPC lighting states
+  - 8-way or so switch for channel (interior?)
+  - Pairing with controller
