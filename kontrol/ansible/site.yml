@@ -1,3 +1,4 @@
+---
 - name: apply login and hostname configuration
   hosts:
     - bootstrap
@@ -8,4 +9,5 @@
   hosts:
     - ungrouped
   roles:
-    - partition
+    - expand_root_partition
+#    - mesh_node

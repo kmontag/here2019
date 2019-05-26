@@ -1,0 +1,11 @@
+---
+# Note order matters here, reboot needs to happen before the resize.
+- name: reboot system
+  reboot:
+  become: yes
+  become_user: root
+
+- name: resize root fs
+  command: "resize2fs {{ device }}p2"
+  become: yes
+  become_user: root

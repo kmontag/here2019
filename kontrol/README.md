@@ -18,12 +18,14 @@ Pi setup
 - Test SSH (default password is `raspberry`):
 
 ``` shell
-ssh -o "StrictHostKeyChecking=no" pi@raspberrypi.local
+ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null pi@raspberrypi.local
 ```
 
-- Perform initial hostname/credentials setup with ansible:
+- Perform initial hostname/credentials setup. This will also generate
+  an SSH key pair in [`ansible/local`](ansible/local) if
+  necessary. Ansible must be installed.
 
 ``` shell
-ansible-playbook -i hosts -l bootstrap site.yml
+make bootstrap
 ```
 

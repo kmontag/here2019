@@ -1,0 +1,2 @@
+expand_root_partition_gb: 4
+device: /dev/mmcblk0

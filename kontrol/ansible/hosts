@@ -1,11 +1,22 @@
+# -*- mode: conf -*-
+
+# These hosts (as well as hosts provided on the command line) get
+# placed in the meta-groups [all] and [ungrouped], which we use to
+# select additional roles in site.yml.
+featherstreamer-nearby.local
+#featherstreamer-machine.local
+
+[ungrouped:vars]
+ansible_connection=ssh
+ansible_user=pi
+
 [bootstrap]
 raspberrypi.local
 
-[featherstreamer]
-featherstreamer.local
-
 [bootstrap:vars]
+# Standard SSH connection doesn't support a password, we need to use
+# paramiko instead.
 ansible_connection=paramiko
 ansible_user=pi
 ansible_ssh_pass=raspberry
-host_key_checking=false
+ansible_host_key_checking=false
