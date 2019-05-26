@@ -1,0 +1,171 @@
+---
+# Inspired by https://github.com/suiluj/pi-adhoc-mqtt-cluster/blob/master/install_scripts/vernemqinstall.txt.
+# - name: add erlang-solutions repository
+#   apt_repository:
+#     repo: "{{ item }}"
+#   become: yes
+#   become_user: root
+#   with_items:
+#     - deb http://packages.erlang-solutions.com/debian stretch contrib
+#     - deb http://binaries.erlang-solutions.com/debian stretch contrib
+#   register: erlang_solutions_repository
+
+# - name: add erlang-solutions key
+#   apt_key:
+#     # Taken from https://packages.erlang-solutions.com/debian/erlang_solutions.asc
+#     data: |
+#       -----BEGIN PGP PUBLIC KEY BLOCK-----
+#       Version: GnuPG v1.4.10 (GNU/Linux)
+
+#       mQINBE8v+uABEACgAlBUDDjc6PF7uI6mlTGnkemHF4trRINtocZKzvyKBmN+pPiV
+#       CjJ3o6NwGmN/McHHyN1sB40n5IZbPtECi5hm+GmHWTkPG0jNQ0f9VDxoIb2eK/Xn
+#       un2KmwJy7W0gth0++Eja5qE4G37o7AUr6hnwSUhFoQ8scahBxiAtya1M4FEeitsY
+#       qY0azafah1Pl6c9I/sdyoH2T3casDByI6aiLK5iP+B5x2j1HKzGGkuTbOdMM0Jos
+#       /pV8HbPBMCQdDhPOKSSEktKr3qgSD/fMzleusCQ5BYzlhAhr5OscCDny/LMiDBOF
+#       8Au92q5DCkjsAlKz49DdpLjep4FwvBLq4DDGj9d8Bz28uUkKnYU8b+c8oPtf9E7D
+#       Uc93i9Ddl6EmZ4QdaTZzR37oUIovKIChYNUh0FLNExhY6VsB3E/BJncaT5D2HkRQ
+#       chUPl2lHVikeJhuHFGY3EkROXMYOxf6FrdVOJa13DflOBssDVwoul45ec9rxW/aA
+#       UG7KCh4ySZ7C1ywSZSr6GXOfVdHjIaYgJpzee86TPnYxF81QpoXsH45tDOxMqMC2
+#       C1keWbzxvv3qxSGFAsCXSeKWNirCRPqsmEW1NpmLNIb2fm8LOru1hl/UknKu3Y1G
+#       gJ/n6pJOB5cRLpconnssQ2iULSJeyrbVVNyXjQbHjj1DOhtrdDmmIEB/IQARAQAB
+#       tDVFcmxhbmcgU29sdXRpb25zIEx0ZC4gPHBhY2thZ2VzQGVybGFuZy1zb2x1dGlv
+#       bnMuY29tPokCOAQTAQIAIgUCTy/64AIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgEC
+#       F4AACgkQ0ghQfKFPT8qeaQ//YAdT+Q206nwe9CauCKFzKfZVizWSXRa9n1pWyPWh
+#       Cimag9gwCZisBasqVoQDP4qVgH6rJf97Z2/2//hK06hmnrtAodLWH2BgTE5nrDaa
+#       XgAxIKDQJvJGKf+SMkZjL22ustpS1rHQ8R/vT9+XodGFVb/tzimN5mfWTlmAAl0/
+#       eRBbm7eEU41vij5P4NEE9hWFTclkxVws5m6iOLvJ+M8vQxt68ZaY6WBUgHxZXKHt
+#       Mn/2OCnX2vg3mYzKWkhMUqgBzOWIBw6oH0kLOo34VqKyeqCubWO7Uu5JekrNrXT7
+#       K03wT+MAgIbmaYkVirTEF4JAqA8s37YFErOoM807pOTyE8Biao42v98F6h/l63qB
+#       s1HBOG7LfuVXyG/reOlgGAlDFD8ShE2HP+UZ3/A/+LchKFAYt4bQG22KJtgWHgSk
+#       ZNNaU7GPb2ai5TbjdvesZu9Wqq10T1dZC1txsZxl0uTDJh2HzzOshUCFxF7Yc2uq
+#       +QBuX0aa9Z4x5Ls/UxTSV8a/XclOcTSIsSttUK5RIZNb2vaqF0Lh0kXaTErQiSq/
+#       SktmzFB09JqiYwXwiIYlYHpHBtWD9eiYtOuiRCf7qmV6g046n6QBq1j2d07SuqZM
+#       AMpiDVY9zueUUpLWZvv77IBVE2TQ4kG7qSFPxSh+pPKoIwaDlo464WRrKqhijFl4
+#       m5y5Ag0ETy/64AEQAK1kcuQd5/vkEnionds1dGti5WPXKgmxYJEOE0K5ERYeZOZz
+#       jHKKyn1sONY5BlZiHC97ISGSv8zuV2ER4GdJI8jH1OV7tx8dhy3ju2Uky5GiLwkJ
+#       snfRLBFSBDD95Js4soZogIqsS9DxomfHD0nfet9ggR5ZYur/053xrY97ylPPvd96
+#       TYRXgNWz5qJX9YzExkAPhNUb6Qcw+Wr54n8lMBQQGl8rKZzVILRtiAo/XzhVWNAg
+#       Ns4tSJlrcsS2qgn9vThtfkiFCwkPuTng+vUoRNSVvuHg1BcG/E5hhc/Gitmrynec
+#       u1Exr2+FeuaG/1j2tQqBS7uwGgtJlDo0Ag1wKMoy790LX9uHS+0xx1x//wnkSQfY
+#       Ob8cJWhWMsxZVngt9Pjs3ZL+bW2xxu/IOQ9OjXQMhJEwyf8/nMrcWnB0arIhqz+M
+#       MX/XAfy/JwKD04LDdxngQD3NUOuuLIZWKuvx5WZr8+lSuc3gtthPFt43olIjY2Yi
+#       HQhlcVKnV3xnXbaqaXptjXEkqi/K7jHtVn9Fpb3JAWNnIf5gaYTbdE2qQFiqPfWs
+#       CQ1w5CHj2KPV3m/ckHiKu1oSvWFamocsEF0C3zYLdoDHKiuHesF0ZqCqIE9c0qkJ
+#       gH+dxcbPhByCDIQbiyiHvXbs1SBM3VwTGhjvzlpLSCquBG5cAGMAnzNaMHr9ABEB
+#       AAGJAh8EGAECAAkFAk8v+uACGwwACgkQ0ghQfKFPT8rwlw/+IGJTucS2T7+0FLDp
+#       TKsdsBidPEOFEa19QBrIFM9sXdJXGyVRw/u/sVYOJYBYCZmGuqA/EB3mPNZHbsHX
+#       pBRTIMGecH9qg55fm5t4WT93TbfbOjJCbbtsVONpig/NOYhVA63UUGasaLzVQ/6E
+#       Ip4bmqSH4XhLrOT1J0yFe13MdfkJ6fxHJML1YeLrZhoVWApLQ9B70/CVfxqX5+oQ
+#       Uwlxiiu6x2tExWCMrY2y9qXQOfk6bYZsNceoHrhXD876nn4pdMrJJoefD02OhT7L
+#       /heeGCRolEzT5JsbTOr/HqyDoz6XP0Na30I4rJYRZKVUEDGT/XJaxhwX93QI2Kr/
+#       TvhgLtPDDngclxBuwfZ/gJMb8T83vN+fuhgjL8pHKaiQeneVuOMNpm5yxyAFr2ep
+#       ux6ipe2UL9kUn7ZnfeiJc385cMTY9cZ30GjgdQr1o1EDwHiYm+ly4Licg5w5mYYx
+#       Vx2bzOJLsGm9xAKp6G4xJHY89PE8y3bksO8pctGkkWmBPCCeH5PPFWrPhLcyiS9P
+#       lvijXzabGtFaVDmxV5oGHW8orpirR3CMgn0DKE5QcH8412d9ByvjK3UcmBTwEnQk
+#       Og0Ce4+ypBIERtufK1osg9lALv/abGtow2S6pdzfdFlISyiLA3HOUQ/spkuPvAe8
+#       ctmKvzuuerI6mVQjg/80PJ4fEV0=
+#       =VAR1
+#       -----END PGP PUBLIC KEY BLOCK-----
+#   become: yes
+#   become_user: root
+#   register: erlang_solutions_key
+
+# - name: update apt
+#   apt:
+#     update_cache: True
+#   when: erlang_solutions_repository.changed or erlang_solutions_key.changed
+
+- name: install build dependencies (round 1)
+  apt:
+    cache_valid_time: 86400
+    name:
+      - autoconf
+      - libssl1.0-dev
+      - libncurses5-dev
+  become: yes
+  become_user: root
+
+
+# libssh-dev won't install unless libssl1.0-dev is already present.
+- name: install build dependencies (round 2)
+  apt:
+    cache_valid_time: 86400
+    name:
+      - libssh-dev
+  become: yes
+  become_user: root
+
+
+# erlang installer helper
+- name: install kerl
+  get_url:
+    url: https://raw.githubusercontent.com/kerl/kerl/73b71512188fe6c16a01d1b983ee7d9508fe346a/kerl
+    dest: /usr/local/bin/kerl
+    mode: '0755'
+  become: yes
+  become_user: root
+
+- name: check for existing erlang installation
+  stat:
+    path: "/opt/kerl/{{ erlang_version }}"
+  register: stat_erlang
+
+# This takes forever. It can be bootstrapped using `kerl deploy` from
+# a machine where the install has already finished.
+- name: install erlang
+  shell: >-
+    kerl build {{ erlang_version }} &&
+    kerl install {{ erlang_version }} /opt/kerl/{{ erlang_version }}
+  when: not stat_erlang.stat.exists
+  become: yes
+  become_user: root
+
+- name: activate erlang build at boot
+  lineinfile:
+    path: /home/pi/.bashrc
+    line: ". /opt/kerl/{{ erlang_version }}/activate"
+
+# - name: clone erlang otp
+#   git:
+#     repo: https://github.com/erlang/otp
+#     dest: /usr/local/src/otp
+#     depth: 1
+#     version: OTP-22.0.1
+#   when: not stat_erlang.stat.exists
+#   become: yes
+#   become_user: root
+
+# - name: build erlang otp
+#   shell: >
+#     ./otp_build autoconf &&
+#     ./configure &&
+#     make -j 4 m&&
+#     make install
+#   args:
+#     chdir: /usr/local/src/otp
+#   when: not stat_erlang.stat.exists
+#   become: yes
+#   become_user: root
+
+
+# - name: check for existing vernemq installation
+#   stat:
+#     path: /usr/local/bin/vernemq
+#   register: stat_vernemq
+
+# - name: clone vernemq
+#   git:
+#     repo: https://github.com/larshesel/vernemq.git
+#     dest: /usr/local/src/vernemq
+#     refspec: 7e458c6215176ec08efae7226642de66ac7a4769
+#   when: not stat_vernemq.stat.exists
+#   become: yes
+#   become_user: root
+
+# - name: build and install vernemq
+#   shell: |
+#     cd /usr/local/src/vernemq
+#     make rpi32
+#   when: not stat_vernemq.stat.exists
+#   become: yes
+#   become_user: root

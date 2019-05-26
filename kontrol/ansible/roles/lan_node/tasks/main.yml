@@ -7,20 +7,21 @@
   file:
     path: /etc/network/interfaces.d/wlan0
     state: absent
-  notify:
-    - reboot system
   become: yes
   become_user: root
+  register: remove_network_interface
 
 - name: allow DHCPD to automatically configure wlan0
   lineinfile:
     path: /etc/dhcpcd.conf
     state: absent
     regexp: denyinterfaces wlan0
-  notify:
-    - reboot system
   become: yes
   become_user: root
+  register: allow_dhcpcd_conf
 
-- name: force system reboot
-  meta: flush_handlers
+# We want this to run right away, but flush_handlers doesn't play
+# nicely with conditional roles.
+- name: reboot after changing network config
+  reboot:
+  when: remove_network_interface.changed or allow_dhcpcd_conf.changed

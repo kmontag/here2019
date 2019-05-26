@@ -10,10 +10,13 @@
     - ungrouped
   roles:
     - expand_root_partition
+    - vernemq
 
-    # Set featherstreamer_lan=True in the [ungrouped:vars] section of
-    # hosts.local if you want to connect using the "standard" wifi
-    # setup instead of the ad hoc network.
+    # Set up networking last, so we can provision all other roles on
+    # initial setup before disconnecting from the internet. Set
+    # featherstreamer_lan=True in the [ungrouped:vars] section of
+    # inventory/hosts.local if you want to connect using the
+    # "standard" wifi setup instead of the ad hoc network.
     - role: lan_node
       when: "featherstreamer_lan | default(False)"
     - role: mesh_node

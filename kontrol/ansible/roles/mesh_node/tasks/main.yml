@@ -32,8 +32,7 @@
       auto bat0
       iface bat0 inet auto
           pre-up /usr/sbin/batctl if add wlan0
-  notify:
-    - reboot system
+  register: create_bat_interface
   become: yes
   become_user: root
 
@@ -49,8 +48,7 @@
           wireless-key {{ network_key }}
           wireless-mode ad-hoc
           wireless-ap {{ network_ap }} # This pre-sets your CELL id
-  notify:
-    - reboot system
+  register: create_wlan_interface
   become: yes
   become_user: root
 
@@ -59,16 +57,14 @@
     path: /home/pi/.bashrc
     state: present
     line: sudo /usr/local/bin/setup-batman-adv
-  notify:
-    - reboot system
+  register: batman_adv_boot
 
 - name: add batman-adv to enabled modules
   lineinfile:
     path: /etc/modules
     state: present
     line: batman-adv
-  notify:
-    - reboot system
+  register: batman_adv_module
   become: yes
   become_user: root
 
@@ -77,7 +73,12 @@
     path: /etc/dhcpcd.conf
     state: present
     line: denyinterfaces wlan0
-  notify:
-    - reboot system
+  register: deny_dhcpcd_conf
   become: yes
   become_user: root
+
+# We want this to run right away, but flush_handlers doesn't play
+# nicely with conditional roles.
+- name: reboot
+  reboot:
+  when: create_bat_interface.changed or create_wlan_interface.changed or batman_adv_boot.changed or batman_adv_module.changed or deny_dhcpcd_conf.changed

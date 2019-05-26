@@ -1,6 +1,8 @@
 ---
-# Note order matters here, reboot needs to happen before the resize.
-- name: reboot system
+# Note order matters here, reboot needs to happen before the
+# resize. We also use a globally unique name to make sure this doesn't
+# get overridden by other reboot handlers.
+- name: reboot system before resize
   reboot:
   become: yes
   become_user: root
