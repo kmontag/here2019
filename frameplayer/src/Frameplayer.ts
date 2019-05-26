@@ -4,13 +4,13 @@ import StrictEventEmitter from 'strict-event-emitter-types';
 import { EventEmitter } from 'events';
 
 type Channel = {
-  readonly id: number,
+  readonly id: string,
   readonly frames: ReadonlyArray<ReadonlyArray<Pixel>>,
 };
 
 interface FrameEvent {
   readonly channels: {
-    [channel: number]: {
+    [channel: string]: {
       readonly currFrame: number,
       readonly totalFrames: number,
       readonly pixels: ReadonlyArray<Pixel>,

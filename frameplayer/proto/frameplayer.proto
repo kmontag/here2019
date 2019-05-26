@@ -21,7 +21,7 @@ message Channel {
  */
 message Animation {
   float fps = 1;
-  map<uint32, Channel> channels = 2;
+  map<string, Channel> channels = 2;
 }
 
 /**

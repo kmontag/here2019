@@ -33,7 +33,7 @@ export const AnimationConfig = Record({
   fps: Number,
 
   // Animation is just a set of channels.
-  channels: Dictionary(ChannelConfig, 'number'),
+  channels: Dictionary(ChannelConfig, 'string'),
 });
 export type AnimationConfig = Static<typeof AnimationConfig>;
 
