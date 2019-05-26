@@ -2,3 +2,13 @@
   - 3-way switch for Off, Built-in, OPC lighting states
   - 8-way or so switch for channel (interior?)
   - Pairing with controller
+
+* Kontrollers
+  Mesh network. Possible approaches:
+  - https://hackaday.com/2012/11/14/mesh-networking-with-multiple-raspberry-pi-boards/
+  - https://github.com/tomeshnet/prototype-cjdns-pi
+  - https://github.com/suiluj/pi-adhoc-mqtt-cluster
+
+  Pi automated setup, see
+  https://www.raspberrypi.org/forums/viewtopic.php?t=190921,
+  https://www.pibakery.org/
