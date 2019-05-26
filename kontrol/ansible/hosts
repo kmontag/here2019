@@ -1,0 +1,11 @@
+[bootstrap]
+raspberrypi.local
+
+[featherstreamer]
+featherstreamer.local
+
+[bootstrap:vars]
+ansible_connection=paramiko
+ansible_user=pi
+ansible_ssh_pass=raspberry
+host_key_checking=false

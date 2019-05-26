@@ -1,0 +1,11 @@
+- name: apply login and hostname configuration
+  hosts:
+    - bootstrap
+  roles:
+    - credentials
+
+- name: fully configure a featherstreamer device
+  hosts:
+    - ungrouped
+  roles:
+    - partition
