@@ -10,4 +10,11 @@
     - ungrouped
   roles:
     - expand_root_partition
-    - mesh_node
+
+    # Set featherstreamer_lan=True in the [ungrouped:vars] section of
+    # hosts.local if you want to connect using the "standard" wifi
+    # setup instead of the ad hoc network.
+    - role: lan_node
+      when: "featherstreamer_lan | default(False)"
+    - role: mesh_node
+      when: "not ( featherstreamer_lan | default(False) )"

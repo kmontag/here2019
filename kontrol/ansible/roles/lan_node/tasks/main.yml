@@ -1,0 +1,26 @@
+---
+# Undo network configuration from the mesh_node role, to reconnect via
+# standard wifi settings. Mainly intended to be selectively enabled
+# during development; see site.yml for instructions.
+
+- name: remove wlan0 interface
+  file:
+    path: /etc/network/interfaces.d/wlan0
+    state: absent
+  notify:
+    - reboot system
+  become: yes
+  become_user: root
+
+- name: allow DHCPD to automatically configure wlan0
+  lineinfile:
+    path: /etc/dhcpcd.conf
+    state: absent
+    regexp: denyinterfaces wlan0
+  notify:
+    - reboot system
+  become: yes
+  become_user: root
+
+- name: force system reboot
+  meta: flush_handlers

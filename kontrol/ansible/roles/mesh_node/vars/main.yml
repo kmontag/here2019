@@ -1,5 +1,11 @@
 ---
+# 1-14.
 network_channel: 6
+
 network_name: featherstreamer
+
+# Anything following this format is valid.
 network_ap: 02:31:43:62:44:A2
+
+# Any 10-digit key is valid.
 network_key: 6081995211
