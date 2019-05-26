@@ -1,0 +1,13 @@
+---
+- name: reboot system
+  reboot:
+  become: yes
+  become_user: root
+
+
+# - name: enable batman-adv service
+#   shell: systemctl enable batman-adv.service && systemctl start batman-adv.service
+#   become: yes
+#   become_user: root
+# - name: setup-batman-adv
+#   shell: sudo /usr/local/bin/setup-batman-adv

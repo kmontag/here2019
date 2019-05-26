@@ -1,0 +1,119 @@
+---
+# Install batman and set the board up as a node in the ad hoc
+# network. See
+# https://medium.com/@tdoll/how-to-setup-a-raspberry-pi-ad-hoc-network-using-batman-adv-on-raspbian-stretch-lite-dce6eb896687.
+- name: install batman
+  apt:
+    name: batctl
+    cache_valid_time: 86400
+  become: yes
+  become_user: root
+
+- name: create batman start script
+  copy:
+    dest: /usr/local/bin/setup-batman-adv
+    content: |
+      #!/bin/bash
+
+      # Tell batman-adv which interface to use.
+      batctl if add wlan0
+
+      # Activates the interfaces for batman-adv.
+      ifconfig wlan0 up
+      ifconfig bat0 up
+    mode: '0755'
+  become: yes
+  become_user: root
+
+- name: create bat0 interface
+  copy:
+    dest: /etc/network/interfaces.d/bat0
+    content: |
+      auto bat0
+      iface bat0 inet auto
+          pre-up /usr/sbin/batctl if add wlan0
+  notify:
+    - reboot system
+  become: yes
+  become_user: root
+
+- name: create wlan0 interface
+  copy:
+    dest: /etc/network/interfaces.d/wlan0
+    content: |
+      auto wlan0
+      iface wlan0 inet manual
+          mtu 1532 # Increase packet size to account for batman-adv header
+          wireless-channel {{ network_channel }} # Any channel from 1-14
+          wireless-essid {{ network_name }}
+          wireless-key {{ network_key }}
+          wireless-mode ad-hoc
+          wireless-ap {{ network_ap }} # This pre-sets your CELL id
+  notify:
+    - reboot system
+  become: yes
+  become_user: root
+
+- name: setup batman-adv at boot
+  lineinfile:
+    path: /home/pi/.bashrc
+    state: present
+    line: sudo /usr/local/bin/setup-batman-adv
+  notify:
+    - reboot system
+
+- name: add batman-adv to enabled modules
+  lineinfile:
+    path: /etc/modules
+    state: present
+    line: batman-adv
+  notify:
+    - reboot system
+  become: yes
+  become_user: root
+
+- name: prevent DHCPCD from automatically configuring wlan0
+  lineinfile:
+    path: /etc/dhcpcd.conf
+    state: present
+    line: denyinterfaces wlan0
+  notify:
+    - reboot system
+  become: yes
+  become_user: root
+
+
+
+# - name: install batman dependencies
+#   apt:
+#     name: "{{ packages }}"
+#     cache_valid_time: 86400
+#   vars:
+#     packages:
+#       - git
+#       - raspberrypi-kernel-headers
+#       - build-essential
+#       - dkms
+#       - libcap-dev
+#       - libgps-dev
+#   become: yes
+#   become_user: root
+
+# - name: install batman-adv
+#   shell: |
+#     echo "{{ md5 }} *batman-adv-{{ version }}.tar.gz" > batman-adv-{{ version }}.tar.gz.md5
+#     wget https://downloads.open-mesh.org/batman/stable/sources/batman-adv/batman-adv-{{ version }}.tar.gz
+#     md5sum -c batman-adv-{{ version }}.tar.gz.md5
+#     tar -xzvf batman-adv-{{ version }}.tar.gz
+#     cd batman-adv-{{ version }}
+#     KERNELPATH=/lib/modules/4.19.42+ make
+#     make install
+#   args:
+#     chdir: /tmp
+#   vars:
+#     version: 2019.2
+#     # Pulled manually from
+#     # https://downloads.open-mesh.org/batman/stable/sources/batman-adv/batman-adv-2019.2.tar.gz.md5
+#     md5: 1e7b62821d21ce9a2f1b0250023238eb
+#   become: yes
+#   become_user: root

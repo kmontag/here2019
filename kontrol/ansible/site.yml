@@ -10,4 +10,4 @@
     - ungrouped
   roles:
     - expand_root_partition
-#    - mesh_node
+    - mesh_node

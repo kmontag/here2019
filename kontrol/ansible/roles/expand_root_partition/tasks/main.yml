@@ -17,3 +17,5 @@
   become: yes
   become_user: root
 
+- name: force root fs resize before continuing
+  meta: flush_handlers

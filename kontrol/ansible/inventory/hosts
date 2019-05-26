@@ -1,11 +1,8 @@
 # -*- mode: conf -*-
 
-# These hosts (as well as hosts provided on the command line) get
-# placed in the meta-groups [all] and [ungrouped], which we use to
-# select additional roles in site.yml.
-featherstreamer-nearby.local
-#featherstreamer-machine.local
-
+# Hosts provided in hosts.local or on the command line get placed in
+# the meta-groups [all] and [ungrouped], which we use to select
+# additional roles in site.yml.
 [ungrouped:vars]
 ansible_connection=ssh
 ansible_user=pi
