@@ -1,5 +1,8 @@
 default: bootstrap
 
+# Specify these to modify ansible commands.
+ANSIBLE_FLAGS:=
+
 BOOT_VOLUME_PATH:=/Volumes/boot
 
 # Set up the boot volume of a plain raspbian image. Tested with
@@ -22,7 +25,7 @@ ansible/inventory/hosts.local:
 # Perform initial setup on a pi with a fresh Raspbian install.
 .PHONY: bootstrap
 bootstrap: ansible/local/id_rsa.pub ansible/local/id_rsa
-	cd ansible && ansible-playbook -l bootstrap site.yml
+	cd ansible && ansible-playbook -l bootstrap $(ANSIBLE_FLAGS) site.yml
 	- ssh -t -o StrictHostKeyChecking=no -i ansible/local/id_rsa pi@raspberrypi.local 'sudo reboot'
 	@echo "\nRebooting, device will be accessible as $$(cat ansible/local/last-hostname).local...\n"
 
@@ -31,4 +34,4 @@ ansible/local/id_rsa.pub ansible/local/id_rsa:
 
 .PHONY: setup
 setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.local
-	cd ansible && ansible-playbook -l ungrouped site.yml
+	cd ansible && ansible-playbook -l ungrouped $(ANSIBLE_FLAGS) site.yml
