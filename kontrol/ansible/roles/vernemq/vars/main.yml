@@ -1,2 +1,4 @@
 ---
-erlang_version: '22.0'
+# Can't use 22.0 pending https://github.com/vernemq/vernemq/issues/1196.
+erlang_version: '21.3'
+vernemq_version: '1.8.0'
