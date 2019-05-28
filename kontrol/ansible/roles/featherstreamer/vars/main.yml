@@ -1,0 +1,3 @@
+---
+node_version: 10.15.3
+module_location: "{{ playbook_dir }}/../featherstreamer"

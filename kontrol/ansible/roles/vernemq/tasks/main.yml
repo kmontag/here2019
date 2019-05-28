@@ -36,7 +36,6 @@
   with_items:
     - /opt/kerl
     - /opt/vernemq
-    - /usr/local/stow
   become: yes
   become_user: root
 

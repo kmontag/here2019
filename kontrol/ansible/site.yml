@@ -8,9 +8,11 @@
 - name: fully configure a featherstreamer device
   hosts:
     - ungrouped
+  strategy: free
   roles:
     - expand_root_partition
     - vernemq
+    - featherstreamer
 
     # Set up networking last, so we can provision all other roles on
     # initial setup before disconnecting from the internet. Set
