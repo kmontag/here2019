@@ -82,3 +82,5 @@
 - name: reboot
   reboot:
   when: create_bat_interface.changed or create_wlan_interface.changed or batman_adv_boot.changed or batman_adv_module.changed or deny_dhcpcd_conf.changed
+  become: yes
+  become_user: root

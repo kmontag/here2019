@@ -32,6 +32,19 @@ bootstrap: ansible/local/id_rsa.pub ansible/local/id_rsa
 ansible/local/id_rsa.pub ansible/local/id_rsa:
 	ssh-keygen -t rsa -N "" -f ansible/local/id_rsa
 
+# Build the JS module.
+featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsconfig.json featherstreamer/tslint.json $(shell find featherstreamer/src -type f)
+	cd featherstreamer && npm run build
+
 .PHONY: setup
-setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.local
+setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.local featherstreamer/dist/index.js
 	cd ansible && ansible-playbook -l ungrouped $(ANSIBLE_FLAGS) site.yml
+
+# Sync the JS module to a pi. This happens during provisioning as
+# well, but it's included here as a quick command during development.
+.PHONY: rsync
+rsync: featherstreamer/dist/index.js
+ifndef PI
+	$(error Specify the host via the PI variable)
+endif
+	rsync -avz --exclude='node_modules' featherstreamer/ pi@$(PI):/usr/local/src/featherstreamer/

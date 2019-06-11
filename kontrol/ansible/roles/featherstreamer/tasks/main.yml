@@ -7,11 +7,19 @@
   become: yes
   become_user: root
 
-- name: get nodejs binaries
+- name: check for existing node download
+  stat:
+    path: "/usr/local/stow/node-v{{ node_version }}-linux-armv6l"
+  register: stat_node_download
+
+- name: download node binaries
   unarchive:
     dest: /usr/local/stow/
     src: "https://nodejs.org/dist/v10.15.3/node-v{{ node_version }}-linux-armv6l.tar.xz"
     remote_src: yes
+  # If we don't make this conditional, it makes a network request
+  # every time.
+  when: not stat_node_download.stat.exists
   become: yes
   become_user: root
 

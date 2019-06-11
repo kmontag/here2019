@@ -25,3 +25,5 @@
 - name: reboot after changing network config
   reboot:
   when: remove_network_interface.changed or allow_dhcpcd_conf.changed
+  become: yes
+  become_user: root

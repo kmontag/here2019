@@ -1,18 +1,20 @@
 ---
-- name: apply login and hostname configuration
+- name: apply preliminary login and hostname configuration
   hosts:
     - bootstrap
   roles:
     - credentials
 
-- name: fully configure a featherstreamer device
+- name: configure a featherstreamer
   hosts:
     - ungrouped
   strategy: free
   roles:
     - expand_root_partition
-    - vernemq
     - featherstreamer
+
+    #- vernemq
+
 
     # Set up networking last, so we can provision all other roles on
     # initial setup before disconnecting from the internet. Set
