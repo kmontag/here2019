@@ -3,27 +3,48 @@
 # standard wifi settings. Mainly intended to be selectively enabled
 # during development; see site.yml for instructions.
 
-- name: remove wlan0 interface
-  file:
-    path: /etc/network/interfaces.d/wlan0
-    state: absent
-  become: yes
-  become_user: root
-  register: remove_network_interface
+# - name: remove wlan0 interface
+#   file:
+#     path: /etc/network/interfaces.d/wlan0
+#     state: absent
+#   become: yes
+#   become_user: root
+#   register: remove_network_interface
 
-- name: allow DHCPD to automatically configure wlan0
-  lineinfile:
-    path: /etc/dhcpcd.conf
-    state: absent
-    regexp: denyinterfaces wlan0
+- name: configure wlan0 interface
+  copy:
+    dest: /etc/network/interfaces.d/wlan0
+
+    # See
+    # https://blog.thewalr.us/2017/09/26/raspberry-pi-zero-w-simultaneous-ap-and-managed-mode-wifi/#comment-3547502039
+    content: |
+      auto wlan0
+      allow-hotplug wlan0
+      iface wlan0 inet dhcp
+              pre-up ifup ap0
+              wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+      # This is the id_str from wpa_supplicant.conf
+      #iface AP1 inet dhcp
+
+  register: create_wlan_interface
   become: yes
   become_user: root
-  register: allow_dhcpcd_conf
+
+# - name: allow DHCPD to automatically configure wlan0
+#   lineinfile:
+#     path: /etc/dhcpcd.conf
+#     state: absent
+#     regexp: denyinterfaces wlan0
+#   become: yes
+#   become_user: root
+#   register: allow_dhcpcd_conf
 
 # We want this to run right away, but flush_handlers doesn't play
 # nicely with conditional roles.
 - name: reboot after changing network config
   reboot:
-  when: remove_network_interface.changed or allow_dhcpcd_conf.changed
+  #when: remove_network_interface.changed or allow_dhcpcd_conf.changed
+  when: create_wlan_interface.changed
   become: yes
   become_user: root

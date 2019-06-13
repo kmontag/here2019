@@ -1,0 +1,6 @@
+---
+ap_name: "{{ ansible_hostname }}"
+ap_passphrase: gallowsbird
+ap_channel: 1
+
+mac_address_base: 'b8:27:eb'

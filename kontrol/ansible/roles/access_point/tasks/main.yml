@@ -1,0 +1,126 @@
+---
+# Set up the device as an access point (so that external devices like
+# the feather can connect) on a manually-created network
+# interface. The default interface (wlan0) can then be used for
+# joining the mesh network.  See
+# e.g. https://hackaday.com/2017/09/29/simultaneous-ap-client-on-the-pi-zero-w/.
+# - name: get MAC address
+#   shell: ip -o link show dev wlan0 | grep -Po 'ether \K[^ ]*'
+#   register: mac_address
+#   changed_when: false
+
+# - set_fact:
+#     ap_mac_address: "{{ mac_address_base | random_mac }}"
+#   run_once: yes
+- name: check if dhcpcd is enabled
+  stat:
+    # This gets moved to K01dhcpcd when disabled.
+    path: /etc/rc2.d/S01dhcpcd
+  register: dhcpcd_enabled
+
+- name: disable dhcpcd
+  shell: update-rc.2 dhcpcd disable
+  when: dhcpcd_enabled.stat.exists
+  become: yes
+  become_user: root
+
+- name: get MAC address
+  shell: ip -o link show dev wlan0 | grep -Po 'ether \K[^ ]*'
+  register: mac_address
+  changed_when: false
+
+- name: add udev rule for AP device
+  copy:
+    dest: /etc/udev/rules.d/70-persistent-net.rules
+    content: |
+      SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="{{ mac_address.stdout }}", KERNEL=="phy0", RUN+="/sbin/iw phy phy0 interface add ap0 type __ap", RUN+="/bin/ip link set ap0 address {{ mac_address.stdout }}"
+
+    # Don't overwrite the file if it already exists, so we don't keep
+    # changing the MAC address.
+    force: no
+  become: yes
+  become_user: root
+
+# - name: prevent DHCPCD from automatically configuring ap0
+#   lineinfile:
+#     path: /etc/dhcpcd.conf
+#     state: present
+#     line: denyinterfaces ap0
+#   register: deny_dhcpcd_conf
+#   become: yes
+#   become_user: root
+
+- name: install dependencies
+  apt:
+    name:
+      - dnsmasq
+      - hostapd
+    cache_valid_time: 86400
+  become: yes
+  become_user: root
+
+# The IP range here is arbitrary, but the subnet must be consistent
+# with the configured node IP. The server address is just google DNS,
+# can really be anything since we won't actually be connected to the
+# internet.
+- name: configure dnsmasq
+  blockinfile:
+    path: /etc/dnsmasq.conf
+    block: |
+      interface=lo,ap0
+      no-dhcp-interface=lo,wlan0
+      bind-interfaces
+      server=8.8.8.8
+      domain-needed
+      bogus-priv
+      dhcp-range=192.168.10.50,192.168.10.150,12h
+  become: yes
+  become_user: root
+
+- name: configure hostapd
+  copy:
+    dest: /etc/hostapd/hostapd.conf
+    content: |
+      ctrl_interface=/var/run/hostapd
+      ctrl_interface_group=0
+      interface=ap0
+      driver=nl80211
+      ssid={{ ap_name }}
+      hw_mode=g
+      channel={{ ap_channel }}
+      wmm_enabled=0
+      macaddr_acl=0
+      auth_algs=1
+      wpa=2
+      wpa_passphrase={{ ap_passphrase }}
+      wpa_key_mgmt=WPA-PSK
+      wpa_pairwise=TKIP CCMP
+      rsn_pairwise=CCMP
+  become: yes
+  become_user: root
+
+- name: use hostapd configuration
+  lineinfile:
+    path: /etc/default/hostapd
+    line: DAEMON_CONF="/etc/hostapd/hostapd.conf"
+  become: yes
+  become_user: root
+
+# This needs to go directly in the interfaces file to make sure the
+# startup order is correct.
+- name: add AP device config
+  blockinfile:
+    dest: /etc/network/interfaces
+    insertbefore: BOF
+    block: |
+      auto lo
+      auto ap0
+      iface lo inet loopback
+
+      allow-hotplug ap0
+      iface ap0 inet static
+          address 192.168.10.1
+          netmask 255.255.255.0
+          hostapd /etc/hostapd/hostapd.conf
+  become: yes
+  become_user: root

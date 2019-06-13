@@ -16,6 +16,8 @@ boot: wpa_supplicant.conf
 # https://raspberrypi.stackexchange.com/questions/47773/disable-auto-file-system-expansion-in-new-jessie-image-2016-05-10.
 	sed -i".bak" 's/init=.*$$//' $(BOOT_VOLUME_PATH)/cmdline.txt
 
+# For SSH over USB, see https://www.thepolyglotdeveloper.com/2016/06/connect-raspberry-pi-zero-usb-cable-ssh/
+
 wpa_supplicant.conf:
 	$(error Please create wpa_supplicant.conf in this directory. See wpa_supplicant.sample.conf for an example.)
 
@@ -38,7 +40,7 @@ featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsc
 
 .PHONY: setup
 setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.local featherstreamer/dist/index.js
-	cd ansible && ansible-playbook -l ungrouped $(ANSIBLE_FLAGS) site.yml
+	cd ansible && ansible-playbook -vv -l ungrouped $(ANSIBLE_FLAGS) site.yml
 
 # Sync the JS module to a pi. This happens during provisioning as
 # well, but it's included here as a quick command during development.

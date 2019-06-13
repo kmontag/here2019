@@ -63,10 +63,12 @@ void setup() {
 
   // attempt to connect to WiFi network:
   while ( status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to WEP network, SSID: ");
+    Serial.print("Status is: ");
+    Serial.print(status);
+    Serial.print(". Attempting to connect to WEP network, SSID: ");
     Serial.println(ssid);
     //status = WiFi.begin(ssid, keyIndex, pass);
-    status = WiFi.begin(ssid, keyIndex, pass);
+    status = WiFi.begin(ssid, pass);
     //status = WiFi.begin(ssid);
 
     keyIndex++;
