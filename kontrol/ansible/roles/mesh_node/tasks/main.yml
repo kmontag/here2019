@@ -1,23 +1,4 @@
 ---
-#   apt_repository:
-#     #repo: "deb http://raspbian.raspberrypi.org/raspbian/ {{ ansible_distribution_release }}-backports main"
-#     repo: "deb http://deb.debian.org/debian/ {{ ansible_distribution_release }}-backports main"
-#     state: present
-#     update_cache: yes
-#   become: yes
-#   become_user: root
-
-# - name: use stable repository by default
-#   copy:
-#     dest: "/etc/apt/preferences.d/{{ ansible_distribution_release }}-backports"
-#     content: |
-#       Package: *
-#       Pin: release n={{ ansible_distribution_release }}-backports"
-#       Pin-Priority: 50
-#   become: yes
-#   become_user: root
-
-
 # Install batman and set the board up as a node in the ad hoc
 # network. See
 # https://medium.com/@tdoll/how-to-setup-a-raspberry-pi-ad-hoc-network-using-batman-adv-on-raspbian-stretch-lite-dce6eb896687.
@@ -62,9 +43,9 @@
     content: |
       auto wlan0
 
-      allow-hotplug wlan0
+      # allow-hotplug wlan0
       iface wlan0 inet manual
-          pre-up ifup ap0
+          # pre-up ifup ap0
 
           # mtu 1532
 

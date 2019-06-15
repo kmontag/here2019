@@ -1,54 +1,43 @@
 ---
 # Set up the device as an access point (so that external devices like
-# the feather can connect) on a manually-created network
-# interface. The default interface (wlan0) can then be used for
-# joining the mesh network.  See
+# the feather can connect) on a manually-created network interface,
+# and a WiFi client for either the internet or the master AP. Add
+# scripts to switch the access point and WiFi config between various
+# valid configurations (see the README for more info). See
 # e.g. https://hackaday.com/2017/09/29/simultaneous-ap-client-on-the-pi-zero-w/.
+
+# - name: check if dhcpcd is enabled
+#   stat:
+#     # This gets moved to K01dhcpcd when disabled.
+#     path: /etc/rc2.d/S01dhcpcd
+#   register: dhcpcd_enabled
+
+# - name: disable dhcpcd
+#   shell: update-rc.2 dhcpcd disable
+#   when: dhcpcd_enabled.stat.exists
+#   become: yes
+#   become_user: root
+
+
 # - name: get MAC address
 #   shell: ip -o link show dev wlan0 | grep -Po 'ether \K[^ ]*'
 #   register: mac_address
 #   changed_when: false
 
-# - set_fact:
-#     ap_mac_address: "{{ mac_address_base | random_mac }}"
-#   run_once: yes
-- name: check if dhcpcd is enabled
-  stat:
-    # This gets moved to K01dhcpcd when disabled.
-    path: /etc/rc2.d/S01dhcpcd
-  register: dhcpcd_enabled
-
-- name: disable dhcpcd
-  shell: update-rc.2 dhcpcd disable
-  when: dhcpcd_enabled.stat.exists
-  become: yes
-  become_user: root
-
-- name: get MAC address
-  shell: ip -o link show dev wlan0 | grep -Po 'ether \K[^ ]*'
-  register: mac_address
-  changed_when: false
-
 - name: add udev rule for AP device
   copy:
     dest: /etc/udev/rules.d/70-persistent-net.rules
+    # content: |
+    #   SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="{{ mac_address.stdout }}", KERNEL=="phy0", RUN+="/sbin/iw phy phy0 interface add {{ ap_device_name }} type __ap", RUN+="/bin/ip link set ap0 address {{ mac_address.stdout }}"
     content: |
-      SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="{{ mac_address.stdout }}", KERNEL=="phy0", RUN+="/sbin/iw phy phy0 interface add ap0 type __ap", RUN+="/bin/ip link set ap0 address {{ mac_address.stdout }}"
+      SUBSYSTEM=="ieee80211", ACTION=="add|change", KERNEL=="phy0", RUN+="/sbin/iw phy phy0 interface add {{ ap_device_name }} type __ap"
 
-    # Don't overwrite the file if it already exists, so we don't keep
-    # changing the MAC address.
-    force: no
+    # # Don't overwrite the file if it already exists, so we don't keep
+    # # changing the MAC address.
+    # force: no
+  register: ap_udev
   become: yes
   become_user: root
-
-# - name: prevent DHCPCD from automatically configuring ap0
-#   lineinfile:
-#     path: /etc/dhcpcd.conf
-#     state: present
-#     line: denyinterfaces ap0
-#   register: deny_dhcpcd_conf
-#   become: yes
-#   become_user: root
 
 - name: install dependencies
   apt:
@@ -56,6 +45,7 @@
       - dnsmasq
       - hostapd
     cache_valid_time: 86400
+  register: dependencies
   become: yes
   become_user: root
 
@@ -67,25 +57,32 @@
   blockinfile:
     path: /etc/dnsmasq.conf
     block: |
-      interface=lo,ap0
+      interface=lo,{{ ap_device_name }}
       no-dhcp-interface=lo,wlan0
       bind-interfaces
       server=8.8.8.8
       domain-needed
       bogus-priv
-      dhcp-range=192.168.10.50,192.168.10.150,12h
+      dhcp-range={{ ap_dhcp_range }}
   become: yes
   become_user: root
 
-- name: configure hostapd
+- name: create hostapd config directory
+  file:
+    path: "{{ custom_hostapd_directory }}"
+    state: directory
+  become: yes
+  become_user: root
+
+- name: create hostapd configs
   copy:
-    dest: /etc/hostapd/hostapd.conf
+    dest: "{{ custom_hostapd_directory }}/hostapd.{{ item.mode }}.conf"
     content: |
       ctrl_interface=/var/run/hostapd
       ctrl_interface_group=0
       interface=ap0
       driver=nl80211
-      ssid={{ ap_name }}
+      ssid={{ item.ap_name }}
       hw_mode=g
       channel={{ ap_channel }}
       wmm_enabled=0
@@ -96,6 +93,24 @@
       wpa_key_mgmt=WPA-PSK
       wpa_pairwise=TKIP CCMP
       rsn_pairwise=CCMP
+  with_items:
+    - mode: pairing
+      ap_name: "{{ pairing_ap_name }}"
+    - mode: master
+      ap_name: "{{ master_ap_name }}"
+    - mode: default
+      ap_name: "{{ primary_ap_name }}"
+    - mode: slave
+      ap_name: "{{ primary_ap_name }}"
+  become: yes
+  become_user: root
+
+- name: add default hostapd config if none exists
+  copy:
+    dest: /etc/hostapd/hostapd.conf
+    src: "{{ custom_hostapd_directory }}/hostapd.default.conf"
+    remote_src: yes
+    force: no
   become: yes
   become_user: root
 
@@ -106,21 +121,120 @@
   become: yes
   become_user: root
 
-# This needs to go directly in the interfaces file to make sure the
-# startup order is correct.
-- name: add AP device config
-  blockinfile:
-    dest: /etc/network/interfaces
-    insertbefore: BOF
-    block: |
-      auto lo
-      auto ap0
-      iface lo inet loopback
-
-      allow-hotplug ap0
-      iface ap0 inet static
-          address 192.168.10.1
-          netmask 255.255.255.0
-          hostapd /etc/hostapd/hostapd.conf
+- name: create swappable network interface directory
+  file:
+    path: "{{ custom_interfaces_directory }}"
+    state: directory
   become: yes
   become_user: root
+
+- name: add AP device config
+  copy:
+    dest: "/etc/network/interfaces.d/{{ ap_device_name }}"
+    content: |
+      auto {{ ap_device_name }}
+
+      allow-hotplug {{ ap_device_name }}
+      iface {{ ap_device_name }} inet static
+          address {{ ap_self_address }}
+          netmask 255.255.255.0
+          hostapd /etc/hostapd/hostapd.conf
+  # with_items:
+  #   - pairing
+  #   - master
+  #   - default
+  #   - slave
+  become: yes
+  become_user: root
+
+- name: add slave wpa_supplicant.conf
+  copy:
+    dest: "{{ slave_wpa_supplicant_conf }}"
+    content: |
+      country={{ slave_wpa_supplicant_country }}
+
+      ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+      update_config=1
+
+      network={
+        ssid="{{ master_ap_name }}"
+        psk="{{ ap_passphrase }}"
+        key_mgmt=WPA-PSK
+      }
+  become: yes
+  become_user: root
+
+- name: add slave WiFi client config
+  copy:
+    dest: "{{ custom_interfaces_directory }}/{{ wlan_device_name }}.slave"
+    content: |
+      auto {{ wlan_device_name }}
+      allow-hotplug {{ wlan_device_name }}
+      iface {{ wlan_device_name }} inet dhcp
+          pre-up ifup {{ ap_device_name }}
+          wpa-conf {{ slave_wpa_supplicant_conf }}
+  become: yes
+  become_user: root
+
+- name: add default WiFi client config
+  copy:
+    dest: "{{ custom_interfaces_directory }}/{{ wlan_device_name }}.{{ item }}"
+    content: |
+      auto {{ wlan_device_name }}
+      allow-hotplug {{ wlan_device_name }}
+      iface {{ wlan_device_name }} inet dhcp
+          pre-up ifup {{ ap_device_name }}
+          wpa-conf {{ default_wpa_supplicant_conf }}
+  with_items:
+    - pairing
+    - master
+    - default
+  become: yes
+  become_user: root
+
+- name: use default WiFi client config
+  copy:
+    dest: "/etc/network/interfaces.d/{{ wlan_device_name }}"
+    src: "{{ custom_interfaces_directory }}/{{ wlan_device_name }}.default"
+    remote_src: true
+    force: no
+  become: yes
+  become_user: root
+
+- name: add network switcher command
+  template:
+    src: "{{ role_path }}/templates/network_switcher.sh.tpl"
+    dest: "/usr/local/bin/{{ network_switcher_cmd_name }}"
+    mode: '0755'
+  become: yes
+  become_user: root
+
+- name: prevent dhcpcd from configuring interfaces
+  lineinfile:
+    path: /etc/dhcpcd.conf
+    state: present
+    line: "denyinterfaces {{ ap_device_name }} {{ wlan_device_name }}"
+  become: yes
+  become_user: root
+
+# - name: enable default network at boot
+#   cron:
+#     name: enable_default_network
+#     user: root
+#     job: "/usr/local/bin/{{ network_switcher_cmd_name }} default"
+#     special_time: reboot
+#   become: yes
+#   become_user: root
+
+- name: reboot system
+  reboot:
+  when: ap_udev.changed
+  become: yes
+  become_user: root
+
+# See https://github.com/raspberrypi/documentation/issues/1018
+# - name: unmask hostapd
+#   shell: systemctl unmask hostapd && systemctl enable hostapd && systemctl start hostapd
+#   when: dependencies.changed
+#   become: yes
+#   become_user: root

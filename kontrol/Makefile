@@ -11,12 +11,19 @@ BOOT_VOLUME_PATH:=/Volumes/boot
 boot: wpa_supplicant.conf
 	cp wpa_supplicant.conf $(BOOT_VOLUME_PATH)/wpa_supplicant.conf
 	touch $(BOOT_VOLUME_PATH)/ssh
+
+# Set up SSH over USB, see
+# https://www.thepolyglotdeveloper.com/2016/06/connect-raspberry-pi-zero-usb-cable-ssh/. We
+# `sed` twice for idempotency.
+	(cat $(BOOT_VOLUME_PATH)/config.txt | grep -q "dtoverlay=dwc2") || (echo "dtoverlay=dwc2" >> $(BOOT_VOLUME_PATH)/config.txt)
+	sed -i".tmp" 's/modules-load=dwc2,g_ether //' $(BOOT_VOLUME_PATH)/cmdline.txt
+	sed -i".tmp" 's/rootfstype/modules-load=dwc2,g_ether rootfstype/' $(BOOT_VOLUME_PATH)/cmdline.txt
+
 # Disable initial file system resize on boot, so we can create a
 # shareable partition. See
 # https://raspberrypi.stackexchange.com/questions/47773/disable-auto-file-system-expansion-in-new-jessie-image-2016-05-10.
-	sed -i".bak" 's/init=.*$$//' $(BOOT_VOLUME_PATH)/cmdline.txt
-
-# For SSH over USB, see https://www.thepolyglotdeveloper.com/2016/06/connect-raspberry-pi-zero-usb-cable-ssh/
+	sed -i".tmp" 's/init=.*$$//' $(BOOT_VOLUME_PATH)/cmdline.txt
+	rm $(BOOT_VOLUME_PATH)/cmdline.txt.tmp
 
 wpa_supplicant.conf:
 	$(error Please create wpa_supplicant.conf in this directory. See wpa_supplicant.sample.conf for an example.)
@@ -40,7 +47,7 @@ featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsc
 
 .PHONY: setup
 setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.local featherstreamer/dist/index.js
-	cd ansible && ansible-playbook -vv -l ungrouped $(ANSIBLE_FLAGS) site.yml
+	cd ansible && ansible-playbook -l ungrouped $(ANSIBLE_FLAGS) site.yml
 
 # Sync the JS module to a pi. This happens during provisioning as
 # well, but it's included here as a quick command during development.

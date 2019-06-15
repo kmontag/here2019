@@ -1,6 +1,22 @@
 ---
-ap_name: "{{ ansible_hostname }}"
+primary_ap_name: "{{ ansible_hostname }}"
+pairing_ap_name: _featherstreamer-pairing
+master_ap_name: _featherstreamer-master
+
+ap_device_name: ap0
+wlan_device_name: wlan0
+
 ap_passphrase: gallowsbird
 ap_channel: 1
 
-mac_address_base: 'b8:27:eb'
+ap_self_address: 192.168.8.1
+ap_dhcp_range: 192.168.8.10,192.168.8.253,12h
+
+custom_interfaces_directory: /usr/local/etc/network/interfaces
+custom_hostapd_directory: /usr/local/etc/hostapd
+
+default_wpa_supplicant_conf: /etc/wpa_supplicant/wpa_supplicant.conf
+slave_wpa_supplicant_conf: /usr/local/etc/network/wpa_supplicant.slave.conf
+slave_wpa_supplicant_country: DE
+
+network_switcher_cmd_name: feathernet

@@ -21,7 +21,7 @@
     # featherstreamer_lan=True in the [ungrouped:vars] section of
     # inventory/hosts.local if you want to connect using the
     # "standard" wifi setup instead of the ad hoc network.
-    - role: lan_node
-      when: "featherstreamer_lan | default(False)"
-    - role: mesh_node
-      when: "not ( featherstreamer_lan | default(False) )"
+    # - role: lan_node
+    #   when: "featherstreamer_lan | default(False)"
+    # - role: mesh_node
+    #   when: "not ( featherstreamer_lan | default(False) )"
