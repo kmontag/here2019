@@ -2,11 +2,14 @@
 // If using Arduino Zero + WiFi Shield 101, comment it out:
 #define ADAFRUIT_ATWINC
 
-#include <SPI.h>
+#include <Arduino.h>
 #include <WiFi101.h>
 
 // Store sensitive data in this file.
 #include "secrets.h"
+
+#include "OPCHandler.hpp"
+#include "Renderer.hpp"
 
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
@@ -23,6 +26,9 @@ void printMacAddress(byte mac[]);
 void printMacAddress();
 void listNetworks();
 void printEncryptionType(int thisType);
+
+featherstream::Renderer *renderer;
+featherstream::OPCHandler *opcHandler;
 
 void setup() {
   //Initialize serial and wait for port to open:
@@ -62,7 +68,11 @@ void setup() {
   Serial.println(ssid);
 
   // attempt to connect to WiFi network:
-  while ( status != WL_CONNECTED) {
+  bool connected = false;
+  while (!connected) {
+    // wait 2 seconds for connection:
+    delay(2000);
+
     Serial.print("Status is: ");
     Serial.print(status);
     Serial.print(". Attempting to connect to WEP network, SSID: ");
@@ -70,12 +80,10 @@ void setup() {
     //status = WiFi.begin(ssid, keyIndex, pass);
     status = WiFi.begin(ssid, pass);
     //status = WiFi.begin(ssid);
+    connected = (status == WL_CONNECTED);
 
     keyIndex++;
     keyIndex = keyIndex % 4;
-
-    // wait 2 seconds for connection:
-    delay(2000);
   }
 
   // start the web server on port 80
@@ -84,10 +92,22 @@ void setup() {
   // you're connected now, so print out the status
   Serial.print("You're connected to the network");
   printWiFiStatus();
+
+  renderer = new featherstream::Renderer(512);
+  Serial.println("Created renderer");
+  opcHandler = new featherstream::OPCHandler(*renderer);
+  Serial.println("Created OPC handler");
 }
 
 
+//featherstream::Renderer renderer = featherstream::Renderer(20);
+//featherstream::OPCHandler opcHandler = featherstream::OPCHandler(renderer);
+
 void loop() {
+  opcHandler->loop();
+}
+
+void oldloop() {
   // compare the previous status to the current status
   if (status != WiFi.status()) {
     // it has changed update the variable
