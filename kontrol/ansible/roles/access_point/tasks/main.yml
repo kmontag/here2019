@@ -6,29 +6,9 @@
 # valid configurations (see the README for more info). See
 # e.g. https://hackaday.com/2017/09/29/simultaneous-ap-client-on-the-pi-zero-w/.
 
-# - name: check if dhcpcd is enabled
-#   stat:
-#     # This gets moved to K01dhcpcd when disabled.
-#     path: /etc/rc2.d/S01dhcpcd
-#   register: dhcpcd_enabled
-
-# - name: disable dhcpcd
-#   shell: update-rc.2 dhcpcd disable
-#   when: dhcpcd_enabled.stat.exists
-#   become: yes
-#   become_user: root
-
-
-# - name: get MAC address
-#   shell: ip -o link show dev wlan0 | grep -Po 'ether \K[^ ]*'
-#   register: mac_address
-#   changed_when: false
-
 - name: add udev rule for AP device
   copy:
     dest: /etc/udev/rules.d/70-persistent-net.rules
-    # content: |
-    #   SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="{{ mac_address.stdout }}", KERNEL=="phy0", RUN+="/sbin/iw phy phy0 interface add {{ ap_device_name }} type __ap", RUN+="/bin/ip link set ap0 address {{ mac_address.stdout }}"
     content: |
       SUBSYSTEM=="ieee80211", ACTION=="add|change", KERNEL=="phy0", RUN+="/sbin/iw phy phy0 interface add {{ ap_device_name }} type __ap"
 
@@ -58,7 +38,7 @@
     path: /etc/dnsmasq.conf
     block: |
       interface=lo,{{ ap_device_name }}
-      no-dhcp-interface=lo,wlan0
+      no-dhcp-interface=lo,{{ wlan_device_name }}
       bind-interfaces
       server=8.8.8.8
       domain-needed
