@@ -97,6 +97,9 @@ void setup() {
   Serial.println("Created renderer");
   opcHandler = new featherstream::OPCHandler(*renderer);
   Serial.println("Created OPC handler");
+
+  renderer->render();
+  Serial.println("Turned off LEDs");
 }
 
 

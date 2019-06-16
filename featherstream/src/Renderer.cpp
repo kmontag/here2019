@@ -8,6 +8,9 @@
 
 using namespace featherstream;
 
+#define NUM_RGB_BUFFERS 3
+#define NUM_SPI_BUFFERS 2
+
 /**
  * Global stuff copied in from the Adafruit lightship demo.
  */
@@ -22,21 +25,11 @@ SPIClass SPI1(      // 11/12/13 classic UNO-style SPI
   SERCOM_RX_PAD_3); // RX pad (for MISO)
 
 #define MAX_LEDS        512 // Upper limit; OK to receive data for fewer
-#define SPI_BUFFER_SIZE (4 + MAX_LEDS * 4 + ((MAX_LEDS / 2) + 7) / 8)
 // SPI buffer includes space for DotStar 32-bit '0' header, 32 bits per LED,
 // and footer of 1 bit per 2 LEDs (rounded to next byte boundary, for SPI).
 // For 512 pixels, that's 2084 bytes per SPI buffer (x2 = 4168 bytes total).
 
-// Two equal-size SPI buffers are allocated; one's being filled with new
-// data as the other's being issued via DMA.
-uint8_t spiBuffer[2][SPI_BUFFER_SIZE];
-uint8_t spiBufferBeingFilled = 0;    // Index of currently-calculating buf
 volatile bool spiReady       = true; // True when SPI DMA ready for new data
-
-// Data for most-recently-received OPC color payload, payload before that,
-// and new in-progress payload currently arriving.  Also, a 'sink' buffer
-// for quickly discarding data.
-uint8_t rgbBuf[4][MAX_LEDS * 3]; // 512 LEDs = 6144 bytes.
 
 // These tables (computed at runtime) are used for gamma correction and
 // dithering.  RAM used = 256*9+MAX_LEDS*3 bytes.  512 LEDs = 3840 bytes.
@@ -105,9 +98,6 @@ void magic(
     // subtracted from the error term before storing back in errR.
     // Diffusion dithering is the result.
     fillPtr[DOTSTAR_REDBYTE] = (e < 256) ? loR[mix] : hiR[mix];
-
-    Serial.print("r: ");
-    Serial.println(fillPtr[DOTSTAR_REDBYTE]);
     // If e exceeds 256, it *should* be reduced by 256 at this point...
     // but rather than subtract, we just rely on truncation in the 8-bit
     // store operation below to do this implicitly. (e & 0xFF)
@@ -119,17 +109,11 @@ void magic(
     fillPtr[DOTSTAR_GREENBYTE] = (e < 256) ? loG[mix] : hiG[mix];
     errG[pixelNum] = e;
 
-    Serial.print("g: ");
-    Serial.println(fillPtr[DOTSTAR_GREENBYTE]);
-
     // ...and blue...
     mix = (*rgbIn1++ * weight1 + *rgbIn2++ * weight2) >> 8;
     e   = fracB[mix] + errB[pixelNum];
     fillPtr[DOTSTAR_BLUEBYTE] = (e < 256) ? loB[mix] : hiB[mix];
     errB[pixelNum] = e;
-
-    Serial.print("b: ");
-    Serial.println(fillPtr[DOTSTAR_BLUEBYTE]);
   }
 
   while(!spiReady); // Wait for prior SPI DMA transfer to complete
@@ -143,20 +127,15 @@ void magic(
 }
 
 Renderer::Renderer(uint16_t length) : length(length) {
-  // Initialize SPI buffers.  Everything's set to 0xFF initially to cover
-  // the per-pixel 0xFF marker and the end-of-data '1' bits, then the first
-  // 4 bytes of each buffer are set to 0x00 as start-of-data marker.
-  memset(spiBuffer, 0xFF, sizeof(spiBuffer));
-  for(uint8_t b=0; b<2; b++) {
-    for(uint8_t i=0; i<4; i++) spiBuffer[b][i] = 0x00;
-  }
+  // SPI buffer includes space for DotStar 32-bit '0' header, 32 bits per LED,
+  // and footer of 1 bit per 2 LEDs (rounded to next byte boundary, for SPI).
+  // For 512 pixels, that's 2084 bytes per SPI buffer (x2 = 4168 bytes total).
+  uint16_t spiBufferLength = 4 + length * 4 + ((length / 2) + 7) / 8;
 
   fillGamma(2.7, 255, loR, hiR, fracR); // Initialize gamma tables to
   fillGamma(2.7, 255, loG, hiG, fracG); // default values (OPC data may
   fillGamma(2.7, 255, loB, hiB, fracB); // override this later).
   // err buffers don't need init, they'll naturally reach equilibrium
-
-  memset(rgbBuf, 0, sizeof(rgbBuf)); // Clear receive buffers
 
   SPI1.begin();                  // Init second SPI bus
   pinPeripheral(11, PIO_SERCOM); // Enable SERCOM MOSI on this pin
@@ -172,53 +151,71 @@ Renderer::Renderer(uint16_t length) : length(length) {
   desc = myDMA.addDescriptor(
     NULL,                             // Source address (not set yet)
     (void *)(&SERCOM1->SPI.DATA.reg), // Dest address
-    SPI_BUFFER_SIZE,                  // Data count
+    spiBufferLength,                  // Data count
     DMA_BEAT_SIZE_BYTE,               // Bytes/halfwords/words
     true,                             // Increment source address
     false);                           // Don't increment dest
   myDMA.setCallback(dma_callback);
 
-  // Turn off LEDs
-  magic(rgbBuf[0], rgbBuf[0], 0, spiBuffer[spiBufferBeingFilled], MAX_LEDS);
-  spiBufferBeingFilled = 1 - spiBufferBeingFilled;
-
-  this->rgb1 = new uint8_t[length * 3];
-  this->rgb2 = new uint8_t[length * 3];
-  for (int i = 0; i < length * 3; i++) {
-    this->rgb1[i] = this->rgb2[i] = 0;
+  this->rgbBuffers = new uint8_t *[NUM_RGB_BUFFERS];
+  for (int i = 0; i < NUM_RGB_BUFFERS; i++) {
+    this->rgbBuffers[i] = new uint8_t[length * 3];
+    for (int j = 0; j < length * 3; j++) {
+      this->rgbBuffers[i][j] = 0;
+    }
   }
 
-  this->fillBuf = new uint8_t[SPI_BUFFER_SIZE];
+  this->spiBuffers = new uint8_t *[NUM_SPI_BUFFERS];
+  for (int i = 0; i < NUM_SPI_BUFFERS; i++) {
+    this->spiBuffers[i] = new uint8_t[spiBufferLength];
 
-  for (int i = 0; i < SPI_BUFFER_SIZE; i++) {
-    this->fillBuf[i] = 0xFF;
-  }
-  for (int i = 0; i < 4; i++) {
-    this->fillBuf[i] = 0x00;
+    // Initialize SPI buffers.  Everything's set to 0xFF initially to cover
+    // the per-pixel 0xFF marker and the end-of-data '1' bits, then the first
+    // 4 bytes of each buffer are set to 0x00 as start-of-data marker.
+    for (int j = 0; j < spiBufferLength; j++) {
+      this->spiBuffers[i][j] = 0xFF;
+    }
+    for (int j = 0; j < 4; j++) {
+      this->spiBuffers[i][j] = 0x00;
+    }
   }
 }
 
 Renderer::~Renderer() {
-  delete this->rgb1;
-  delete this->rgb2;
-  delete this->fillBuf;
+  for (int i = 0; i < NUM_RGB_BUFFERS; i++) {
+    delete[] this->rgbBuffers[i];
+  }
+  delete[] this->rgbBuffers;
+
+  for (int i = 0; i < NUM_SPI_BUFFERS; i++) {
+    delete[] this->spiBuffers[i];
+  }
+  delete[] this->spiBuffers;
 }
 
 uint16_t Renderer::getLength() const {
   return this->length;
 }
 
-void Renderer::setPixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b) {
-  this->rgb1[3 * index + 0] = r;
-  this->rgb1[3 * index + 1] = g;
-  this->rgb1[3 * index + 2] = b;
+uint8_t * Renderer::getRGBBuffer() const {
+  return this->rgbBuffers[this->currentRGBBufferIndex];
+}
 
-  this->rgb2[3 * index + 0] = r;
-  this->rgb2[3 * index + 1] = g;
-  this->rgb2[3 * index + 2] = b;
+void Renderer::setPixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b) {
+  uint8_t * const rgb = this->getRGBBuffer();
+  rgb[3 * index + 0] = r;
+  rgb[3 * index + 1] = g;
+  rgb[3 * index + 2] = b;
 }
 
 void Renderer::render() {
-  Serial.println(this->getLength());
-  magic(this->rgb1, this->rgb2, 0, this->fillBuf, this->getLength());
+  uint8_t * const prev =
+    this->rgbBuffers[(this->currentRGBBufferIndex + NUM_RGB_BUFFERS - 2) % NUM_RGB_BUFFERS];
+  uint8_t * const current =
+    this->rgbBuffers[(this->currentRGBBufferIndex + NUM_RGB_BUFFERS - 1) % NUM_RGB_BUFFERS];
+
+  magic(prev, current, 0, this->spiBuffers[this->currentSPIBufferIndex], this->getLength());
+
+  this->currentSPIBufferIndex = (this->currentSPIBufferIndex + 1) % NUM_SPI_BUFFERS;
+  this->currentRGBBufferIndex = (this->currentRGBBufferIndex + 1) % NUM_RGB_BUFFERS;
 }
