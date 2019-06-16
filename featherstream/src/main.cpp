@@ -93,21 +93,31 @@ void setup() {
   Serial.print("You're connected to the network");
   printWiFiStatus();
 
-  renderer = new featherstream::Renderer(512);
+  renderer = new featherstream::Renderer(16);
   Serial.println("Created renderer");
   opcHandler = new featherstream::OPCHandler(*renderer);
   Serial.println("Created OPC handler");
 
-  renderer->render();
+  renderer->render(0);
   Serial.println("Turned off LEDs");
 }
 
-
-//featherstream::Renderer renderer = featherstream::Renderer(20);
-//featherstream::OPCHandler opcHandler = featherstream::OPCHandler(renderer);
+bool connected = false;
 
 void loop() {
-  opcHandler->loop();
+  if (!connected) {
+    connected = opcHandler->connect(1, IPAddress(192, 168, 0, 20), 44668);
+  }
+
+  if (connected) {
+    connected = opcHandler->loop();
+    if (!connected) {
+      Serial.println("OPC handler disconnected.");
+    }
+  } else {
+    Serial.println("Not connected, pausing.");
+    delay(1000);
+  }
 }
 
 void oldloop() {

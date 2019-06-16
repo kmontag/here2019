@@ -18,7 +18,12 @@ namespace featherstream {
      * data read over the wire). This buffer is in "OPC format",
      * i.e. each group of three elements represents RGB for a pixel.
      *
-     * This value gets updated after every call to `render`, and the
+     * Modifications to this array will have no effect until `commit`
+     * is called, enabling `render` to be invoked "asynchronously"
+     * (and dithering/smoothing applied) while an RGB buffer is being
+     * filled.
+     *
+     * This value gets updated after every call to `commit`, and the
      * array should not be modified after such a call.
      */
     uint8_t * getRGBBuffer() const;
@@ -26,13 +31,24 @@ namespace featherstream {
     /**
      * Convenience method to set a pixel value directly, rather than
      * having to deal with the current RGB buffer.
+     *
+     * Note that like direct modifications to the RGB buffer, this
+     * method will have no visible effect until `commit` is called.
      */
     void setPixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b);
 
     /**
-     * Flush pixel data to the relevant pins.
+     * Commit the current RGB buffer as a finished frame, which will
+     * be displayed on the next call to `render`.
      */
-    void render();
+    void commit();
+
+    /**
+     * Flush committed pixel data to the relevant pins, applying
+     * dithering based on the current rate at which `commit` is being
+     * called.
+     */
+    void render(uint8_t);
 
   private:
     const uint16_t length;
@@ -44,11 +60,6 @@ namespace featherstream {
     uint8_t currentSPIBufferIndex = 0;
 
     /**
-     * Get the current SPI buffer to fill.
-     */
-    uint8_t * getSPIBuffer() const;
-
-    /**
      * Previously-displayed buffer, currently-displaying buffer, and
      * currently-filling buffer. We keep the first two around so we
      * can interpolate between them in `render` calls while the
@@ -57,12 +68,10 @@ namespace featherstream {
     uint8_t ** rgbBuffers;
 
     /**
-     * After each `render` call, rotate the roles of the RGB buffers
+     * After each `commit` call, rotate the roles of the RGB buffers
      * using this index.
      */
     uint8_t currentRGBBufferIndex = 0;
-
-    uint8_t * fillBuf;
   };
 }
 

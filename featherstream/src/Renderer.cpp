@@ -208,14 +208,17 @@ void Renderer::setPixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b) {
   rgb[3 * index + 2] = b;
 }
 
-void Renderer::render() {
+void Renderer::commit() {
+  this->currentRGBBufferIndex = (this->currentRGBBufferIndex + 1) % NUM_RGB_BUFFERS;
+}
+
+void Renderer::render(uint8_t w) {
   uint8_t * const prev =
     this->rgbBuffers[(this->currentRGBBufferIndex + NUM_RGB_BUFFERS - 2) % NUM_RGB_BUFFERS];
   uint8_t * const current =
     this->rgbBuffers[(this->currentRGBBufferIndex + NUM_RGB_BUFFERS - 1) % NUM_RGB_BUFFERS];
 
-  magic(prev, current, 0, this->spiBuffers[this->currentSPIBufferIndex], this->getLength());
+  magic(prev, current, w, this->spiBuffers[this->currentSPIBufferIndex], this->getLength());
 
   this->currentSPIBufferIndex = (this->currentSPIBufferIndex + 1) % NUM_SPI_BUFFERS;
-  this->currentRGBBufferIndex = (this->currentRGBBufferIndex + 1) % NUM_RGB_BUFFERS;
 }
