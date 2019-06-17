@@ -1,4 +1,4 @@
 /.pio
 /.pioenvs
 /.piolibdeps
-/src/secrets.h
+/include/secrets.h

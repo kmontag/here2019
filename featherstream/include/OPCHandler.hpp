@@ -23,6 +23,8 @@ namespace featherstream {
      */
     bool connect(uint8_t channel, const IPAddress &address, uint16_t port);
 
+    bool isConnected();
+
     /**
      * Process any incoming data, and render it if appropriate. Return
      * false if the connection has dropped, true otherwise.

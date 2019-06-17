@@ -24,16 +24,17 @@ bool OPCHandler::connect(uint8_t channel, const IPAddress &address, uint16_t por
   this->client = WiFiClient();
 
   if (this->client.connect(address, port)) {
-    Serial.println("Connected to OPC server.");
-
     this->client.println("GET /opc/1 HTTP/1.0");
     this->client.println();
 
     return true;
   } else {
-    Serial.println("Could not connect to OPC server.");
     return false;
   }
+}
+
+bool OPCHandler::isConnected() {
+  return this->client.connected();
 }
 
 bool OPCHandler::loop() {
