@@ -14,7 +14,7 @@ OPCHandler::OPCHandler(
   Renderer &renderer
 ): renderer(renderer) {
   this->mode = MODE_HEADER;
-  this->numLEDs = this->nextNumLEDs = renderer.getLength();
+  this->numLEDs = this->nextNumLEDs = renderer.getMaxLength();
 }
 
 OPCHandler::~OPCHandler() {
@@ -82,7 +82,7 @@ bool OPCHandler::loop() {
       bytesPending = (bytesPending + 1) / 2; // Handle a fraction of it
       uint8_t *rgbBuf = this->renderer.getRGBBuffer();
 
-      uint16_t maxLength = this->renderer.getLength() * 3;
+      uint16_t maxLength = this->renderer.getMaxLength() * 3;
 
       do {
         if(this->mode == MODE_DATA) { // Receiving pixel data, most likely case

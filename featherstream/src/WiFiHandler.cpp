@@ -10,7 +10,7 @@
 // Explicitly re-check connection status this often. Unclear whether
 // checking all the time would actually be an issue - WiFi101 does
 // something with a pending-event list on each check, though.
-#define CONNECTION_VALID_MS 5000
+#define CONNECTION_VALID_MS 1000
 
 using namespace featherstream;
 

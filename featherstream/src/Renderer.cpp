@@ -126,11 +126,11 @@ void magic(
   myDMA.startJob();
 }
 
-Renderer::Renderer(uint16_t length) : length(length) {
+Renderer::Renderer() {
   // SPI buffer includes space for DotStar 32-bit '0' header, 32 bits per LED,
   // and footer of 1 bit per 2 LEDs (rounded to next byte boundary, for SPI).
   // For 512 pixels, that's 2084 bytes per SPI buffer (x2 = 4168 bytes total).
-  uint16_t spiBufferLength = 4 + length * 4 + ((length / 2) + 7) / 8;
+  uint16_t spiBufferLength = 4 + MAX_LEDS * 4 + ((MAX_LEDS / 2) + 7) / 8;
 
   fillGamma(2.7, 255, loR, hiR, fracR); // Initialize gamma tables to
   fillGamma(2.7, 255, loG, hiG, fracG); // default values (OPC data may
@@ -159,8 +159,8 @@ Renderer::Renderer(uint16_t length) : length(length) {
 
   this->rgbBuffers = new uint8_t *[NUM_RGB_BUFFERS];
   for (int i = 0; i < NUM_RGB_BUFFERS; i++) {
-    this->rgbBuffers[i] = new uint8_t[length * 3];
-    for (int j = 0; j < length * 3; j++) {
+    this->rgbBuffers[i] = new uint8_t[MAX_LEDS * 3];
+    for (int j = 0; j < MAX_LEDS * 3; j++) {
       this->rgbBuffers[i][j] = 0;
     }
   }
@@ -191,10 +191,6 @@ Renderer::~Renderer() {
     delete[] this->spiBuffers[i];
   }
   delete[] this->spiBuffers;
-}
-
-uint16_t Renderer::getLength() const {
-  return this->length;
 }
 
 uint8_t * Renderer::getRGBBuffer() const {
@@ -232,11 +228,17 @@ void Renderer::render() {
   uint8_t * const current =
     this->rgbBuffers[(this->currentRGBBufferIndex + NUM_RGB_BUFFERS - 1) % NUM_RGB_BUFFERS];
 
-  magic(prev, current, w, this->spiBuffers[this->currentSPIBufferIndex], this->getLength());
+  magic(prev, current, w, this->spiBuffers[this->currentSPIBufferIndex], MAX_LEDS);
 
   this->currentSPIBufferIndex = (this->currentSPIBufferIndex + 1) % NUM_SPI_BUFFERS;
 }
 
 void Renderer::clear() {
-  memset(this->getRGBBuffer(), 0, this->length * 3);
+  memset(this->getRGBBuffer(), 0, MAX_LEDS * 3);
+  this->commit();
+  this->render();
+}
+
+uint16_t Renderer::getMaxLength() const {
+  return MAX_LEDS;
 }

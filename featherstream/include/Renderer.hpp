@@ -6,10 +6,8 @@
 namespace featherstream {
   class Renderer {
   public:
-    Renderer(uint16_t length);
+    Renderer();
     virtual ~Renderer();
-
-    uint16_t getLength() const;
 
     /**
      * Get the raw current pixel data buffer. `setPixel` works by
@@ -27,6 +25,8 @@ namespace featherstream {
      * array should not be modified after such a call.
      */
     uint8_t * getRGBBuffer() const;
+
+    uint16_t getMaxLength() const;
 
     /**
      * Convenience method to set a pixel value directly, rather than
@@ -51,14 +51,11 @@ namespace featherstream {
     void render();
 
     /**
-     * Zero out all pixels in the current buffer. Note `commit` and
-     * `render` need to be called separately to actually clear LEDs.
+     * Convenience method to commit and render a blank frame.
      */
     void clear();
 
   private:
-    const uint16_t length;
-
     /**
      * Two buffers for SPI data, rotated at each `render` call.
      */

@@ -30,9 +30,9 @@ featherstream::WiFiHandler *wiFiHandler;
 void setup() {
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+  // while (!Serial) {
+  //   ; // wait for serial port to connect. Needed for native USB port only
+  // }
 
   Serial.println("== featherstream ==");
 
@@ -56,7 +56,7 @@ void setup() {
   // Serial.println("Scanning available networks...");
   // listNetworks();
 
-  renderer = new featherstream::Renderer(80);
+  renderer = new featherstream::Renderer();
   Serial.println("Created renderer");
 
   opcHandler = new featherstream::OPCHandler(*renderer);
@@ -86,17 +86,25 @@ void loop() {
       if (opcConnected) {
         opcConnected = opcHandler->loop();
         if (!opcConnected) {
+          renderer->clear();
+
           Serial.println("Lost connection to OPC server.");
         }
       } else {
+        renderer->clear();
+
         Serial.println("Could not connect to OPC server.");
         delay(1000);
       }
     } else {
+      renderer->clear();
+
       Serial.println("Could not connect to WiFi.");
       delay(1000);
     }
   } else {
+    renderer->clear();
+
     Serial.println("TODO bootstrap mode");
   }
 }
