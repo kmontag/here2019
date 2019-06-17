@@ -42,20 +42,21 @@ bool OPCHandler::loop() {
     /**
      * Processing logic copied in from lightship demo.
      */
-    uint32_t t, timeSinceFrameStart, seconds;
+    uint32_t t, seconds;
     int16_t  a, bytesPending, dataSize;
-    uint8_t  w;
+    //uint8_t  w;
 
     // DITHER-AND-RECEIVE LOOP STARTS HERE -------------------------------
 
-    // Interpolation weight (0-255) is the ratio of the time since last
-    // frame arrived to the prior two frames' interval.
-    t                   = micros();          // Current time
-    timeSinceFrameStart = t - this->lastFrameTime; // Elapsed since data recv'd
-    w                   = (timeSinceFrameStart >= this->timeBetweenFrames) ? 255 :
-      (255L * timeSinceFrameStart / this->timeBetweenFrames);
+    // // Interpolation weight (0-255) is the ratio of the time since last
+    // // frame arrived to the prior two frames' interval.
+    // t                   = micros();          // Current time
+    // timeSinceFrameStart = t - this->lastFrameTime; // Elapsed since data recv'd
+    // w                   = (timeSinceFrameStart >= this->timeBetweenFrames) ? 255 :
+    //   (255L * timeSinceFrameStart / this->timeBetweenFrames);
 
-    this->renderer.render(w);
+    t = micros();
+    this->renderer.render();
     this->updates++;
 
     // Show approximate updates-per-second
@@ -100,9 +101,6 @@ bool OPCHandler::loop() {
               // END OF PIXEL DATA.  Record arrival time and interval since
               // last frame, advance buffer indices, switch to HEADER mode
               // if end of packet, else to DISCARD mode for any remainders.
-              t                   = micros();
-              this->timeBetweenFrames = t - this->lastFrameTime;
-              this->lastFrameTime = t;
               this->renderer.commit();
               this->commits++;
               this->numLEDs       = this->nextNumLEDs;
@@ -161,25 +159,4 @@ bool OPCHandler::loop() {
   } else { // end ifclient connected
     return false;
   }
-
-  delay(1000);
-  Serial.println("boop");
-
-// this->isWhite = !this->isWhite;
-
-// for (uint16_t i = 0; i < this->renderer.getLength(); i++) {
-//   if (this->isWhite) {
-//     this->renderer.setPixel(i, 40, 40, 40);
-//   } else {
-//     this->renderer.setPixel(i, 40, 0, 0);
-//   }
-// }
-
-Serial.println("bop");
-
-this->renderer.render(0);
-
-Serial.println("bleep");
-
-return true;
 }

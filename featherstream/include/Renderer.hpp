@@ -48,7 +48,13 @@ namespace featherstream {
      * dithering based on the current rate at which `commit` is being
      * called.
      */
-    void render(uint8_t);
+    void render();
+
+    /**
+     * Zero out all pixels in the current buffer. Note `commit` and
+     * `render` need to be called separately to actually clear LEDs.
+     */
+    void clear();
 
   private:
     const uint16_t length;
@@ -72,6 +78,14 @@ namespace featherstream {
      * using this index.
      */
     uint8_t currentRGBBufferIndex = 0;
+
+    // For interpolation: lastFrameTime is the absolute time (in microseconds)
+    // when the most recent OPC pixel data packet was fully read.
+    // timeBetweenFrames is the interval (also in cycles) between lastFrameTime
+    // and the frame before that.
+    uint32_t lastFrameTime = 0;
+    uint32_t timeBetweenFrames = 0;
+
   };
 }
 

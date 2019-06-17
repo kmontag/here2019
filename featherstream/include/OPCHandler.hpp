@@ -54,13 +54,8 @@ namespace featherstream {
     int16_t bytesToRead = 0, bytesRead = 0, bytesToDiscard = 0,
       numLEDs, nextNumLEDs;
 
-    // For interpolation: lastFrameTime is the absolute time (in microseconds)
-    // when the most recent OPC pixel data packet was fully read.
-    // timeBetweenFrames is the interval (also in cycles) between lastFrameTime
-    // and the frame before that.  updates and priorSeconds are used for the
-    // updates-per-second estimate.
-    uint32_t lastFrameTime = 0;
-    uint32_t timeBetweenFrames = 0;
+    // updates and priorSeconds are used for the updates-per-second
+    // estimate.
     uint32_t updates = 0;
     uint32_t priorSeconds = 0;
 

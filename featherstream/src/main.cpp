@@ -53,44 +53,10 @@ void setup() {
   printMacAddress();
 
   // // scan for existing networks:
-  Serial.println("Scanning available networks...");
-  listNetworks();
+  // Serial.println("Scanning available networks...");
+  // listNetworks();
 
-  // // by default the local IP address of will be 192.168.1.1
-  // // you can override it with the following:
-  // // WiFi.config(IPAddress(10, 0, 0, 1));
-
-  // // print the network name (SSID);
-  // Serial.print("Connecting to network named: ");
-  // Serial.println(ssid);
-
-  // // attempt to connect to WiFi network:
-  // bool connected = false;
-  // while (!connected) {
-  //   // wait 2 seconds for connection:
-  //   delay(2000);
-
-  //   Serial.print("Status is: ");
-  //   Serial.print(status);
-  //   Serial.print(". Attempting to connect to WEP network, SSID: ");
-  //   Serial.println(ssid);
-  //   //status = WiFi.begin(ssid, keyIndex, pass);
-  //   status = WiFi.begin(ssid, pass);
-  //   //status = WiFi.begin(ssid);
-  //   connected = (status == WL_CONNECTED);
-
-  //   keyIndex++;
-  //   keyIndex = keyIndex % 4;
-  // }
-
-  // // start the web server on port 80
-  // server.begin();
-
-  // // you're connected now, so print out the status
-  // Serial.print("You're connected to the network");
-  // printWiFiStatus();
-
-  renderer = new featherstream::Renderer(30);
+  renderer = new featherstream::Renderer(80);
   Serial.println("Created renderer");
 
   opcHandler = new featherstream::OPCHandler(*renderer);
@@ -98,7 +64,9 @@ void setup() {
 
   wiFiHandler = new featherstream::WiFiHandler();
 
-  renderer->render(0);
+  renderer->clear();
+  renderer->commit();
+  renderer->render();
   Serial.println("Turned off LEDs");
 }
 

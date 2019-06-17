@@ -209,10 +209,24 @@ void Renderer::setPixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void Renderer::commit() {
+  uint32_t t = micros();
+  this->timeBetweenFrames = t - this->lastFrameTime;
+  this->lastFrameTime = t;
+
   this->currentRGBBufferIndex = (this->currentRGBBufferIndex + 1) % NUM_RGB_BUFFERS;
 }
 
-void Renderer::render(uint8_t w) {
+void Renderer::render() {
+  uint32_t t, timeSinceFrameStart;
+  uint8_t w;
+
+  // Interpolation weight (0-255) is the ratio of the time since last
+  // frame arrived to the prior two frames' interval.
+  t                   = micros();          // Current time
+  timeSinceFrameStart = t - this->lastFrameTime; // Elapsed since data recv'd
+  w                   = (timeSinceFrameStart >= this->timeBetweenFrames) ? 255 :
+    (255L * timeSinceFrameStart / this->timeBetweenFrames);
+
   uint8_t * const prev =
     this->rgbBuffers[(this->currentRGBBufferIndex + NUM_RGB_BUFFERS - 2) % NUM_RGB_BUFFERS];
   uint8_t * const current =
@@ -221,4 +235,8 @@ void Renderer::render(uint8_t w) {
   magic(prev, current, w, this->spiBuffers[this->currentSPIBufferIndex], this->getLength());
 
   this->currentSPIBufferIndex = (this->currentSPIBufferIndex + 1) % NUM_SPI_BUFFERS;
+}
+
+void Renderer::clear() {
+  memset(this->getRGBBuffer(), 0, this->length * 3);
 }
