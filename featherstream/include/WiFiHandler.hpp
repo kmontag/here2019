@@ -3,6 +3,7 @@
 
 #define WRAPPER_MAGIC "guardrail"
 #define SSID_MAX_LENGTH 256
+#define PASSPHRASE_MAX_LENGTH 256
 
 #include <Arduino.h>
 #include <WiFi101.h>
@@ -32,32 +33,31 @@ namespace featherstream {
     IPAddress getServerAddress() const;
 
     /**
-     * Set the default SSID and save it to permanent storage. Don't
-     * call this too often - see
+     * Set the default credentials and save them to permanent
+     * storage. Don't call this too often - see
      * https://github.com/cmaglie/FlashStorage#limited-number-of-writes.
      * Return whether the set operation was successful.
      */
-    bool setPairedSSID(const char *);
-
-    const char * getPairedSSID() const;
+    bool setPairedCredentials(const char *ssid, const char *passphrase);
 
     /**
      * Struct for FlashStorage.
      */
     typedef struct {
       char ssid[SSID_MAX_LENGTH];
+      char passphrase[PASSPHRASE_MAX_LENGTH];
       char magic[sizeof(WRAPPER_MAGIC)];
-    } ssid_wrapper_t;
+    } credentials_t;
 
-
-  protected:
+    const char * getPairedSSID() const;
     const char * getMasterSSID() const;
     const char * getPairedPassphrase() const;
     const char * getMasterPassphrase() const;
 
   private:
-    bool isLoaded;
-    ssid_wrapper_t ssidWrapper;
+    // Whether the credentials wrapper actually contains valid info.
+    bool hasCredentials;
+    credentials_t credentials;
 
     int32_t lastVerifiedAt;
 

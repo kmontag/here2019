@@ -31,6 +31,11 @@ namespace featherstream {
      */
     bool loop();
 
+    /**
+     * Set the OPC channel, from 1 to 255.
+     */
+    void setChannel(uint8_t);
+
   private:
     Renderer &renderer;
     WiFiClient client;

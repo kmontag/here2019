@@ -8,12 +8,15 @@
 // Store sensitive data in this file.
 #include "secrets.h"
 
+#include "FeatherstreamerManager.hpp"
 #include "OPCHandler.hpp"
 #include "Renderer.hpp"
+#include "Server.hpp"
 #include "WiFiHandler.hpp"
 
-int led = LED_BUILTIN;
-int status = WL_IDLE_STATUS;
+#define LED_PIN A1
+#define RANDOM_PIN A2
+#define SWITCH_PIN A3
 
 // WiFiServer server(80);
 
@@ -23,7 +26,12 @@ void printMacAddress();
 void listNetworks();
 void printEncryptionType(int thisType);
 
+void blink(uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs);
+void bootstrap();
+
+featherstream::FeatherstreamerManager *featherstreamerManager;
 featherstream::Renderer *renderer;
+featherstream::Server *server;
 featherstream::OPCHandler *opcHandler;
 featherstream::WiFiHandler *wiFiHandler;
 
@@ -36,7 +44,11 @@ void setup() {
 
   Serial.println("== featherstream ==");
 
-  pinMode(led, OUTPUT);      // set the LED pin mode
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(RANDOM_PIN, INPUT);
+  pinMode(SWITCH_PIN, INPUT_PULLUP);
+
+  randomSeed(analogRead(RANDOM_PIN));
 
 #ifdef ADAFRUIT_ATWINC
   WiFi.setPins(8, 7, 4, 2); // Pins for Adafruit ATWINC1500 Feather
@@ -56,56 +68,91 @@ void setup() {
   // Serial.println("Scanning available networks...");
   // listNetworks();
 
+  featherstreamerManager = new featherstream::FeatherstreamerManager();
+
   renderer = new featherstream::Renderer();
-  Serial.println("Created renderer");
+  // Serial.println("Created renderer");
 
   opcHandler = new featherstream::OPCHandler(*renderer);
-  Serial.println("Created OPC handler");
+  // Serial.println("Created OPC handler");
 
   wiFiHandler = new featherstream::WiFiHandler();
 
+  server = new featherstream::Server(*featherstreamerManager, *wiFiHandler);
+
+  // If pairing credentials were provided at compile time, add them
+  // here on first boot. Note we can still enter bootstrap mode later
+  // to change them.
+  #ifdef SECRET_PAIRED_SSID
+  if (!wiFiHandler->isPaired()) {
+    const char *passphrase = SECRET_PAIRED_PASSPHRASE;
+    wiFiHandler->setPairedCredentials(SECRET_PAIRED_SSID, passphrase);
+  }
+  #endif
+
   renderer->clear();
-  renderer->commit();
-  renderer->render();
   Serial.println("Turned off LEDs");
+
+  // Check if we should enter bootstrap mode.
+  bool isBootstrapModeActive = false;
+  if (!wiFiHandler->isPaired()) {
+    isBootstrapModeActive = true;
+  } else {
+    // Check for more than two clicks of the switch in 500ms.
+    uint32_t bootstrapPossibleUntil = millis() + 500;
+    uint32_t numClicks = 0;
+
+    int buttonState = digitalRead(SWITCH_PIN);
+
+    while(millis() < bootstrapPossibleUntil) {
+      int nextButtonState = digitalRead(SWITCH_PIN);
+      if (nextButtonState != buttonState) {
+        numClicks++;
+      }
+    }
+
+    if (numClicks >= 2) {
+      isBootstrapModeActive = true;
+    }
+  }
+
+  if (isBootstrapModeActive) {
+    // This will run forever, so we'll never enter the main loop.
+    bootstrap();
+  }
 }
 
 void loop() {
-  if (wiFiHandler->isPaired()) {
-    // Standard operative mode, when we're paired with a
-    // featherstreamer.
-    if (wiFiHandler->ensureConnected()) {
+  // Handle any incoming requests.
+  server->loop();
 
-      bool opcConnected = opcHandler->isConnected();
+  if (wiFiHandler->ensureConnected()) {
 
+    bool opcConnected = opcHandler->isConnected();
+
+    if (!opcConnected) {
+      Serial.println("Establishing connection to OPC server.");
+      opcConnected = opcHandler->connect(1, wiFiHandler->getServerAddress(), SECRET_SERVER_PORT);
+    }
+
+    if (opcConnected) {
+      opcConnected = opcHandler->loop();
       if (!opcConnected) {
-        Serial.println("Establishing connection to OPC server.");
-        opcConnected = opcHandler->connect(1, wiFiHandler->getServerAddress(), 44668);
-      }
-
-      if (opcConnected) {
-        opcConnected = opcHandler->loop();
-        if (!opcConnected) {
-          renderer->clear();
-
-          Serial.println("Lost connection to OPC server.");
-        }
-      } else {
         renderer->clear();
 
-        Serial.println("Could not connect to OPC server.");
-        delay(1000);
+        Serial.println("Lost connection to OPC server.");
       }
     } else {
       renderer->clear();
 
-      Serial.println("Could not connect to WiFi.");
+      Serial.println("Could not connect to OPC server.");
       delay(1000);
     }
   } else {
     renderer->clear();
 
-    Serial.println("TODO bootstrap mode");
+    Serial.println("Could not connect to WiFi.");
+    delay(1000);
   }
 }
 
@@ -179,6 +226,64 @@ void loop() {
 //     Serial.println("client disconnected");
 //   }
 // }
+
+/**
+ * Connect to the bootstrap network, try to pull credentials from the
+ * featherstreamer server, and serve HTTP requests forever, presenting
+ * a minimal UI to change device config.
+ */
+void bootstrap() {
+  Serial.println("Entered bootstrap mode");
+
+  // Connect to WiFi
+  bool isLit = false;
+  while (WiFi.begin(SECRET_BOOTSTRAP_SSID, SECRET_BOOTSTRAP_PASSPHRASE) != WL_CONNECTED) {
+    Serial.print("Trying to connect to SSID ");
+    Serial.println(SECRET_BOOTSTRAP_SSID);
+
+    isLit = !isLit;
+    digitalWrite(LED_PIN, isLit ? HIGH : LOW);
+
+    delay(1000);
+  }
+
+  // If we don't already have network credentials, try to pull them
+  // from the featherstreamer we're connected to.
+  if (!wiFiHandler.isPaired()) {
+    const char *ssid = featherstreamerManager->getReportedSSID(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
+    const char *passphrase = featherstreamerManager->getReportedPassphrase(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
+
+    if (ssid != NULL && passphrase != NULL) {
+      wiFiManager->setCredentials(ssid, passphrase);
+      Serial.println("Set credentials pulled from featherstreamer server");
+    }
+  }
+
+  while (true) {
+    blink(100, 300, 0);
+    server->loop();
+  }
+}
+
+/**
+ * Call this repeatedly to blink the notification LED.
+ */
+void blink(uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs) {
+  static bool blinkActive = false;
+
+  if ((millis() + offsetMs) % periodMs < onDurationMs) {
+    if (!blinkActive) {
+      digitalWrite(LED_PIN, HIGH);
+      blinkActive = true;
+      // Serial.println("blink");
+    }
+  } else {
+    if (blinkActive) {
+      digitalWrite(LED_PIN, LOW);
+      blinkActive = false;
+    }
+  }
+}
 
 void printWiFiStatus() {
   // print the SSID of the network you're attached to:

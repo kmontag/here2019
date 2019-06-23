@@ -14,10 +14,12 @@
 
 using namespace featherstream;
 
-FlashStorage(ssid_storage, WiFiHandler::ssid_wrapper_t);
+FlashStorage(credentials_storage, WiFiHandler::credentials_t);
 
 WiFiHandler::WiFiHandler() {
-  this->isLoaded = false;
+  this->credentials = credentials_storage.read();
+  this->hasCredentials = (strcmp(WRAPPER_MAGIC, this->credentials.magic) == 0);
+
   this->lastVerifiedAt = -CONNECTION_VALID_MS;
   this->isLastConnectionToMaster = false;
 }
@@ -26,7 +28,7 @@ WiFiHandler::~WiFiHandler() {
 }
 
 bool WiFiHandler::isPaired() const {
-  return (this->getPairedSSID() != NULL);
+  return this->hasCredentials;
 }
 
 bool WiFiHandler::ensureConnected() {
@@ -134,41 +136,35 @@ bool WiFiHandler::connect(const char *ssid, const char *passphrase) {
   return true;
 }
 
-bool WiFiHandler::setPairedSSID(const char *ssid) {
+bool WiFiHandler::setPairedCredentials(const char *ssid, const char *passphrase) {
   if (strlen(ssid) > SSID_MAX_LENGTH) {
     Serial.println("SSID is too long to store");
     return false;
+  } else if (strlen(passphrase) > PASSPHRASE_MAX_LENGTH) {
+    Serial.println("Passphrase is too long to store");
+    return false;
   } else {
-    memset(this->ssidWrapper.ssid, 0, sizeof(this->ssidWrapper.ssid));
-    strcpy(ssidWrapper.ssid, ssid);
-    strcpy(ssidWrapper.magic, WRAPPER_MAGIC);
-    ssid_storage.write(ssidWrapper);
+    memset(this->credentials.ssid, 0, sizeof(this->credentials.ssid));
+    memset(this->credentials.passphrase, 0, sizeof(this->credentials.passphrase));
 
+    strcpy(this->credentials.ssid, ssid);
+    strcpy(this->credentials.passphrase, passphrase);
+    strcpy(this->credentials.magic, WRAPPER_MAGIC);
+
+    credentials_storage.write(this->credentials);
+    this->hasCredentials = true;
+
+    Serial.println("Updated paired credentials");
     return true;
   }
 }
 
 const char * WiFiHandler::getPairedSSID() const {
-  #ifdef SECRET_PAIRED_SSID
-  return SECRET_PAIRED_SSID;
-  #else
-
-  // Once a value is successfully loaded, we don't need to read it
-  // again from flash (note we update the value manually in save
-  // calls).
-  if (this->isLoaded) {
-    return this->ssidWrapper.ssid;
+  if (this->hasCredentials) {
+    return this->credentials.ssid;
   } else {
-    this->ssidWrapper = ssid_storage.read();
-    if (strcmp(WRAPPER_MAGIC, this->ssidWrapper.magic) == 0) {
-      this->isLoaded = true;
-      return storedSSID.ssid;
-    } else {
-      return NULL;
-    }
+    return NULL;
   }
-
-  #endif
 }
 
 inline const char * WiFiHandler::getMasterSSID() const {
@@ -176,15 +172,15 @@ inline const char * WiFiHandler::getMasterSSID() const {
 }
 
 inline const char * WiFiHandler::getPairedPassphrase() const {
-  #ifdef SECRET_PAIRED_PASS
-  return SECRET_PAIRED_PASS;
-  #else
-  return SECRET_PASS;
-  #endif
+  if (this->hasCredentials) {
+    return this->credentials.passphrase;
+  } else {
+    return NULL;
+  }
 }
 
 inline const char * WiFiHandler::getMasterPassphrase() const {
-  return SECRET_PASS;
+  return SECRET_MASTER_PASSPHRASE;
 }
 
 IPAddress WiFiHandler::getServerAddress() const {
