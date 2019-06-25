@@ -46,27 +46,86 @@
   become: yes
   become_user: root
   with_items:
-    - /usr/local/src/featherstreamer
+    - "{{ remote_modules_location }}/featherstreamer"
+    - "{{ remote_modules_location }}/featherstreamer-shared"
+    - "{{ remote_modules_location }}/featherstreamer-web"
     # Need to access this directory during rsync
-    - /usr/local/src/
+    - "{{ remote_modules_location }}"
 
 - name: copy package-lock.json individually
   copy:
-    dest: /usr/local/src/featherstreamer/package-lock.json
-    src: "{{ module_location }}/package-lock.json"
+    dest: "{{ remote_modules_location }}/{{ item }}/package-lock.json"
+    src: "{{ local_modules_location }}/{{ item }}/package-lock.json"
   register: copy_package_lock
+  with_items:
+    - featherstreamer
+    - featherstreamer-web
 
 - name: synchronize module from local sources
   synchronize:
     mode: push
     delete: yes
-    dest: /usr/local/src/
-    src: "{{ module_location }}"
+    dest: "{{ remote_modules_location }}/"
+    src: "{{ local_modules_location }}/{{ item }}"
     rsync_opts:
       - "--exclude='node_modules'"
+  with_items:
+    - featherstreamer
+    - featherstreamer-shared
+    - featherstreamer-web
 
 - name: install node modules
   shell: npm install --production
   args:
-    chdir: /usr/local/src/featherstreamer
-  when: copy_package_lock.changed
+    chdir: "{{ remote_modules_location }}/{{ item.item }}"
+  when: item.changed
+  with_items: "{{ copy_package_lock.results }}"
+
+- name: create featherstreamer service
+  copy:
+    dest: /etc/systemd/system/featherstreamer.service
+    content: |
+      [Unit]
+      Description=featherstreamer
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/npm start
+      WorkingDirectory={{ remote_modules_location }}/featherstreamer
+      User=pi
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  become: yes
+  become_user: root
+
+- name: create featherstreamer-web service
+  copy:
+    dest: /etc/systemd/system/featherstreamer-web.service
+    content: |
+      [Unit]
+      Description=featherstreamer frontend
+      After=network.target
+
+      [Service]
+      ExecStart={{ remote_modules_location }}/featherstreamer-web/node_modules/.bin/serve -s build
+      WorkingDirectory={{ remote_modules_location }}/featherstreamer-web
+      User=pi
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  become: yes
+  become_user: root
+
+- name: start featherstreamer services at boot
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  with_items:
+    - featherstreamer
+    - featherstreamer-web
+  become: yes
+  become_user: root

@@ -19,13 +19,17 @@ export default class OPCManager {
       return minBrightness + Math.floor(Math.random() * (maxBrightness - minBrightness));
     });
 
-    const strand = createStrand(16);
+    const strand = createStrand(this.opcStream.length);
     setInterval(() => {
       const interpolationInterval = 2000;
       const interpolation = Math.abs((new Date().getTime() % interpolationInterval) - (interpolationInterval / 2)) / (interpolationInterval / 2);
 
       for (let pixel = 0; pixel < strand.length; pixel++) {
-        strand.setPixel(pixel, ...color.map((c) => c + interpolation * (maxBrightness - c)));
+        if (pixel < 15) {
+          strand.setPixel(pixel, ...color.map((c) => c + interpolation * (maxBrightness - c)));
+        } else {
+          strand.setPixel(pixel, 0, 0, 0);
+        }
       }
 
       // isWhite = !isWhite;

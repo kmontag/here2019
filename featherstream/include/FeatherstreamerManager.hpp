@@ -14,9 +14,10 @@ namespace featherstream {
     virtual ~FeatherstreamerManager();
     /**
      * Make a request to the featherstreamer server, and return its
-     * reported credentials, or NULL if the request does not succeed.
+     * reported credentials, or the empty string if the request does
+     * not succeed.
      */
-    const char *getReportedSSID(const IPAddress &, uint16_t port) const;
+    String getReportedSSID(const IPAddress &, uint16_t port) const;
     // const char *getReportedPassphrase(const IPAddress &, uint16_t port) const;
   };
 }

@@ -18,8 +18,6 @@
 #define RANDOM_PIN A2
 #define SWITCH_PIN A3
 
-// WiFiServer server(80);
-
 void printWiFiStatus();
 void printMacAddress(byte mac[]);
 void printMacAddress();
@@ -31,7 +29,7 @@ void bootstrap();
 
 featherstream::FeatherstreamerManager *featherstreamerManager;
 featherstream::Renderer *renderer;
-featherstream::ConfigServer *server;
+// featherstream::ConfigServer *server;
 featherstream::OPCHandler *opcHandler;
 featherstream::WiFiHandler *wiFiHandler;
 
@@ -78,7 +76,7 @@ void setup() {
 
   wiFiHandler = new featherstream::WiFiHandler();
 
-  server = new featherstream::ConfigServer(*wiFiHandler);
+  // server = new featherstream::ConfigServer(*wiFiHandler);
 
   // If pairing credentials were provided at compile time, add them
   // here on first boot. Note we can still enter bootstrap mode later
@@ -123,7 +121,7 @@ void setup() {
 
 void loop() {
   // Handle any incoming requests.
-  server->loop();
+  // server->loop();
 
   if (wiFiHandler->ensureConnected()) {
 
@@ -176,17 +174,23 @@ void bootstrap() {
   }
 
   // Try to pull network credentials from the featherstreamer we're connected to.
-  const char *ssid = featherstreamerManager->getReportedSSID(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
+  const String ssid = featherstreamerManager->getReportedSSID(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
   // const char *passphrase = featherstreamerManager->getReportedPassphrase(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
 
-  if (ssid != NULL) { // && passphrase != NULL) {
-    wiFiHandler->setPairedSSID(ssid);
-    Serial.println("Set credentials pulled from featherstreamer server");
-  }
+  if (ssid.length() > 0) { // && passphrase != NULL) {
+    wiFiHandler->setPairedSSID(ssid.c_str());
+    Serial.print("Pulled SSID from featherstreamer server: ");
+    Serial.println(ssid);
 
-  while (true) {
-    blink(100, 300, 0);
-    server->loop();
+    // Fast blink indicates success.
+    while (true) {
+      blink(100, 300, 0);
+    }
+  } else {
+    // Slower blink indicates error.
+    while(true) {
+      blink(100, 1000, 0);
+    }
   }
 }
 

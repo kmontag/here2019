@@ -11,9 +11,10 @@ FeatherstreamerManager::~FeatherstreamerManager() {
 }
 
 
-const char *FeatherstreamerManager::getReportedSSID(const IPAddress &address, uint16_t port) const {
+String FeatherstreamerManager::getReportedSSID(const IPAddress &address, uint16_t port) const {
   WiFiClient client;
   String response = "";
+  const String errorResponse = "";
 
   Serial.println("Fetching SSID...");
 
@@ -21,20 +22,33 @@ const char *FeatherstreamerManager::getReportedSSID(const IPAddress &address, ui
     client.println("GET /ssid HTTP/1.0");
     client.println();
 
-    const char *result = NULL;
     String currentLine = "";                // make a String to hold incoming data from the client
+    bool isReceivingContent = false;
+    bool isSuccessResponse = false;
 
-    while (client.connected() && result == NULL) {
+    while (client.connected()) {
       if (client.available()) {
         char c = client.read();             // read a byte, then
         Serial.write(c);                    // print it out the serial monitor
-        if (c == '\n') {                    // if the byte is a newline character
+        if (c == '\n' && !isReceivingContent) {      // if the byte is a newline character
 
-          // if the current line is blank, you got two newline characters in a row.
-          // that's the end of the client HTTP request, so send a response:
+          // The first line must be an HTTP success response. Bail
+          // immediately otherwise.
+          if (!isSuccessResponse) {
+            if (currentLine.equals("HTTP/1.1 200 OK")) {
+              isSuccessResponse = true;
+            } else {
+              Serial.print("got non-success response beginning with: ");
+              Serial.println(currentLine);
+              return errorResponse;
+            }
+          }
+
+          // From here, we know we have a success response. If the
+          // current line is blank, we got two newline characters in a
+          // row. That means content is starting.
           if (currentLine.length() == 0) {
-            // TODO
-            break;
+            isReceivingContent = true;
           }
           else {      // if you got a newline, then clear currentLine:
             currentLine = "";
@@ -47,11 +61,16 @@ const char *FeatherstreamerManager::getReportedSSID(const IPAddress &address, ui
     }
     client.stop();
 
-    return result;
+    if (isReceivingContent) {
+      Serial.println();
+      return currentLine;
+    } else {
+      return errorResponse;
+    }
 
   } else {
     Serial.println("Could not connect to featherstreamer");
-    return NULL;
+    return errorResponse;
   }
 }
 

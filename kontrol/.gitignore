@@ -2,3 +2,4 @@
 /ansible/local/*
 /ansible/inventory/hosts.local
 /node_modules/
+/.make.*

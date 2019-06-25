@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as os from 'os';
 import * as bodyParser from 'body-parser';
 import OPCManager from './OPCManager';
+import { handleTurnCW, handleTurnCCW, handlePress, handleRelease } from './rotaryEncoder';
 
 /**
  * Server running in all operational modes.
@@ -43,6 +44,26 @@ export default function server({
     // https://stackoverflow.com/questions/6572572/node-js-http-server-detect-when-clients-disconnect
     req.on('close', handleDisconnect);
     req.on('end', handleDisconnect);
+  });
+
+  /**
+   * Actions to simulate interaction with the rotary encoder.
+   */
+  app.post('/turn/cw', (req, res) => {
+    handleTurnCW();
+    res.status(204).send();
+  });
+  app.post('/turn/ccw', (req, res) => {
+    handleTurnCCW();
+    res.status(204).send();
+  });
+  app.post('/button/press', (req, res) => {
+    handlePress();
+    res.status(204).send();
+  });
+  app.post('/button/release', (req, res) => {
+    handleRelease();
+    res.status(204).send();
   });
 
   return app;

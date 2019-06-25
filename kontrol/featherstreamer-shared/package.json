@@ -1,0 +1,19 @@
+{
+  "name": "featherstreamer-shared",
+  "version": "0.0.0-dev",
+  "description": "shared models and types for featherstreamer server and frontend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kevin Montag <kmontag@cs.stanford.edu>",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.5.2"
+  },
+  "dependencies": {
+    "runtypes": "^4.0.0"
+  }
+}
