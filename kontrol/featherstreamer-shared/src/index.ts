@@ -1,7 +1,7 @@
 import { Record, Static } from 'runtypes';
 
-const State = Record({
+const ServerState = Record({
 
 });
-type State = Static<typeof State>;
-export { State };
+type ServerState = Static<typeof ServerState>;
+export { ServerState };

@@ -1,4 +1,4 @@
 import { Record, Static } from 'runtypes';
-declare const State: Record<{}, false>;
-declare type State = Static<typeof State>;
-export { State };
+declare const ServerState: Record<{}, false>;
+declare type ServerState = Static<typeof ServerState>;
+export { ServerState };
