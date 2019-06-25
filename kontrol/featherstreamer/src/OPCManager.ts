@@ -1,4 +1,5 @@
 import { Readable } from 'stream';
+import { writableNoopStream } from 'noop-stream';
 
 const createOPCStream = require('opc');
 const createStrand = require('opc/strand');
@@ -8,6 +9,9 @@ export default class OPCManager {
 
   constructor() {
     this.opcStream = createOPCStream(100);
+
+    // Don't let data get backed up.
+    this.opcStream.pipe(writableNoopStream());
   }
 
   // Temp, until we get frameplayer integrated
@@ -19,7 +23,7 @@ export default class OPCManager {
       return minBrightness + Math.floor(Math.random() * (maxBrightness - minBrightness));
     });
 
-    const strand = createStrand(this.opcStream.length);
+    const strand = createStrand(100);
     setInterval(() => {
       const interpolationInterval = 2000;
       const interpolation = Math.abs((new Date().getTime() % interpolationInterval) - (interpolationInterval / 2)) / (interpolationInterval / 2);
