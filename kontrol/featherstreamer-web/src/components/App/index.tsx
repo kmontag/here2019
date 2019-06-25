@@ -1,12 +1,11 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { connect } from 'react-redux';
+import styles from './style.module.scss';
 
 const App: React.FC = () => {
   return (
-    <div className="App">
+    <div className={styles.root}>
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
@@ -23,4 +22,4 @@ const App: React.FC = () => {
   );
 }
 
-export default App;
+export default connect()(App);

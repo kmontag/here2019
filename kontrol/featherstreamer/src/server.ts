@@ -49,19 +49,19 @@ export default function server({
   /**
    * Actions to simulate interaction with the rotary encoder.
    */
-  app.post('/turn/cw', (req, res) => {
+  app.post('/rotaryEncoder/cw', (req, res) => {
     handleTurnCW();
     res.status(204).send();
   });
-  app.post('/turn/ccw', (req, res) => {
+  app.post('/rotaryEncoder/ccw', (req, res) => {
     handleTurnCCW();
     res.status(204).send();
   });
-  app.post('/button/press', (req, res) => {
+  app.post('/rotaryEncoder/press', (req, res) => {
     handlePress();
     res.status(204).send();
   });
-  app.post('/button/release', (req, res) => {
+  app.post('/rotaryEncoder/release', (req, res) => {
     handleRelease();
     res.status(204).send();
   });
