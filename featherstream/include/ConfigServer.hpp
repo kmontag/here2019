@@ -1,14 +1,14 @@
-#ifndef __SERVER_HPP__
-#define __SERVER_HPP__
+#ifndef __CONFIG_SERVER_HPP__
+#define __CONFIG_SERVER_HPP__
 
 #include <WiFi101.h>
 #include "WiFiHandler.hpp"
 
 namespace featherstream {
-  class Server {
+  class ConfigServer {
   public:
-    Server(const WiFiHandler &);
-    virtual ~Server();
+    ConfigServer(const WiFiHandler &);
+    virtual ~ConfigServer();
 
     void loop();
 

@@ -11,7 +11,7 @@
 #include "FeatherstreamerManager.hpp"
 #include "OPCHandler.hpp"
 #include "Renderer.hpp"
-#include "Server.hpp"
+#include "ConfigServer.hpp"
 #include "WiFiHandler.hpp"
 
 #define LED_PIN A1
@@ -31,7 +31,7 @@ void bootstrap();
 
 featherstream::FeatherstreamerManager *featherstreamerManager;
 featherstream::Renderer *renderer;
-featherstream::Server *server;
+featherstream::ConfigServer *server;
 featherstream::OPCHandler *opcHandler;
 featherstream::WiFiHandler *wiFiHandler;
 
@@ -78,15 +78,14 @@ void setup() {
 
   wiFiHandler = new featherstream::WiFiHandler();
 
-  server = new featherstream::Server(*featherstreamerManager, *wiFiHandler);
+  server = new featherstream::ConfigServer(*wiFiHandler);
 
   // If pairing credentials were provided at compile time, add them
   // here on first boot. Note we can still enter bootstrap mode later
   // to change them.
   #ifdef SECRET_PAIRED_SSID
   if (!wiFiHandler->isPaired()) {
-    const char *passphrase = SECRET_PAIRED_PASSPHRASE;
-    wiFiHandler->setPairedCredentials(SECRET_PAIRED_SSID, passphrase);
+    wiFiHandler->setPairedSSID(SECRET_PAIRED_SSID);
   }
   #endif
 
@@ -156,77 +155,6 @@ void loop() {
   }
 }
 
-// void oldloop() {
-//   // compare the previous status to the current status
-//   if (status != WiFi.status()) {
-//     // it has changed update the variable
-//     status = WiFi.status();
-
-//     if (status == WL_AP_CONNECTED) {
-//       byte remoteMac[6];
-
-//       // a device has connected to the AP
-//       Serial.print("Device connected to AP, MAC address: ");
-//       WiFi.APClientMacAddress(remoteMac);
-//       printMacAddress(remoteMac);
-//     } else {
-//       // a device has disconnected from the AP, and we are back in listening mode
-//       Serial.println("Device disconnected from AP");
-//     }
-//   }
-
-//   WiFiClient client = server.available();   // listen for incoming clients
-
-//   if (client) {                             // if you get a client,
-//     Serial.println("new client");           // print a message out the serial port
-//     String currentLine = "";                // make a String to hold incoming data from the client
-//     while (client.connected()) {            // loop while the client's connected
-//       if (client.available()) {             // if there's bytes to read from the client,
-//         char c = client.read();             // read a byte, then
-//         Serial.write(c);                    // print it out the serial monitor
-//         if (c == '\n') {                    // if the byte is a newline character
-
-//           // if the current line is blank, you got two newline characters in a row.
-//           // that's the end of the client HTTP request, so send a response:
-//           if (currentLine.length() == 0) {
-//             // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-//             // and a content-type so the client knows what's coming, then a blank line:
-//             client.println("HTTP/1.1 200 OK");
-//             client.println("Content-type:text/html");
-//             client.println();
-
-//             // the content of the HTTP response follows the header:
-//             client.print("Click <a href=\"/H\">here</a> turn the LED on<br>");
-//             client.print("Click <a href=\"/L\">here</a> turn the LED off<br>");
-
-//             // The HTTP response ends with another blank line:
-//             client.println();
-//             // break out of the while loop:
-//             break;
-//           }
-//           else {      // if you got a newline, then clear currentLine:
-//             currentLine = "";
-//           }
-//         }
-//         else if (c != '\r') {    // if you got anything else but a carriage return character,
-//           currentLine += c;      // add it to the end of the currentLine
-//         }
-
-//         // Check to see if the client request was "GET /H" or "GET /L":
-//         if (currentLine.endsWith("GET /H")) {
-//           digitalWrite(led, HIGH);               // GET /H turns the LED on
-//         }
-//         if (currentLine.endsWith("GET /L")) {
-//           digitalWrite(led, LOW);                // GET /L turns the LED off
-//         }
-//       }
-//     }
-//     // close the connection:
-//     client.stop();
-//     Serial.println("client disconnected");
-//   }
-// }
-
 /**
  * Connect to the bootstrap network, try to pull credentials from the
  * featherstreamer server, and serve HTTP requests forever, presenting
@@ -247,16 +175,13 @@ void bootstrap() {
     delay(1000);
   }
 
-  // If we don't already have network credentials, try to pull them
-  // from the featherstreamer we're connected to.
-  if (!wiFiHandler.isPaired()) {
-    const char *ssid = featherstreamerManager->getReportedSSID(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
-    const char *passphrase = featherstreamerManager->getReportedPassphrase(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
+  // Try to pull network credentials from the featherstreamer we're connected to.
+  const char *ssid = featherstreamerManager->getReportedSSID(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
+  // const char *passphrase = featherstreamerManager->getReportedPassphrase(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
 
-    if (ssid != NULL && passphrase != NULL) {
-      wiFiManager->setCredentials(ssid, passphrase);
-      Serial.println("Set credentials pulled from featherstreamer server");
-    }
+  if (ssid != NULL) { // && passphrase != NULL) {
+    wiFiHandler->setPairedSSID(ssid);
+    Serial.println("Set credentials pulled from featherstreamer server");
   }
 
   while (true) {

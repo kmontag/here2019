@@ -136,19 +136,20 @@ bool WiFiHandler::connect(const char *ssid, const char *passphrase) {
   return true;
 }
 
-bool WiFiHandler::setPairedCredentials(const char *ssid, const char *passphrase) {
+bool WiFiHandler::setPairedSSID(const char *ssid) {
   if (strlen(ssid) > SSID_MAX_LENGTH) {
     Serial.println("SSID is too long to store");
     return false;
-  } else if (strlen(passphrase) > PASSPHRASE_MAX_LENGTH) {
-    Serial.println("Passphrase is too long to store");
-    return false;
+  // } else if (strlen(passphrase) > PASSPHRASE_MAX_LENGTH) {
+  //   Serial.println("Passphrase is too long to store");
+  //   return false;
   } else {
     memset(this->credentials.ssid, 0, sizeof(this->credentials.ssid));
     memset(this->credentials.passphrase, 0, sizeof(this->credentials.passphrase));
 
     strcpy(this->credentials.ssid, ssid);
-    strcpy(this->credentials.passphrase, passphrase);
+    //strcpy(this->credentials.passphrase, passphrase);
+    strcpy(this->credentials.passphrase, SECRET_PAIRED_PASSPHRASE);
     strcpy(this->credentials.magic, WRAPPER_MAGIC);
 
     credentials_storage.write(this->credentials);

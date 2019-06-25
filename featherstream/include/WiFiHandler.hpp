@@ -38,7 +38,7 @@ namespace featherstream {
      * https://github.com/cmaglie/FlashStorage#limited-number-of-writes.
      * Return whether the set operation was successful.
      */
-    bool setPairedCredentials(const char *ssid, const char *passphrase);
+    bool setPairedSSID(const char *ssid);
 
     /**
      * Struct for FlashStorage.
