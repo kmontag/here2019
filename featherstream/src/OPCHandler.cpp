@@ -38,7 +38,7 @@ bool OPCHandler::isConnected() {
 }
 
 bool OPCHandler::loop() {
-  if (this->client.connected()) {
+  if (this->client.connected() && this->consecutiveSecondsWithoutFrames < 5) {
     /**
      * Processing logic copied in from lightship demo.
      */
@@ -69,6 +69,13 @@ bool OPCHandler::loop() {
       Serial.println(" frames/sec");
       this->priorSeconds = seconds;
       this->updates      = 0; // Reset counter
+
+      if (this->commits == 0) {
+        this->consecutiveSecondsWithoutFrames++;
+
+      } else {
+        this->consecutiveSecondsWithoutFrames = 0;
+      }
       this->commits      = 0;
     }
 
@@ -157,6 +164,7 @@ bool OPCHandler::loop() {
     return true;
     // DITHER-AND-RECEIVE LOOP ENDS HERE ---------------------------------
   } else { // end ifclient connected
+    this->consecutiveSecondsWithoutFrames = 0;
     return false;
   }
 }

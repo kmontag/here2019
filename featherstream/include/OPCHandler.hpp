@@ -64,6 +64,8 @@ namespace featherstream {
     uint32_t updates = 0;
     uint32_t priorSeconds = 0;
 
+    uint16_t consecutiveSecondsWithoutFrames = 0;
+
     uint32_t commits = 0;
 
     uint8_t discardBuf[512 * 3];
