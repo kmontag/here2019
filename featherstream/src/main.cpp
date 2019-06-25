@@ -81,11 +81,11 @@ void setup() {
   // If pairing credentials were provided at compile time, add them
   // here on first boot. Note we can still enter bootstrap mode later
   // to change them.
-  #ifdef SECRET_PAIRED_SSID
+#ifdef SECRET_PAIRED_SSID
   if (!wiFiHandler->isPaired()) {
     wiFiHandler->setPairedSSID(SECRET_PAIRED_SSID);
   }
-  #endif
+#endif
 
   renderer->clear();
   Serial.println("Turned off LEDs");
@@ -123,9 +123,16 @@ void loop() {
   // Handle any incoming requests.
   // server->loop();
 
-  if (wiFiHandler->ensureConnected()) {
+  // While connected, show a slow blink. While not connected, just
+  // always keep the LED on.
+  bool opcConnected = opcHandler->isConnected();
+  if (opcConnected) {
+    blink(100, 2000, 0);
+  } else {
+    blink(100, 100, 0);
+  }
 
-    bool opcConnected = opcHandler->isConnected();
+  if (wiFiHandler->ensureConnected()) {
 
     if (!opcConnected) {
       Serial.println("Establishing connection to OPC server.");
@@ -141,15 +148,29 @@ void loop() {
       }
     } else {
       renderer->clear();
+      const uint32_t delayMillis = 2000;
+      uint32_t delayUntil = millis() + delayMillis;
+      while (millis() < delayUntil) {
+        for (uint8_t i = 0; i < 3; i++) {
+          blink(100, delayMillis, 200 * i);
+        }
+      }
 
       Serial.println("Could not connect to OPC server.");
-      delay(1000);
     }
   } else {
     renderer->clear();
 
     Serial.println("Could not connect to WiFi.");
-    delay(1000);
+
+    const uint32_t delayMillis = 3000;
+    uint32_t delayUntil = millis() + delayMillis;
+    while (millis() < delayUntil) {
+      for (uint8_t i = 0; i < 5; i++) {
+        blink(100, delayMillis, 200 * i);
+      }
+    }
+
   }
 }
 
@@ -250,10 +271,10 @@ void listNetworks() {
   Serial.println("** Scan Networks **");
   int numSsid = WiFi.scanNetworks();
   if (numSsid == -1)
-  {
-    Serial.println("Couldn't get a wifi connection");
-    while (true);
-  }
+    {
+      Serial.println("Couldn't get a wifi connection");
+      while (true);
+    }
 
   // print the list of networks seen:
   Serial.print("number of available networks:");
@@ -276,21 +297,21 @@ void listNetworks() {
 void printEncryptionType(int thisType) {
   // read the encryption type and print out the name:
   switch (thisType) {
-    case ENC_TYPE_WEP:
-      Serial.println("WEP");
-      break;
-    case ENC_TYPE_TKIP:
-      Serial.println("WPA");
-      break;
-    case ENC_TYPE_CCMP:
-      Serial.println("WPA2");
-      break;
-    case ENC_TYPE_NONE:
-      Serial.println("None");
-      break;
-    case ENC_TYPE_AUTO:
-      Serial.println("Auto");
-      break;
+  case ENC_TYPE_WEP:
+    Serial.println("WEP");
+    break;
+  case ENC_TYPE_TKIP:
+    Serial.println("WPA");
+    break;
+  case ENC_TYPE_CCMP:
+    Serial.println("WPA2");
+    break;
+  case ENC_TYPE_NONE:
+    Serial.println("None");
+    break;
+  case ENC_TYPE_AUTO:
+    Serial.println("Auto");
+    break;
   }
 }
 
