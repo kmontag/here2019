@@ -47,6 +47,7 @@
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0",
     "reset-css": "^4.0.1",
+    "semantic-ui-forest-themes": "^1.0.3",
     "semantic-ui-less": "^2.4.1",
     "semantic-ui-react": "^0.87.2",
     "typescript": "^3.5.2"
