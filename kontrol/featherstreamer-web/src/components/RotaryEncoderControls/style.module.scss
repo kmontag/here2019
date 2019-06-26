@@ -1,3 +1,35 @@
 .root {
   text-align: center;
 }
+
+$pink: #e03997;
+$blue: #0d71bb;
+
+.dial {
+  $dimension: 2em;
+  $font-size: 1em;
+
+  margin: auto;
+  vertical-align: middle;
+  background: #1b1c1d;
+  max-width: $dimension;
+  max-height: $dimension;
+  padding: ($dimension - $font-size) / 2;
+  height: 100%;
+  border-radius: 100%;
+  font-size: 2rem;
+  color: $blue;
+  > .icon {
+    margin-left: -0.2rem;
+  }
+  &.active {
+    color: $pink;
+  }
+
+  $numClicks: 8;
+  @for $i from 0 to $numClicks {
+    &.rotate-#{$i} {
+      transform: rotate($i * (360deg / $numClicks));
+    }
+  }
+}

@@ -1,16 +1,50 @@
-import { ThunkAction } from 'redux-thunk';
 import { ActionCreator, Action } from 'redux';
-import axios from 'axios';
-import { BACKEND_PREFIX } from '../../routing';
+// import axios from 'axios';
+// import { BACKEND_PREFIX } from '../../routing';
 
-interface PressAction extends Action {
+export interface PressAction extends Action {
   type: '@@rotaryEncoder/PRESS';
 }
 
-export const press: ActionCreator<ThunkAction<Promise<void>, void, void, PressAction>>
-  = () => async dispatch => {
-    await axios.post(`${BACKEND_PREFIX}/rotaryEncoder/press`);
+export const press: ActionCreator<PressAction> = () => {
+  return {
+    type: '@@rotaryEncoder/PRESS',
   };
+};
+
+export interface ReleaseAction extends Action {
+  type: '@@rotaryEncoder/RELEASE',
+}
+
+export const release: ActionCreator<ReleaseAction> = () => {
+  return {
+    type: '@@rotaryEncoder/RELEASE',
+  };
+};
+
+export interface RotateClockwiseAction extends Action {
+  type: '@@rotaryEncoder/ROTATE_CLOCKWISE',
+}
+
+export const rotateClockwise: ActionCreator<RotateClockwiseAction> = () => {
+  return {
+    type: '@@rotaryEncoder/ROTATE_CLOCKWISE',
+  };
+};
+
+export interface RotateCounterclockwiseAction extends Action {
+  type: '@@rotaryEncoder/ROTATE_COUNTERCLOCKWISE',
+}
+
+export const rotateCounterclockwise: ActionCreator<RotateCounterclockwiseAction> = () => {
+  return {
+    type: '@@rotaryEncoder/ROTATE_COUNTERCLOCKWISE',
+  };
+};
 
 export type RotaryEncoderAction =
-  ReturnType<typeof press>;
+  PressAction |
+  ReleaseAction |
+  RotateClockwiseAction |
+  RotateCounterclockwiseAction |
+  never;
