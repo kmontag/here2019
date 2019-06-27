@@ -19,9 +19,6 @@
 #define SWITCH_PIN A3
 
 void printWiFiStatus();
-void printMacAddress(byte mac[]);
-void printMacAddress();
-void listNetworks();
 void printEncryptionType(int thisType);
 
 void blink(uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs);
@@ -59,20 +56,14 @@ void setup() {
     while (true);
   }
 
-  // Print WiFi MAC address:
-  printMacAddress();
-
-  // // scan for existing networks:
-  // Serial.println("Scanning available networks...");
-  // listNetworks();
-
   featherstreamerManager = new featherstream::FeatherstreamerManager();
 
   renderer = new featherstream::Renderer();
   // Serial.println("Created renderer");
 
   opcHandler = new featherstream::OPCHandler(*renderer);
-  // Serial.println("Created OPC handler");
+  Serial.print("My name is ");
+  Serial.println(opcHandler->getDeviceID());
 
   wiFiHandler = new featherstream::WiFiHandler();
 
@@ -154,6 +145,7 @@ void loop() {
         for (uint8_t i = 0; i < 3; i++) {
           blink(100, delayMillis, 200 * i);
         }
+        delay(40);
       }
 
       Serial.println("Could not connect to OPC server.");
@@ -256,44 +248,6 @@ void printWiFiStatus() {
 
 }
 
-void printMacAddress() {
-  // the MAC address of your WiFi shield
-  byte mac[6];
-
-  // print your MAC address:
-  WiFi.macAddress(mac);
-  Serial.print("MAC: ");
-  printMacAddress(mac);
-}
-
-void listNetworks() {
-  // scan for nearby networks:
-  Serial.println("** Scan Networks **");
-  int numSsid = WiFi.scanNetworks();
-  if (numSsid == -1)
-    {
-      Serial.println("Couldn't get a wifi connection");
-      while (true);
-    }
-
-  // print the list of networks seen:
-  Serial.print("number of available networks:");
-  Serial.println(numSsid);
-
-  // print the network number and name for each network found:
-  for (int thisNet = 0; thisNet < numSsid; thisNet++) {
-    Serial.print(thisNet);
-    Serial.print(") ");
-    Serial.print(WiFi.SSID(thisNet));
-    Serial.print("\tSignal: ");
-    Serial.print(WiFi.RSSI(thisNet));
-    Serial.print(" dBm");
-    Serial.print("\tEncryption: ");
-    printEncryptionType(WiFi.encryptionType(thisNet));
-    Serial.flush();
-  }
-}
-
 void printEncryptionType(int thisType) {
   // read the encryption type and print out the name:
   switch (thisType) {
@@ -313,17 +267,4 @@ void printEncryptionType(int thisType) {
     Serial.println("Auto");
     break;
   }
-}
-
-void printMacAddress(byte mac[]) {
-  for (int i = 5; i >= 0; i--) {
-    if (mac[i] < 16) {
-      Serial.print("0");
-    }
-    Serial.print(mac[i], HEX);
-    if (i > 0) {
-      Serial.print(":");
-    }
-  }
-  Serial.println();
 }

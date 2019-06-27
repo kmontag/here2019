@@ -26,6 +26,12 @@ namespace featherstream {
     bool isConnected();
 
     /**
+     * Get the device ID to be passed to the server when requesting
+     * OPC data.
+     */
+    const String &getDeviceID() const;
+
+    /**
      * Process any incoming data, and render it if appropriate. Return
      * false if the connection has dropped, true otherwise.
      */
@@ -39,6 +45,8 @@ namespace featherstream {
   private:
     Renderer &renderer;
     WiFiClient client;
+
+    String deviceId;
 
     // Getting decent interpolation and dithering REQUIRES frequent calls to
     // the magic() function.  This means we can't sit in a tight loop waiting

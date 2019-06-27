@@ -15,6 +15,25 @@ OPCHandler::OPCHandler(
 ): renderer(renderer) {
   this->mode = MODE_HEADER;
   this->numLEDs = this->nextNumLEDs = renderer.getMaxLength();
+
+  byte macBytes[6];
+  WiFi.macAddress(macBytes);
+  String macString = "";
+
+  for (int i = 5; i >= 0; i--) {
+    // macString += sprintf("%02X", macBytes[i]);
+    // if (mac[i] < 16) {
+    //   macString += "0";
+    // }
+
+    // macString += mac[i], HEX);
+    macString += macBytes[i];
+    if (i > 0) {
+      macString += ":";
+    }
+  }
+
+  this->deviceId = "fs:" + macString;
 }
 
 OPCHandler::~OPCHandler() {
@@ -24,7 +43,9 @@ bool OPCHandler::connect(uint8_t channel, const IPAddress &address, uint16_t por
   this->client = WiFiClient();
 
   if (this->client.connect(address, port)) {
-    this->client.println("GET /opc/1 HTTP/1.0");
+    this->client.print("GET /device/");
+    this->client.print(this->getDeviceID());
+    this->client.println("/opc HTTP/1.0");
     this->client.println();
 
     return true;
@@ -35,6 +56,10 @@ bool OPCHandler::connect(uint8_t channel, const IPAddress &address, uint16_t por
 
 bool OPCHandler::isConnected() {
   return this->client.connected();
+}
+
+const String &OPCHandler::getDeviceID() const {
+  return this->deviceId;
 }
 
 bool OPCHandler::loop() {
