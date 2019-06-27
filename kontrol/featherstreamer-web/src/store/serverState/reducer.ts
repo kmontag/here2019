@@ -1,0 +1,24 @@
+import { Reducer } from 'redux';
+import { ServerStateAction } from './actions';
+import { ServerState } from 'featherstreamer-shared';
+
+export type ServerStateState = ServerState & {
+  isLoading: boolean,
+};
+
+export const initialState: ServerStateState = {
+  channels: {},
+  devices: {},
+  ssid: '',
+  isLoading: true,
+};
+
+const reducer: Reducer<ServerStateState, ServerStateAction> = (state: ServerStateState = initialState, action): ServerStateState => {
+  switch(action.type) {
+    case '@@serverState/UPDATE':
+      return { ...action.serverState, isLoading: false };
+    default:
+      return state;
+  };
+};
+export default reducer;

@@ -2,17 +2,17 @@ import logger from './logger';
 
 // Handlers and setup for the rotary encoder.
 export function handleTurnCW() {
-  logger.info('Clockwise turn');
+  logger.debug('Clockwise turn');
 }
 
 export function handleTurnCCW() {
-  logger.info('Counterclockwise turn');
+  logger.debug('Counterclockwise turn');
 }
 
 export function handlePress() {
-  logger.info('Encoder pressed');
+  logger.debug('Encoder pressed');
 }
 
 export function handleRelease() {
-  logger.info('Encoder released');
+  logger.debug('Encoder released');
 }

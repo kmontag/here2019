@@ -1,6 +1,4 @@
 import { ActionCreator, Action } from 'redux';
-// import axios from 'axios';
-// import { BACKEND_PREFIX } from '../../routing';
 
 export interface PressAction extends Action {
   type: '@@rotaryEncoder/PRESS';

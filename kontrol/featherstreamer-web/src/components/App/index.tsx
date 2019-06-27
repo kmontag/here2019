@@ -1,6 +1,7 @@
 import React from 'react';
 import RotaryEncoderControls from '../RotaryEncoderControls';
-import { connect } from 'react-redux';
+import ServerDescription from '../ServerDescription';
+import DevicesList from '../DevicesList';
 import styles from './style.module.scss';
 import { Grid } from 'semantic-ui-react';
 
@@ -11,7 +12,17 @@ class App extends React.Component {
         <Grid container columns={1}>
           <Grid.Row>
             <Grid.Column>
+              <ServerDescription />
+            </Grid.Column>
+          </Grid.Row>
+          <Grid.Row>
+            <Grid.Column>
               <RotaryEncoderControls />
+            </Grid.Column>
+          </Grid.Row>
+          <Grid.Row>
+            <Grid.Column>
+              <DevicesList />
             </Grid.Column>
           </Grid.Row>
         </Grid>
@@ -20,4 +31,4 @@ class App extends React.Component {
   }
 }
 
-export default connect()(App);
+export default App;

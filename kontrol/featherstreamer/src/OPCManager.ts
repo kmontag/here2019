@@ -50,14 +50,9 @@ export default class OPCManager {
   }
 
   /**
-   * Get a permanent stream for all data on the given strand
-   * (1-255). Broadcast messages (i.e. "strand 0") will also be
-   * included.
+   * Get a permanent stream for all data on the given channel.
    */
-  getStream(strand: number): Readable {
-    if (strand < 1 || strand > 255) {
-      throw new Error(`Strand must be between 1 and 255, got ${strand}`);
-    }
+  getStream(channel: string): Readable {
     return this.opcStream;
   }
 }
