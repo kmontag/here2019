@@ -5,24 +5,30 @@
 $pink: #e03997;
 $blue: #0d71bb;
 
-.dial {
-  $dimension: 2em;
-  $font-size: 1em;
-
-  margin: auto;
-  background: #1b1c1d;
-  max-width: $dimension;
-  max-height: $dimension;
-  padding: ($dimension - $font-size) / 2;
+.dialWrapper {
+  position: relative;
   height: 100%;
-  border-radius: 100%;
-  font-size: 2rem;
+
+}
+
+.dial {
+  /* $dimension: 2em; */
+  /* $font-size: 1em; */
+
+  /* margin: auto; */
+  /* background: #1b1c1d; */
+  /* max-width: $dimension; */
+  /* max-height: $dimension; */
+  /* padding: ($dimension - $font-size) / 2; */
+  /* height: 100%; */
+  /* border-radius: 100%; */
+  /* font-size: 2rem; */
   color: $blue;
-  > .icon {
-    // Account for weird positioning of the dial...
-    $translateOffset: 0.175rem;
-    transform: translate(-$translateOffset, $translateOffset);
-  }
+  fill: currentColor;
+
+  position: absolute;
+  /* height: 200%; */
+  /* top: -50%; */
   &.active {
     color: $pink;
   }
@@ -30,7 +36,7 @@ $blue: #0d71bb;
   $numClicks: 8;
   @for $i from 0 to $numClicks {
     &.rotate-#{$i} {
-      transform: rotate($i * (360deg / $numClicks));
+      transform: translateX(-25%) scale(1.7) rotate($i * (360deg / $numClicks));
     }
   }
 }

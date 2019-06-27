@@ -69,6 +69,7 @@
     src: "{{ local_modules_location }}/{{ item }}"
     rsync_opts:
       - "--exclude='node_modules'"
+  register: update_sources
   with_items:
     - featherstreamer
     - featherstreamer-shared
@@ -97,6 +98,7 @@
 
       [Install]
       WantedBy=multi-user.target
+  register: featherstreamer_service
   become: yes
   become_user: root
 
@@ -109,21 +111,24 @@
       After=network.target
 
       [Service]
-      ExecStart={{ remote_modules_location }}/featherstreamer-web/node_modules/.bin/serve -s build
+      ExecStart=/usr/local/bin/npm run serve
       WorkingDirectory={{ remote_modules_location }}/featherstreamer-web
-      User=pi
+      # Needs to run as root to open port 80.
+      User=root
       Restart=always
 
       [Install]
       WantedBy=multi-user.target
+  register: featherstreamer_web_service
   become: yes
   become_user: root
 
 - name: start featherstreamer services at boot
   service:
     name: "{{ item }}"
+    daemon_reload: "{{ featherstreamer_web_service.changed or featherstreamer_service.changed }}"
     enabled: yes
-    state: started
+    state: "{{ 'restarted' if featherstreamer_web_service.changed or featherstreamer_service.changed or update_sources.changed or copy_package_lock.changed else 'started' }}"
   with_items:
     - featherstreamer
     - featherstreamer-web
