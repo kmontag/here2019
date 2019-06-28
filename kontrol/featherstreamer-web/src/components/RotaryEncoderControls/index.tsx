@@ -29,14 +29,9 @@ class RotaryEncoderControls extends React.Component<Props> {
     const pushProps: ButtonProps = Object.assign({}, buttonProps, {
       color: isPressed ? 'pink' : 'blue',
     });
-    const knobProps: ButtonProps = Object.assign({}, buttonProps, {
-      color: 'white',
-      inverted: isPressed,
-    });
-
     return (
       <div className={style.root}>
-        <Grid relaxed>
+        <Grid relaxed stackable>
           <Grid.Column width={5}>
             <Button {...buttonProps}
               onClick={() => dispatch(rotateCounterclockwise())}
@@ -52,31 +47,22 @@ class RotaryEncoderControls extends React.Component<Props> {
             </Button>
           </Grid.Column>
           <Grid.Column width={6}>
-            <Grid>
-              <Grid.Column width={11}>
-                <Button {...pushProps}
-                  onMouseDown={() => dispatch(press())}
-                  onMouseUp={() => dispatch(release())}>
-                  { isPressed ? 'RELEASE' : 'PUSH' }
-                </Button>
-              </Grid.Column>
-              <Grid.Column width={5}>
-                <Button {...knobProps}
-                  onMouseDown={() => dispatch(press())}
-                  onMouseUp={() => dispatch(release())}>
-                  <div className={style.dialWrapper}>
-                    <svg className={[
-                      style.dial,
-                      isPressed ? style.active : style.inactive,
-                      style[`rotate-${position}`],
-                    ].join(' ')} height="100%" width="100%">
-                      <image xlinkHref={knob} height="100%" width="100%" />
-                    </svg>
-                    <span>&nbsp;</span>
-                  </div>
-                </Button>
-              </Grid.Column>
-            </Grid>
+            <Button {...pushProps}
+              onMouseDown={() => dispatch(press())}
+              onMouseUp={() => dispatch(release())}
+              className={style.dialButton}>
+              <span className={style.dialText}>{ isPressed ? 'RELEASE' : 'PUSH' }</span>
+              <span className={style.dialWrapper}>
+                <svg className={[
+                  style.dial,
+                  isPressed ? style.active : style.inactive,
+                  style[`rotate-${position}`],
+                ].join(' ')} height="100%" width="100%">
+                  <image xlinkHref={knob} height="100%" width="100%" />
+                </svg>
+                <span>&nbsp;</span>
+              </span>
+            </Button>
           </Grid.Column>
         </Grid>
       </div>

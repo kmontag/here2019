@@ -4,6 +4,7 @@ import { ServerStateState } from '../../store/serverState/reducer';
 import { connect } from 'react-redux';
 import { Icon, Table } from 'semantic-ui-react';
 import { forgetDevice } from '../../store/serverState/actions';
+import style from './style.module.scss';
 
 type Props = ServerStateState & ConnectedReduxProps;
 
@@ -22,17 +23,19 @@ class Device extends React.Component<DeviceProps> {
   }
 
   render() {
-    const deleteCell =
+    const deleteElement =
       (this.props.connections <= 0) ?
-      (<Icon name="delete" link color="red" onClick={() => this.onClickDelete()} />) :
+      (<Icon className={style.delete} name="delete" link color="red" onClick={() => this.onClickDelete()} />) :
       (<div />);
 
     return (
       <Table.Row>
-        <Table.Cell width={5}>{this.props.id}</Table.Cell>
+        <Table.Cell width={5}>
+          {this.props.id}
+          {deleteElement}
+        </Table.Cell>
         <Table.Cell width={5}>{this.props.channelId}</Table.Cell>
         <Table.Cell width={5}>{this.props.connections}</Table.Cell>
-        <Table.Cell width={1}>{deleteCell}</Table.Cell>
       </Table.Row>
     );
   }
@@ -55,7 +58,6 @@ class DevicesList extends React.Component<Props> {
             <Table.HeaderCell>Device</Table.HeaderCell>
             <Table.HeaderCell>Channel</Table.HeaderCell>
             <Table.HeaderCell>Connections</Table.HeaderCell>
-            <Table.HeaderCell></Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>

@@ -2,35 +2,30 @@
   text-align: center;
 }
 
-$pink: #e03997;
-$blue: #0d71bb;
+/* $pink: #e03997; */
+/* $blue: #0d71bb; */
+
+.dialButton {
+  text-align: left !important;
+}
 
 .dialWrapper {
   position: relative;
   height: 100%;
+  display: inline-block;
+  float: right;
+}
 
+.dialText {
+  display: inline-block;
 }
 
 .dial {
-  /* $dimension: 2em; */
-  /* $font-size: 1em; */
-
-  /* margin: auto; */
-  /* background: #1b1c1d; */
-  /* max-width: $dimension; */
-  /* max-height: $dimension; */
-  /* padding: ($dimension - $font-size) / 2; */
-  /* height: 100%; */
-  /* border-radius: 100%; */
-  /* font-size: 2rem; */
-  color: $blue;
-  fill: currentColor;
-
   position: absolute;
-  /* height: 200%; */
-  /* top: -50%; */
-  &.active {
-    color: $pink;
+  width: 1em;
+  > image {
+    height: 100%;
+    width: 1em;
   }
 
   $numClicks: 8;
