@@ -1,5 +1,4 @@
-#ifndef __WI_FI_HANDLER_HPP__
-#define __WI_FI_HANDLER_HPP__
+#pragma once
 
 #define WRAPPER_MAGIC "guardrail"
 #define SSID_MAX_LENGTH 256
@@ -66,5 +65,3 @@ namespace featherstream {
     bool isLastConnectionToMaster;
   };
 }
-
-#endif

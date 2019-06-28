@@ -1,5 +1,4 @@
-#ifndef __FEATHERSTREAMER_MANAGER_HPP__
-#define __FEATHERSTREAMER_MANAGER_HPP__
+#pragma once
 
 #include <WiFi101.h>
 
@@ -21,5 +20,3 @@ namespace featherstream {
     // const char *getReportedPassphrase(const IPAddress &, uint16_t port) const;
   };
 }
-
-#endif

@@ -239,6 +239,6 @@ void Renderer::clear() {
   this->render();
 }
 
-uint16_t Renderer::getMaxLength() const {
+uint16_t Renderer::getLength() const {
   return MAX_LEDS;
 }

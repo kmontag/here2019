@@ -9,9 +9,9 @@
 #include "secrets.h"
 
 #include "FeatherstreamerManager.hpp"
+#include "OfflineAnimation.hpp"
 #include "OPCHandler.hpp"
 #include "Renderer.hpp"
-#include "ConfigServer.hpp"
 #include "WiFiHandler.hpp"
 
 #define LED_PIN A1
@@ -26,9 +26,11 @@ void bootstrap();
 
 featherstream::FeatherstreamerManager *featherstreamerManager;
 featherstream::Renderer *renderer;
-// featherstream::ConfigServer *server;
 featherstream::OPCHandler *opcHandler;
+featherstream::OfflineAnimation *offlineAnimation;
 featherstream::WiFiHandler *wiFiHandler;
+
+int lastSwitchState = -1;
 
 void setup() {
   //Initialize serial and wait for port to open:
@@ -57,17 +59,13 @@ void setup() {
   }
 
   featherstreamerManager = new featherstream::FeatherstreamerManager();
-
   renderer = new featherstream::Renderer();
-  // Serial.println("Created renderer");
-
   opcHandler = new featherstream::OPCHandler(*renderer);
-  Serial.print("My name is ");
-  Serial.println(opcHandler->getDeviceID());
-
+  offlineAnimation = new featherstream::OfflineAnimation(*renderer);
   wiFiHandler = new featherstream::WiFiHandler();
 
-  // server = new featherstream::ConfigServer(*wiFiHandler);
+  Serial.print("My name is ");
+  Serial.println(opcHandler->getDeviceID());
 
   // If pairing credentials were provided at compile time, add them
   // here on first boot. Note we can still enter bootstrap mode later
@@ -111,59 +109,70 @@ void setup() {
 }
 
 void loop() {
-  // Handle any incoming requests.
-  // server->loop();
-
-  // While connected, show a slow blink. While not connected, just
-  // always keep the LED on.
-  bool opcConnected = opcHandler->isConnected();
-  if (opcConnected) {
-    blink(100, 2000, 0);
-  } else {
-    blink(100, 100, 0);
+  int switchState = digitalRead(SWITCH_PIN);
+  if (switchState != lastSwitchState) {
+    Serial.print("Entered switch state ");
+    Serial.println(switchState);
+    renderer->clear();
   }
 
-  if (wiFiHandler->ensureConnected()) {
-
-    if (!opcConnected) {
-      Serial.println("Establishing connection to OPC server.");
-      opcConnected = opcHandler->connect(1, wiFiHandler->getServerAddress(), SECRET_SERVER_PORT);
+  if (switchState == HIGH) {
+    blink(100, 2000, 0);
+    blink(100, 2000, 200);
+    offlineAnimation->loop();
+  } else {
+    // While connected, show a slow blink. While not connected, just
+    // always keep the LED on.
+    bool opcConnected = opcHandler->isConnected();
+    if (opcConnected) {
+      blink(100, 2000, 0);
+    } else {
+      blink(100, 100, 0);
     }
 
-    if (opcConnected) {
-      opcConnected = opcHandler->loop();
-      if (!opcConnected) {
-        renderer->clear();
+    if (wiFiHandler->ensureConnected()) {
 
-        Serial.println("Lost connection to OPC server.");
+      if (!opcConnected) {
+        Serial.println("Establishing connection to OPC server.");
+        opcConnected = opcHandler->connect(1, wiFiHandler->getServerAddress(), SECRET_SERVER_PORT);
+      }
+
+      if (opcConnected) {
+        opcConnected = opcHandler->loop();
+        if (!opcConnected) {
+          renderer->clear();
+
+          Serial.println("Lost connection to OPC server.");
+        }
+      } else {
+        renderer->clear();
+        const uint32_t delayMillis = 2000;
+        uint32_t delayUntil = millis() + delayMillis;
+        while (millis() < delayUntil) {
+          for (uint8_t i = 0; i < 3; i++) {
+            blink(100, delayMillis, 200 * i);
+          }
+          delay(40);
+        }
+
+        Serial.println("Could not connect to OPC server.");
       }
     } else {
       renderer->clear();
-      const uint32_t delayMillis = 2000;
+
+      Serial.println("Could not connect to WiFi.");
+
+      const uint32_t delayMillis = 3000;
       uint32_t delayUntil = millis() + delayMillis;
       while (millis() < delayUntil) {
-        for (uint8_t i = 0; i < 3; i++) {
+        for (uint8_t i = 0; i < 5; i++) {
           blink(100, delayMillis, 200 * i);
         }
-        delay(40);
-      }
-
-      Serial.println("Could not connect to OPC server.");
-    }
-  } else {
-    renderer->clear();
-
-    Serial.println("Could not connect to WiFi.");
-
-    const uint32_t delayMillis = 3000;
-    uint32_t delayUntil = millis() + delayMillis;
-    while (millis() < delayUntil) {
-      for (uint8_t i = 0; i < 5; i++) {
-        blink(100, delayMillis, 200 * i);
       }
     }
-
   }
+
+  lastSwitchState = switchState;
 }
 
 /**

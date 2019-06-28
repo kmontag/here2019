@@ -1,5 +1,4 @@
-#ifndef __RENDERER_HPP__
-#define __RENDERER_HPP__
+#pragma once
 
 #include <Arduino.h>
 
@@ -26,7 +25,7 @@ namespace featherstream {
      */
     uint8_t * getRGBBuffer() const;
 
-    uint16_t getMaxLength() const;
+    uint16_t getLength() const;
 
     /**
      * Convenience method to set a pixel value directly, rather than
@@ -85,5 +84,3 @@ namespace featherstream {
 
   };
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __OPC_HANDLER_HPP__
-#define __OPC_HANDLER_HPP__
+#pragma once
 
 #include <Arduino.h>
 #include <WiFi101.h>
@@ -79,5 +78,3 @@ namespace featherstream {
     uint8_t discardBuf[512 * 3];
   };
 }
-
-#endif

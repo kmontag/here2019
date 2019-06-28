@@ -14,7 +14,7 @@ OPCHandler::OPCHandler(
   Renderer &renderer
 ): renderer(renderer) {
   this->mode = MODE_HEADER;
-  this->numLEDs = this->nextNumLEDs = renderer.getMaxLength();
+  this->numLEDs = this->nextNumLEDs = renderer.getLength();
 
   byte macBytes[6];
   WiFi.macAddress(macBytes);
@@ -114,13 +114,13 @@ bool OPCHandler::loop() {
       bytesPending = (bytesPending + 1) / 2; // Handle a fraction of it
       uint8_t *rgbBuf = this->renderer.getRGBBuffer();
 
-      uint16_t maxLength = this->renderer.getMaxLength() * 3;
+      uint16_t maxLength = this->renderer.getLength() * 3;
 
       do {
         if(this->mode == MODE_DATA) { // Receiving pixel data, most likely case
           // Read size mustn't exceed remaining pixel payload size or pixel
           // buffer size. This avoids some ugly cases like the next pixel
-          //header appearing mid-buffer, which would require nasty memmoves
+          // header appearing mid-buffer, which would require nasty memmoves
           // and stuff.  We'll read some now and pick up the rest on the
           // next pass through.
           if(bytesPending > this->bytesToRead) bytesPending = this->bytesToRead;
@@ -167,7 +167,7 @@ bool OPCHandler::loop() {
                       this->bytesToDiscard -= maxLength; // discard rest
                     }
                     this->nextNumLEDs = this->bytesToRead / 3; // Pixel count when done
-                  } // endif valid command
+                  } // Endif valid command
                 } // endif valid channel
               } // else 0-byte payload; remain in HEADER mode
             } // else full header not yet received; remain in HEADER mode
