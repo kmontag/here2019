@@ -66,6 +66,14 @@ namespace featherstream {
     int16_t bytesToRead = 0, bytesRead = 0, bytesToDiscard = 0,
       numLEDs, nextNumLEDs;
 
+    // Currently-processing data size. Technically this should be
+    // unsigned, but this would only matter for giant packets and the
+    // lightship math works better with a signed value.
+    int16_t dataSize;
+
+    // Details about the currently-processing message.
+    uint8_t cmd = 0;
+
     // updates and priorSeconds are used for the updates-per-second
     // estimate.
     uint32_t updates = 0;

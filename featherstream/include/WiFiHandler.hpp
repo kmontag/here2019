@@ -1,6 +1,5 @@
 #pragma once
 
-#define WRAPPER_MAGIC "guardrail"
 #define SSID_MAX_LENGTH 256
 #define PASSPHRASE_MAX_LENGTH 256
 
@@ -42,11 +41,13 @@ namespace featherstream {
     /**
      * Struct for FlashStorage.
      */
-    typedef struct {
+    struct credentials_t {
       char ssid[SSID_MAX_LENGTH];
       char passphrase[PASSPHRASE_MAX_LENGTH];
-      char magic[sizeof(WRAPPER_MAGIC)];
-    } credentials_t;
+
+      // Use this to check whether the object is valid.
+      uint16_t magic;
+    };
 
     const char * getPairedSSID() const;
     const char * getMasterSSID() const;
@@ -63,5 +64,7 @@ namespace featherstream {
     bool connect(const char *ssid, const char *passphrase);
 
     bool isLastConnectionToMaster;
+
+    static const uint16_t EXPECTED_MAGIC = 4255;
   };
 }

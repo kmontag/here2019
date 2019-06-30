@@ -10,6 +10,9 @@ using namespace featherstream;
 #define MODE_HEADER  1
 #define MODE_DISCARD 2
 
+#define CMD_SET_8_BIT 0
+#define CMD_SYSEX 255
+
 OPCHandler::OPCHandler(
   Renderer &renderer
 ): renderer(renderer) {
@@ -68,8 +71,7 @@ bool OPCHandler::loop() {
      * Processing logic copied in from lightship demo.
      */
     uint32_t t, seconds;
-    int16_t  a, bytesPending, dataSize;
-    //uint8_t  w;
+    int16_t  a, bytesPending;
 
     // DITHER-AND-RECEIVE LOOP STARTS HERE -------------------------------
 
@@ -130,12 +132,31 @@ bool OPCHandler::loop() {
             bytesPending -= a;
             this->bytesToRead  -= a;
             if(this->bytesToRead <= 0) { // End of pixel payload?
-              // END OF PIXEL DATA.  Record arrival time and interval since
-              // last frame, advance buffer indices, switch to HEADER mode
-              // if end of packet, else to DISCARD mode for any remainders.
-              this->renderer.commit();
-              this->commits++;
-              this->numLEDs       = this->nextNumLEDs;
+              if (this->cmd == CMD_SET_8_BIT) {
+                this->renderer.commit();
+                this->commits++;
+                this->numLEDs       = this->nextNumLEDs;
+              } else if (this->cmd == CMD_SYSEX) {
+                if (this->dataSize < 2) {
+                  Serial.println("Sysex command payload size too small, ignoring...");
+                } else {
+                  uint16_t sysexCmd = *(uint16_t *)(&rgbBuf);
+
+                  if (sysexCmd == 6) { // Change offline animation color.
+                    if (this->dataSize == 5) {
+                      uint8_t r = rgbBuf[2], g = rgbBuf[3], b = rgbBuf[4];
+                      Serial.print("Setting offline animation color to R");
+                      Serial.print(r);
+                      Serial.print(" G");
+                      Serial.print(g);
+                      Serial.print(" B");
+                      Serial.println(b);
+                    } else {
+                      Serial.println("Sysex command 6 requires exactly 5 bytes in payload, ignoring...");
+                    }
+                  }
+                }
+              }
               this->bytesRead           = 0; // Reset index
               this->mode = bytesToDiscard ? MODE_DISCARD : MODE_HEADER;
             } else {
@@ -150,23 +171,30 @@ bool OPCHandler::loop() {
             bytesPending -= a;
             if(bytesPending <= 0) { // Full header received, parse it!
               this->bytesRead = 0;        // Reset read buffer index
-              dataSize  = (rgbBuf[2] << 8) |
+              this->dataSize  = (rgbBuf[2] << 8) |
                 rgbBuf[3];
-              if(dataSize > 0) {           // Payload size > 0?
+              if(this->dataSize > 0) {           // Payload size > 0?
                 this->mode = MODE_DISCARD;       // Assume DISCARD until validated,
-                this->bytesToDiscard = dataSize; // may override below
+                this->bytesToDiscard = this->dataSize; // may override below
                 if(rgbBuf[0] <= 1) {   // Valid channel?
-                  if(rgbBuf[1] == 0) { // Pixel data command?
+                  this->cmd = rgbBuf[1];
+                  if(this->cmd == CMD_SET_8_BIT || this->cmd == CMD_SYSEX) { // Valid command?
                     // Valid!  Switch to DATA mode, set up counters...
                     this->mode = MODE_DATA;
-                    if(dataSize <= maxLength) {    // <= MAX_LEDS
-                      this->bytesToRead     = dataSize;          // Read all,
+                    if(this->dataSize <= maxLength) {    // <= MAX_LEDS
+                      this->bytesToRead     = this->dataSize;          // Read all,
                       this->bytesToDiscard  = 0;                 // no discard
                     } else {                               // > MAX_LEDS
                       this->bytesToRead     = maxLength; // Read MAX_LEDS,
                       this->bytesToDiscard -= maxLength; // discard rest
                     }
                     this->nextNumLEDs = this->bytesToRead / 3; // Pixel count when done
+                  } else {
+                    Serial.print("Invalid command ");
+                    Serial.print(this->cmd);
+                    Serial.print(", discarding ");
+                    Serial.print(this->bytesToDiscard);
+                    Serial.println(" bytes of data.");
                   } // Endif valid command
                 } // endif valid channel
               } // else 0-byte payload; remain in HEADER mode

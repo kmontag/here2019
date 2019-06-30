@@ -9,7 +9,7 @@
 #include "secrets.h"
 
 #include "FeatherstreamerManager.hpp"
-#include "OfflineAnimation.hpp"
+#include "TwinkleAnimation.hpp"
 #include "OPCHandler.hpp"
 #include "Renderer.hpp"
 #include "WiFiHandler.hpp"
@@ -22,12 +22,12 @@ void printWiFiStatus();
 void printEncryptionType(int thisType);
 
 void blink(uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs);
-void bootstrap();
+void pairing();
 
 featherstream::FeatherstreamerManager *featherstreamerManager;
 featherstream::Renderer *renderer;
 featherstream::OPCHandler *opcHandler;
-featherstream::OfflineAnimation *offlineAnimation;
+featherstream::TwinkleAnimation *offlineAnimation;
 featherstream::WiFiHandler *wiFiHandler;
 
 int lastSwitchState = -1;
@@ -61,14 +61,14 @@ void setup() {
   featherstreamerManager = new featherstream::FeatherstreamerManager();
   renderer = new featherstream::Renderer();
   opcHandler = new featherstream::OPCHandler(*renderer);
-  offlineAnimation = new featherstream::OfflineAnimation(*renderer);
+  offlineAnimation = new featherstream::TwinkleAnimation(*renderer);
   wiFiHandler = new featherstream::WiFiHandler();
 
   Serial.print("My name is ");
   Serial.println(opcHandler->getDeviceID());
 
   // If pairing credentials were provided at compile time, add them
-  // here on first boot. Note we can still enter bootstrap mode later
+  // here on first boot. Note we can still enter pairing mode later
   // to change them.
 #ifdef SECRET_PAIRED_SSID
   if (!wiFiHandler->isPaired()) {
@@ -79,18 +79,18 @@ void setup() {
   renderer->clear();
   Serial.println("Turned off LEDs");
 
-  // Check if we should enter bootstrap mode.
-  bool isBootstrapModeActive = false;
+  // Check if we should enter pairing mode.
+  bool isPairingModeActive = false;
   if (!wiFiHandler->isPaired()) {
-    isBootstrapModeActive = true;
+    isPairingModeActive = true;
   } else {
     // Check for more than two clicks of the switch in 500ms.
-    uint32_t bootstrapPossibleUntil = millis() + 500;
+    uint32_t pairingPossibleUntil = millis() + 500;
     uint32_t numClicks = 0;
 
     int buttonState = digitalRead(SWITCH_PIN);
 
-    while(millis() < bootstrapPossibleUntil) {
+    while(millis() < pairingPossibleUntil) {
       int nextButtonState = digitalRead(SWITCH_PIN);
       if (nextButtonState != buttonState) {
         numClicks++;
@@ -98,13 +98,13 @@ void setup() {
     }
 
     if (numClicks >= 2) {
-      isBootstrapModeActive = true;
+      isPairingModeActive = true;
     }
   }
 
-  if (isBootstrapModeActive) {
+  if (isPairingModeActive) {
     // This will run forever, so we'll never enter the main loop.
-    bootstrap();
+    pairing();
   }
 }
 
@@ -176,18 +176,18 @@ void loop() {
 }
 
 /**
- * Connect to the bootstrap network, try to pull credentials from the
+ * Connect to the pairing network, try to pull credentials from the
  * featherstreamer server, and serve HTTP requests forever, presenting
  * a minimal UI to change device config.
  */
-void bootstrap() {
-  Serial.println("Entered bootstrap mode");
+void pairing() {
+  Serial.println("Entered pairing mode");
 
   // Connect to WiFi
   bool isLit = false;
-  while (WiFi.begin(SECRET_BOOTSTRAP_SSID, SECRET_BOOTSTRAP_PASSPHRASE) != WL_CONNECTED) {
+  while (WiFi.begin(SECRET_PAIRING_SSID, SECRET_PAIRING_PASSPHRASE) != WL_CONNECTED) {
     Serial.print("Trying to connect to SSID ");
-    Serial.println(SECRET_BOOTSTRAP_SSID);
+    Serial.println(SECRET_PAIRING_SSID);
 
     isLit = !isLit;
     digitalWrite(LED_PIN, isLit ? HIGH : LOW);
@@ -196,8 +196,8 @@ void bootstrap() {
   }
 
   // Try to pull network credentials from the featherstreamer we're connected to.
-  const String ssid = featherstreamerManager->getReportedSSID(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
-  // const char *passphrase = featherstreamerManager->getReportedPassphrase(SECRET_BOOTSTRAP_SERVER_IP, SECRET_SERVER_PORT);
+  const String ssid = featherstreamerManager->getReportedSSID(SECRET_PAIRING_SERVER_IP, SECRET_SERVER_PORT);
+  // const char *passphrase = featherstreamerManager->getReportedPassphrase(SECRET_PAIRING_SERVER_IP, SECRET_SERVER_PORT);
 
   if (ssid.length() > 0) { // && passphrase != NULL) {
     wiFiHandler->setPairedSSID(ssid.c_str());

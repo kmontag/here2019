@@ -18,7 +18,7 @@ FlashStorage(credentials_storage, WiFiHandler::credentials_t);
 
 WiFiHandler::WiFiHandler() {
   this->credentials = credentials_storage.read();
-  this->hasCredentials = (strcmp(WRAPPER_MAGIC, this->credentials.magic) == 0);
+  this->hasCredentials = (this->credentials.magic == EXPECTED_MAGIC);
 
   this->lastVerifiedAt = -CONNECTION_VALID_MS;
   this->isLastConnectionToMaster = false;
@@ -150,7 +150,7 @@ bool WiFiHandler::setPairedSSID(const char *ssid) {
     strcpy(this->credentials.ssid, ssid);
     //strcpy(this->credentials.passphrase, passphrase);
     strcpy(this->credentials.passphrase, SECRET_PAIRED_PASSPHRASE);
-    strcpy(this->credentials.magic, WRAPPER_MAGIC);
+    this->credentials.magic = EXPECTED_MAGIC;
 
     credentials_storage.write(this->credentials);
     this->hasCredentials = true;

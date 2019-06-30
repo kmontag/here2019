@@ -1,8 +1,19 @@
-#include "OfflineAnimation.hpp"
+#include "TwinkleAnimation.hpp"
+
+#include <FlashStorage.h>
 
 using namespace featherstream;
 
-OfflineAnimation::OfflineAnimation(Renderer &renderer) : renderer(renderer) {
+FlashStorage(settings_storage, TwinkleAnimation::settings_t);
+
+TwinkleAnimation::TwinkleAnimation(Renderer &renderer) : renderer(renderer) {
+  this->settings = settings_storage.read();
+
+  // Default to white.
+  if (this->settings.magic != EXPECTED_MAGIC) {
+    this->settings.r = this->settings.g = this->settings.b = 255;
+  }
+
   this->twinkleStatuses = new twinkleStatus[renderer.getLength()];
   for (uint16_t i = 0; i < renderer.getLength(); i++) {
     this->twinkleStatuses[i].brightness = 0;
@@ -11,11 +22,11 @@ OfflineAnimation::OfflineAnimation(Renderer &renderer) : renderer(renderer) {
   }
 }
 
-OfflineAnimation::~OfflineAnimation() {
+TwinkleAnimation::~TwinkleAnimation() {
   delete[] this->twinkleStatuses;
 }
 
-void OfflineAnimation::loop() {
+void TwinkleAnimation::loop() {
   for (uint16_t i = 0; i < this->renderer.getLength(); i++) {
     // Randomly turn on twinkles.
     if (!this->twinkleStatuses[i].isActive && random(FRAMES_BETWEEN_TWINKLES) == 0) {
@@ -44,4 +55,13 @@ void OfflineAnimation::loop() {
   }
   this->renderer.commit();
   delay(LOOP_DELAY);
+}
+
+void TwinkleAnimation::setColor(uint8_t r, uint8_t g, uint8_t b) {
+  this->settings.r = r;
+  this->settings.g = g;
+  this->settings.b = b;
+  this->settings.magic = EXPECTED_MAGIC;
+
+  settings_storage.write(this->settings);
 }
