@@ -54,7 +54,8 @@ void TwinkleAnimation::loop() {
     this->renderer.setPixel(i, renderedBrightness, renderedBrightness, renderedBrightness);
   }
   this->renderer.commit();
-  delay(LOOP_DELAY);
+  this->renderer.render();
+  //delay(LOOP_DELAY);
 }
 
 void TwinkleAnimation::setColor(uint8_t r, uint8_t g, uint8_t b) {

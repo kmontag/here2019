@@ -237,6 +237,11 @@ void Renderer::clear() {
   memset(this->getRGBBuffer(), 0, MAX_LEDS * 3);
   this->commit();
   this->render();
+
+  // Do this twice to force a full (non-dithered) blackout.
+  memset(this->getRGBBuffer(), 0, MAX_LEDS * 3);
+  this->commit();
+  this->render();
 }
 
 uint16_t Renderer::getLength() const {

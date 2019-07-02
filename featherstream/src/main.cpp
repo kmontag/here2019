@@ -21,7 +21,7 @@
 void printWiFiStatus();
 void printEncryptionType(int thisType);
 
-void blink(uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs);
+void blink(uint32_t identifier, uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs);
 void pairing();
 
 featherstream::FeatherstreamerManager *featherstreamerManager;
@@ -117,17 +117,17 @@ void loop() {
   }
 
   if (switchState == HIGH) {
-    blink(100, 2000, 0);
-    blink(100, 2000, 200);
+    blink(550932, 100, 3000, 0);
+    blink(552411, 100, 3000, 300);
     offlineAnimation->loop();
   } else {
     // While connected, show a slow blink. While not connected, just
     // always keep the LED on.
     bool opcConnected = opcHandler->isConnected();
     if (opcConnected) {
-      blink(100, 2000, 0);
+      blink(552614, 100, 2000, 0);
     } else {
-      blink(100, 100, 0);
+      blink(552415, 100, 100, 0);
     }
 
     if (wiFiHandler->ensureConnected()) {
@@ -150,7 +150,7 @@ void loop() {
         uint32_t delayUntil = millis() + delayMillis;
         while (millis() < delayUntil) {
           for (uint8_t i = 0; i < 3; i++) {
-            blink(100, delayMillis, 200 * i);
+            blink(556473, 100, delayMillis, 200 * i);
           }
           delay(40);
         }
@@ -166,7 +166,7 @@ void loop() {
       uint32_t delayUntil = millis() + delayMillis;
       while (millis() < delayUntil) {
         for (uint8_t i = 0; i < 5; i++) {
-          blink(100, delayMillis, 200 * i);
+          blink(551231, 100, delayMillis, 200 * i);
         }
       }
     }
@@ -206,32 +206,33 @@ void pairing() {
 
     // Fast blink indicates success.
     while (true) {
-      blink(100, 300, 0);
+      blink(551231, 100, 300, 0);
     }
   } else {
     // Slower blink indicates error.
     while(true) {
-      blink(100, 1000, 0);
+      blink(554244, 100, 1000, 0);
     }
   }
 }
 
 /**
- * Call this repeatedly to blink the notification LED.
+ * Call this repeatedly to blink the notification LED. Pass a separate
+ * consistent identifier (can be anything except 0) for each blink in
+ * a series to get reasonable on/off behavior.
  */
-void blink(uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs) {
-  static bool blinkActive = false;
-
-  if ((millis() + offsetMs) % periodMs < onDurationMs) {
-    if (!blinkActive) {
+uint32_t activeBlink = 0;
+void blink(uint32_t identifier, uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs) {
+  uint32_t positionMs = (millis() + offsetMs) % periodMs;
+  if (positionMs < onDurationMs) {
+    if (activeBlink != identifier) {
       digitalWrite(LED_PIN, HIGH);
-      blinkActive = true;
-      // Serial.println("blink");
+      activeBlink = identifier;
     }
   } else {
-    if (blinkActive) {
+    if (activeBlink == identifier) {
       digitalWrite(LED_PIN, LOW);
-      blinkActive = false;
+      activeBlink = 0;
     }
   }
 }
