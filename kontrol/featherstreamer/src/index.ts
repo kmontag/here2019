@@ -1,14 +1,18 @@
 import server from './server';
 import OPCManager from './OPCManager';
+import { initMedia } from './media';
 
-const opcManager = new OPCManager();
-opcManager.start();
+(async () => {
+  await initMedia();
 
-const app = server({
-  opcManager,
-});
+  const opcManager = new OPCManager();
 
-const port = 44668;
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server listening on port ${port}.`);
-});
+  const app = server({
+    opcManager,
+  });
+
+  const port = 44668;
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Server listening on port ${port}.`);
+  });
+})();

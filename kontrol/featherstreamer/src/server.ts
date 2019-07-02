@@ -3,9 +3,10 @@ import * as os from 'os';
 import * as bodyParser from 'body-parser';
 import OPCManager from './OPCManager';
 import { handleTurnCW, handleTurnCCW, handlePress, handleRelease } from './rotaryEncoder';
-import { registerDeviceConnection, store, forgetDevice, setDeviceChannel, registerDeviceDisconnection } from './state';
+import { registerDeviceConnection, store as deviceStore, forgetDevice, setDeviceChannel, registerDeviceDisconnection } from './deviceState';
 import { Record as RuntypesRecord, String as RuntypesString } from 'runtypes';
 import { ServerState } from 'featherstreamer-shared';
+import nodeStatusManager from './nodeStatusManager';
 
 const getSSID = () => {
   return os.hostname();
@@ -35,16 +36,21 @@ export default function server({
   });
 
   app.get('/state', (req, res) => {
-    const applicationState = store.getState();
+    const deviceState = deviceStore.getState();
     const publicState: ServerState = {
       channels: {},
       devices: {},
+      nodeStatus: {
+        mode: nodeStatusManager.getMode(),
+        isNetworkInterfaceUpdating: nodeStatusManager.isNetworkInterfaceUpdating(),
+        isMasterVisible: false,
+      },
       ssid: getSSID(),
     };
-    applicationState.get('channels').forEach((channel, id) => {
-      publicState.channels[id] = channel.toJS();
-    });
-    applicationState.get('devices').forEach((device, id) => {
+    // deviceState.get('channels').forEach((channel, id) => {
+    //   publicState.channels[id] = channel.toJS();
+    // });
+    deviceState.get('devices').forEach((device, id) => {
       publicState.devices[id] = device.toJS();
     });
 
@@ -57,16 +63,14 @@ export default function server({
    */
   app.get('/device/:id/opc', (req, res) => {
     registerDeviceConnection(req.params.id);
-    const device = store.getState().get('devices').get(req.params.id);
+    const device = deviceStore.getState().get('devices').get(req.params.id);
     if (!device) {
       throw new Error('unexpected');
     }
 
-    const stream = opcManager.getStream(device.get('channelId'));
-
-    stream.pipe(res);
+    const removeStream = opcManager.stream(device.get('channelId'), res);
     const handleDisconnect = () => {
-      stream.unpipe(res);
+      removeStream();
       registerDeviceDisconnection(req.params.id);
     };
 

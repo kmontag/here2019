@@ -4,7 +4,7 @@ import StrictEventEmitter from 'strict-event-emitter-types';
 import { EventEmitter } from 'events';
 
 type Channel = {
-  readonly id: string,
+  readonly length: number,
   readonly frames: ReadonlyArray<ReadonlyArray<Pixel>>,
 };
 
@@ -53,7 +53,7 @@ type FrameplayerEventEmitter = StrictEventEmitter<EventEmitter, Events>;
  */
 export default class Frameplayer {
 
-  private readonly _channels: ReadonlyArray<Channel>;
+  private readonly _channels: {readonly [id: string]: Channel};
   private readonly _fps: number;
   private readonly eventEmitter: FrameplayerEventEmitter;
   private currFrame: number;
@@ -80,7 +80,7 @@ export default class Frameplayer {
 
     const animationMsg = p(frameplayerFile.animation);
 
-    const channels: Channel[] = [];
+    const channels: {[id: string]: Channel} = {};
 
     for (const channelId in animationMsg.channels) {
       const frames: Pixel[][] = [];
@@ -101,13 +101,10 @@ export default class Frameplayer {
         frames.push(pixels);
       }
 
-      if (!/[0-9]+/.test(channelId)) {
-        throw new Error('unexpected - channel ID is not an integer');
-      }
-      channels.push({
-        id: parseInt(channelId),
+      channels[channelId] = {
+        length: frames[0] ? frames[0].length : 0,
         frames,
-      });
+      };
     }
 
     this._channels = channels;
@@ -120,7 +117,7 @@ export default class Frameplayer {
     return this._fps;
   }
 
-  get channels(): ReadonlyArray<Channel> {
+  get channels(): {readonly [id: string]: Channel} {
     return this._channels;
   }
 
@@ -161,9 +158,10 @@ export default class Frameplayer {
       const frameEventChannels: { -readonly [P in keyof FrameEvent['channels']]-?: FrameEvent['channels'][P] } = {};
 
       // Build the event.
-      for (const channel of this.channels) {
+      for (const channelId in this.channels) {
+        const channel = this.channels[channelId];
         const channelFrame = this.currFrame % channel.frames.length;
-        frameEventChannels[channel.id] = {
+        frameEventChannels[channelId] = {
           currFrame: channelFrame,
           totalFrames: channel.frames.length,
           pixels: channel.frames[channelFrame],

@@ -10,8 +10,8 @@
     - ungrouped
   # strategy: free
   roles:
-    # - expand_root_partition
-    # - access_point
+    - expand_root_partition
+    - access_point
     - featherstreamer
 
     #- vernemq

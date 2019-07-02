@@ -1,22 +1,29 @@
+/**
+ * State for connected devices.
+ *
+ * TODO: Redux was probably the wrong design choice here, other parts
+ * of the global state use their own modules + `PersistentState` for
+ * persistence. Redo this at some point.
+ */
+
 import { createStore, Reducer, Action } from 'redux';
-import { Channel, Device } from 'featherstreamer-shared';
+import { Device } from 'featherstreamer-shared';
 import { Map, Record as ImmutableRecord } from 'immutable';
 import { Dictionary, Record as RuntypesRecord, String as RuntypesString, Static } from 'runtypes';
-import * as fs from 'fs';
-import * as path from 'path';
+import persistentState from './persistentState';
 import logger from './logger';
+import OPCManager from './OPCManager';
 
 const SavedState = RuntypesRecord({
   // ID -> channel number
   devices: Dictionary(RuntypesString, 'string'),
 });
 type SavedState = Static<typeof SavedState>;
-const SAVED_STATE_FILENAME = path.join(__dirname, '..', 'state.json');
 
-const DEFAULT_CHANNEL_ID = 'default';
+const PERSISTENT_STATE_KEY = 'devices';
+const DEFAULT_CHANNEL_ID = OPCManager.getDefaultChannel();
 
 type ApplicationState = ImmutableRecord<{
-  channels: Map<string, ImmutableRecord<Channel>>,
   devices: Map<string, ImmutableRecord<Device>>,
 }>;
 
@@ -51,11 +58,14 @@ type ApplicationAction =
 const getDefaultState = (): ApplicationState => {
   let savedState: SavedState | undefined = undefined;
   try {
-    const json = fs.readFileSync(SAVED_STATE_FILENAME, { encoding: 'UTF-8' });
-    savedState = SavedState.check(JSON.parse(json));
+    const obj = persistentState.get(PERSISTENT_STATE_KEY);
+    if (!obj) {
+      throw new Error('State does not exist.');
+    }
+    savedState = SavedState.check(obj);
     logger.info('Loaded saved state.');
   } catch {
-    logger.warn(`Error reading state, or no state file found at ${SAVED_STATE_FILENAME}`);
+    logger.warn(`Error reading device state, or no device state found.`);
   }
 
   const devices: {
@@ -71,11 +81,6 @@ const getDefaultState = (): ApplicationState => {
   }
 
   return ImmutableRecord({
-    channels: Map({
-      [DEFAULT_CHANNEL_ID]: ImmutableRecord({
-        description: 'Default channel',
-      })(),
-    }),
     devices: Map(devices),
   })();
 };
@@ -156,7 +161,7 @@ const reducer: Reducer<ApplicationState, ApplicationAction> = (state = getDefaul
     newState.get('devices').forEach((device, id) => {
       savedState.devices[id] = device.get('channelId');
     });
-    fs.writeFileSync(SAVED_STATE_FILENAME, JSON.stringify(savedState), { encoding: 'UTF-8' });
+    persistentState.set(PERSISTENT_STATE_KEY, savedState);
 
     logger.info('Saved updated state.');
   }

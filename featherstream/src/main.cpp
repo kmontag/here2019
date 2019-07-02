@@ -217,9 +217,9 @@ void pairing() {
 }
 
 /**
- * Call this repeatedly to blink the notification LED. Pass a separate
+ * Call this repeatedly to blink the notification LED. Pass a unique
  * consistent identifier (can be anything except 0) for each blink in
- * a series to get reasonable on/off behavior.
+ * a series to prevent blinks from stomping on each other.
  */
 uint32_t activeBlink = 0;
 void blink(uint32_t identifier, uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs) {

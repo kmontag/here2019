@@ -1,11 +1,15 @@
-import { Readable } from 'stream';
+import { Writable } from 'stream';
 import { writableNoopStream } from 'noop-stream';
+import { getFrameplayers } from './media';
+import logger from './logger';
 
 const createOPCStream = require('opc');
 const createStrand = require('opc/strand');
 
 export default class OPCManager {
   private readonly opcStream: ReturnType<typeof createOPCStream>;
+  private mediaIndex: number = 0;
+  private channels: string[]|undefined = undefined;
 
   constructor() {
     this.opcStream = createOPCStream(100);
@@ -14,45 +18,74 @@ export default class OPCManager {
     this.opcStream.pipe(writableNoopStream());
   }
 
-  // Temp, until we get frameplayer integrated
-  start() {
-    // let isWhite: boolean = true;
-    const maxBrightness = 70;
-    const minBrightness = 10;
-    const color: number[] = new Array(3).fill(0).map((unused) => {
-      return minBrightness + Math.floor(Math.random() * (maxBrightness - minBrightness));
+  /**
+   * Stream a channel to e.g. an express response object, swapping the
+   * content as necessary when e.g. the playing video is cycled, the
+   * mode is changed, etc.
+   *
+   * Returns a callback to stop streaming.
+   */
+  stream(channel: string, toWritable: Writable): (() => void) {
+    const frameplayers = getFrameplayers();
+    const { frameplayer } = frameplayers[this.mediaIndex % frameplayers.length];
+    if (!(channel in frameplayer.channels)) {
+      logger.warn(`Channel ${channel} not found, falling back to a default value`);
+      const defaultChannel = OPCManager.getDefaultChannel();
+      if (defaultChannel in frameplayer.channels) {
+        channel = defaultChannel;
+      } else {
+        channel = Object.keys(frameplayer.channels).sort()[0];
+      }
+    }
+    const channelData = frameplayer.channels[channel];
+    if (!channelData) {
+      throw new Error('unexpected');
+    }
+
+    const stream = createOPCStream(channelData.length);
+    const strand = createStrand(channelData.length);
+
+    frameplayer.on('frame', (frame) => {
+      const channelData = frame.channels[channel];
+      for (let i = 0; i < channelData.pixels.length; i++) {
+        const pixel = channelData.pixels[i];
+        strand.setPixel(i, pixel.r, pixel.g, pixel.b);
+      }
+      stream.writePixels(0, strand.buffer);
     });
 
-    const strand = createStrand(100);
-    setInterval(() => {
-      const interpolationInterval = 2000;
-      const interpolation = Math.abs((new Date().getTime() % interpolationInterval) - (interpolationInterval / 2)) / (interpolationInterval / 2);
+    stream.pipe(toWritable);
 
-      for (let pixel = 0; pixel < strand.length; pixel++) {
-        if (pixel < 15) {
-          strand.setPixel(pixel, ...color.map((c) => c + interpolation * (maxBrightness - c)));
-        } else {
-          strand.setPixel(pixel, 0, 0, 0);
-        }
-      }
-
-      // isWhite = !isWhite;
-      // for (let pixel = 0; pixel < strand.length; pixel++) {
-      //   if (isWhite) {
-      //     strand.setPixel(pixel, maxBrightness, maxBrightness, maxBrightness);
-      //   } else {
-      //     strand.setPixel(pixel, color[0], color[1], color[2]);
-      //     //strand.setPixel(pixel, maxBrightness, 0, 0);
-      //   }
-      // }
-      this.opcStream.writePixels(0, strand.buffer);
-    }, 100);
+    return () => {
+      stream.unpipe(toWritable);
+    };
   }
 
   /**
-   * Get a permanent stream for all data on the given channel.
+   * All channel IDs which are available on one or more frameplayer
+   * files, plus the default channel.
    */
-  getStream(channel: string): Readable {
-    return this.opcStream;
+  getChannels(): string[] {
+    if (this.channels === undefined) {
+      const channelsSet = new Set<string>();
+      getFrameplayers().forEach((f) => {
+        for (const channel in f.frameplayer.channels) {
+          channelsSet.add(channel);
+        }
+      });
+      channelsSet.add(OPCManager.getDefaultChannel());
+
+      this.channels = Array.from(channelsSet);
+    }
+    return this.channels;
+  }
+
+  /**
+   * If `stream` is called with a channel not present on the current
+   * frameplayer instance, this channel will be used instead. (If this
+   * channel also doesn't exist, an arbitrary one will be chosen.).
+   */
+  static getDefaultChannel(): string {
+    return 'default';
   }
 }

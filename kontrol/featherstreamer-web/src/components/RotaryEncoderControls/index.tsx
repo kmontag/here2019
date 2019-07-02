@@ -48,8 +48,7 @@ class RotaryEncoderControls extends React.Component<Props> {
           </Grid.Column>
           <Grid.Column width={6}>
             <Button {...pushProps}
-              onMouseDown={() => dispatch(press())}
-              onMouseUp={() => dispatch(release())}
+              onClick={() => isPressed ? dispatch(release()) : dispatch(press())}
               className={style.dialButton}>
               <span className={style.dialText}>{ isPressed ? 'RELEASE' : 'PUSH' }</span>
               <span className={style.dialWrapper}>

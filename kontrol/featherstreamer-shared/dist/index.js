@@ -10,9 +10,22 @@ const Device = runtypes_1.Record({
     channelId: runtypes_1.String,
 });
 exports.Device = Device;
+/**
+ * Info related to the device's status within the wider network of
+ * devices.
+ */
+const Mode = runtypes_1.Union(runtypes_1.Literal('master'), runtypes_1.Literal('slave'), runtypes_1.Literal('isolated'), runtypes_1.Literal('pairing'));
+exports.Mode = Mode;
+const NodeStatus = runtypes_1.Record({
+    mode: Mode,
+    isNetworkInterfaceUpdating: runtypes_1.Boolean,
+    isMasterVisible: runtypes_1.Boolean,
+});
+exports.NodeStatus = NodeStatus;
 const ServerState = runtypes_1.Record({
     channels: runtypes_1.Dictionary(Channel, 'string'),
     devices: runtypes_1.Dictionary(Device, 'string'),
+    nodeStatus: NodeStatus,
     ssid: runtypes_1.String,
 });
 exports.ServerState = ServerState;

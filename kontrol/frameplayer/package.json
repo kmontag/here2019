@@ -2,7 +2,8 @@
   "name": "frameplayer",
   "version": "0.0.0-dev",
   "description": "Stream pixel data from video files",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "pbjs -t static-module -w es6 -o src/proto.js proto/*.proto && pbts -o src/proto.d.ts src/proto.js && tsc",
     "prepare-example": "ts-node --files src/cli.ts prepare examples/input.mp4 -o examples/output.fpl -c examples/frameplayer.json",

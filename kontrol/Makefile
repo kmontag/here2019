@@ -42,9 +42,11 @@ ansible/local/id_rsa.pub ansible/local/id_rsa:
 	ssh-keygen -t rsa -N "" -f ansible/local/id_rsa
 
 # JS module builds.
-featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsconfig.json featherstreamer/tslint.json $(shell find featherstreamer/src -type f) $(shell find featherstreamer-shared -type f)
+featherstreamer-shared/dist/index.js: featherstreamer-shared/tsconfig.json featherstreamer-shared/tslint.json $(shell find featherstreamer-shared/src/ -type f)
+	cd featherstreamer-shared && npm run build
+featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsconfig.json featherstreamer/tslint.json $(shell find featherstreamer/src -type f) featherstreamer-shared/dist/index.js
 	cd featherstreamer && npm run build
-.make.featherstreamer-web: $(shell find	featherstreamer-web -type f) $(shell find featherstreamer-shared -type f)
+.make.featherstreamer-web: $(shell find	featherstreamer-web -type f) featherstreamer-shared/dist/index.js
 	cd featherstreamer-web && npm run build
 	touch .make.featherstreamer-web
 

@@ -744,7 +744,7 @@ export const frameplayer = $root.frameplayer = (() => {
                     writer.uint32(/* id 1, wireType 5 =*/13).float(message.fps);
                 if (message.channels != null && message.hasOwnProperty("channels"))
                     for (let keys = Object.keys(message.channels), i = 0; i < keys.length; ++i) {
-                        writer.uint32(/* id 2, wireType 2 =*/18).fork().uint32(/* id 1, wireType 0 =*/8).uint32(keys[i]);
+                        writer.uint32(/* id 2, wireType 2 =*/18).fork().uint32(/* id 1, wireType 2 =*/10).string(keys[i]);
                         $root.frameplayer.protobuf.Channel.encode(message.channels[keys[i]], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim().ldelim();
                     }
                 return writer;
@@ -788,7 +788,7 @@ export const frameplayer = $root.frameplayer = (() => {
                         reader.skip().pos++;
                         if (message.channels === $util.emptyObject)
                             message.channels = {};
-                        key = reader.uint32();
+                        key = reader.string();
                         reader.pos++;
                         message.channels[key] = $root.frameplayer.protobuf.Channel.decode(reader, reader.uint32());
                         break;
@@ -835,13 +835,9 @@ export const frameplayer = $root.frameplayer = (() => {
                         return "channels: object expected";
                     let key = Object.keys(message.channels);
                     for (let i = 0; i < key.length; ++i) {
-                        if (!$util.key32Re.test(key[i]))
-                            return "channels: integer key{k:uint32} expected";
-                        {
-                            let error = $root.frameplayer.protobuf.Channel.verify(message.channels[key[i]]);
-                            if (error)
-                                return "channels." + error;
-                        }
+                        let error = $root.frameplayer.protobuf.Channel.verify(message.channels[key[i]]);
+                        if (error)
+                            return "channels." + error;
                     }
                 }
                 return null;
