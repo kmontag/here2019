@@ -1,21 +1,67 @@
 import { Writable } from 'stream';
 import { writableNoopStream } from 'noop-stream';
-import { getFrameplayers } from './media';
+import { getFrameplayers, FrameplayerDescriptor } from './media';
 import logger from './logger';
+import StrictEventEmitter from 'strict-event-emitter-types';
+import { EventEmitter } from 'events';
 
 const createOPCStream = require('opc');
 const createStrand = require('opc/strand');
+
+interface MediaDescriptor {
+  readonly name: string,
+  readonly type: 'frameplayer',
+}
+
+interface MediaIndexChangedEvent {
+  prevMediaIndex: number;
+  mediaIndex: number;
+}
+
+interface Events {
+  mediaIndexChanged: MediaIndexChangedEvent;
+}
 
 export default class OPCManager {
   private readonly opcStream: ReturnType<typeof createOPCStream>;
   private mediaIndex: number = 0;
   private channels: string[]|undefined = undefined;
+  private readonly frameplayers: ReadonlyArray<FrameplayerDescriptor>;
+  private readonly eventEmitter: StrictEventEmitter<EventEmitter, Events> =
+    new EventEmitter();
 
-  constructor() {
+  constructor(
+    frameplayers: Iterable<FrameplayerDescriptor>,
+  ) {
     this.opcStream = createOPCStream(100);
 
     // Don't let data get backed up.
     this.opcStream.pipe(writableNoopStream());
+    this.frameplayers = Array.from(frameplayers);
+  }
+
+  /**
+   * Start playing media from a different index. The list of media is
+   * treated as a "circular" array, i.e. this index can be any
+   * integer.
+   */
+  setMediaIndex(mediaIndex: number) {
+    const prevMediaIndex = this.mediaIndex;
+    this.mediaIndex = mediaIndex;
+    this.eventEmitter.emit('mediaIndexChanged', {
+      prevMediaIndex,
+      mediaIndex,
+    });
+  }
+
+  getMediaIndex(): number {
+    return this.mediaIndex;
+  }
+
+  getMediaDescriptors(): ReadonlyArray<MediaDescriptor> {
+    return this.frameplayers.map((f) => {
+      return { name: f.name, type: 'frameplayer' };
+    });
   }
 
   /**
@@ -26,8 +72,10 @@ export default class OPCManager {
    * Returns a callback to stop streaming.
    */
   stream(channel: string, toWritable: Writable): (() => void) {
-    const frameplayers = getFrameplayers();
-    const { frameplayer } = frameplayers[this.mediaIndex % frameplayers.length];
+    // Handle negative values, see
+    // https://web.archive.org/web/20090717035140if_/javascript.about.com/od/problemsolving/a/modulobug.htm.
+    const realMediaIndex = (this.mediaIndex % this.frameplayers.length + this.frameplayers.length) % this.frameplayers.length;
+    const { frameplayer } = this.frameplayers[realMediaIndex];
     if (!(channel in frameplayer.channels)) {
       logger.warn(`Channel ${channel} not found, falling back to a default value`);
       const defaultChannel = OPCManager.getDefaultChannel();

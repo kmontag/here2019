@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["es6"],
     "noUnusedLocals": true,

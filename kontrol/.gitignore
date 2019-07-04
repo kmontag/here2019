@@ -3,3 +3,6 @@
 /ansible/inventory/hosts.local
 /node_modules/
 /.make.*
+
+/media-src/
+/media-build/

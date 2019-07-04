@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "pbjs -t static-module -w es6 -o src/proto.js proto/*.proto && pbts -o src/proto.d.ts src/proto.js && tsc",
+    "build": "rm -rf dist/ && pbjs -t static-module -w es6 -o src/proto.js proto/*.proto && pbts -o src/proto.d.ts src/proto.js && tsc && tsc --declaration false --allowJs true && chmod +x dist/cli.js",
     "prepare-example": "ts-node --files src/cli.ts prepare examples/input.mp4 -o examples/output.fpl -c examples/frameplayer.json",
     "preview-example": "ts-node --files src/cli.ts preview examples/output.fpl",
     "test": "echo \"Error: no test specified\" && exit 1"

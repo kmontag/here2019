@@ -24,7 +24,9 @@
   },
   "dependencies": {
     "body-parser": "^1.19.0",
+    "env-var": "^5.0.0",
     "express": "^4.17.1",
+    "fast-glob": "^3.0.3",
     "featherstreamer-shared": "file:../featherstreamer-shared",
     "frameplayer": "file:../frameplayer",
     "immutable": "^4.0.0-rc.12",

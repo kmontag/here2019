@@ -1,12 +1,11 @@
 import { Frameplayer } from 'frameplayer';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as fg from 'fast-glob';
 import logger from './logger';
+import { getConfig } from './config';
 
-// TODO: Configurable so we can use a writable volume on the SD card.
-const MEDIA_DIRECTORY = `${__dirname}/../media`;
-
-interface FrameplayerDescriptor {
+export interface FrameplayerDescriptor {
   readonly name: string;
   readonly frameplayer: Frameplayer;
 }
@@ -19,11 +18,12 @@ let frameplayers: FrameplayerDescriptor[] = [];
  * available synchronously.
  */
 export async function initMedia() {
-  const filesInMediaDir = await fs.promises.readdir(MEDIA_DIRECTORY);
+  const mediaDirectory = path.resolve(getConfig().mediaDir);
+  const filesInMediaDir = await fg('**/*', { cwd: mediaDirectory });
   const frameplayerFiles = filesInMediaDir.filter((f) => /\.fpl$/.test(f));
   frameplayers = await Promise.all(frameplayerFiles.map(async (f) => {
     logger.debug(`Loading ${f}`);
-    const frameplayer = new Frameplayer(await fs.promises.readFile(path.join(MEDIA_DIRECTORY, f)));
+    const frameplayer = new Frameplayer(await fs.promises.readFile(path.join(mediaDirectory, f)));
     frameplayer.play();
     return {
       name: f,

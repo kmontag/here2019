@@ -2,6 +2,7 @@
 import chalk from 'chalk';
 import * as commander from 'commander';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as ProgressBar from 'progress';
 import * as readline from 'readline';
 import Frameplayer from './Frameplayer';
@@ -47,7 +48,7 @@ commander
         framesProgressBar.update(processed / total);
       },
     }
-    let config = JSON.parse((await fs.promises.readFile(cmd.config)).toString('utf8'));
+    const config = require(path.resolve(cmd.config));
     const result = await prepare(input, config, opts);
     cleanupFramesProgressBar();
     await fs.promises.writeFile(cmd.output, result);

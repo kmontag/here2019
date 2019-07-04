@@ -1,7 +1,9 @@
 import { Record, Boolean, String, Number, Static } from 'runtypes';
+import * as env from 'env-var';
 import * as fs from 'fs';
+import * as path from 'path';
 
-const CONFIG_FILE = '/etc/featherstreamer.conf';
+const CONFIG_FILE = env.get('CONFIG', '/etc/featherstreamer.conf').asString();
 const Config = Record({
   /**
    * If true, don't actually call `feathernet` when changing
@@ -19,6 +21,11 @@ const Config = Record({
   eagerSlave: Boolean,
 
   /**
+   * Directory containing compiled frameplayer files.
+   */
+  mediaDir: String,
+
+  /**
    * Where to look for the master device.
    */
   masterHost: String,
@@ -30,6 +37,7 @@ type Config = Static<typeof Config>;
 const defaultConfig: Config = {
   fakeSystemCalls: true,
   eagerSlave: false,
+  mediaDir: path.join(__dirname, '..', '..', 'media-build'),
   masterHost: '192.168.9.1',
   masterPort: 44668,
 };
