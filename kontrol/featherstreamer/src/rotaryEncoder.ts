@@ -1,19 +1,29 @@
 import nodeStatusManager from './nodeStatusManager';
 import logger from './logger';
+import OPCManager from './OPCManager';
 
 let isPressed: boolean = false;
 let turnsSincePress: number = 0;
 
 // Handlers and setup for the rotary encoder.
 export function handleTurnCW() {
-    logger.debug('Clockwise turn');
+  logger.debug('Clockwise turn');
   if (isPressed) {
     turnsSincePress++;
+  } else {
+    const opcManager = OPCManager.getInstance();
+    opcManager.setMediaIndex(opcManager.getMediaIndex() + 1);
   }
 }
 
 export function handleTurnCCW() {
   logger.debug('Counterclockwise turn');
+  if (isPressed) {
+    turnsSincePress--;
+  } else {
+    const opcManager = OPCManager.getInstance();
+    opcManager.setMediaIndex(opcManager.getMediaIndex() - 1);
+  }
 }
 
 export function handlePress() {

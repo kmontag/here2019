@@ -30,6 +30,11 @@ const Config = Record({
    */
   masterHost: String,
   masterPort: Number,
+
+  /**
+   * Number between 0 and 1.
+   */
+  brightness: Number,
 });
 type Config = Static<typeof Config>;
 
@@ -40,6 +45,7 @@ const defaultConfig: Config = {
   mediaDir: path.join(__dirname, '..', '..', 'media-build'),
   masterHost: '192.168.9.1',
   masterPort: 44668,
+  brightness: 0.3,
 };
 
 let config: Config|undefined = undefined;

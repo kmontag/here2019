@@ -1,12 +1,12 @@
-import server from './server';
-import OPCManager from './OPCManager';
-import { initMedia, getFrameplayers } from './media';
 import * as env from 'env-var';
+import { initMedia } from './media';
+import OPCManager from './OPCManager';
+import server from './server';
 
 (async () => {
   await initMedia();
 
-  const opcManager = new OPCManager(getFrameplayers());
+  const opcManager = OPCManager.getInstance();
 
   const app = server({
     opcManager,

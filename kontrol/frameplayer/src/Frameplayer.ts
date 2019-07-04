@@ -8,7 +8,7 @@ type Channel = {
   readonly frames: ReadonlyArray<ReadonlyArray<Pixel>>,
 };
 
-interface FrameEvent {
+export interface FrameEvent {
   readonly channels: {
     [channel: string]: {
       readonly currFrame: number,
