@@ -16,7 +16,7 @@ using namespace featherstream;
 
 FlashStorage(credentials_storage, WiFiHandler::credentials_t);
 
-WiFiHandler::WiFiHandler() {
+WiFiHandler::WiFiHandler(const FeatherstreamerManager &featherstreamerManager) : featherstreamerManager(featherstreamerManager) {
   this->credentials = credentials_storage.read();
   this->hasCredentials = (this->credentials.magic == EXPECTED_MAGIC);
 
@@ -70,6 +70,16 @@ bool WiFiHandler::ensureConnected() {
             return success;
           } else if (foundMasterAP) {
             bool success = this->connect(this->getMasterSSID(), this->getMasterPassphrase());
+            // When connecting to a master network, only succeed if
+            // the network has the correct SSID.
+            if (success) {
+              const String ssid = this->featherstreamerManager.getReportedSSID(SECRET_MASTER_SERVER_IP, SECRET_SERVER_PORT);
+              if (!ssid.equals(this->getPairedSSID())) {
+                Serial.println("Connected to master network, but it did not report the correct SSID");
+                success = false;
+                WiFi.disconnect();
+              }
+            }
             if (success) {
               this->isLastConnectionToMaster = true;
             }

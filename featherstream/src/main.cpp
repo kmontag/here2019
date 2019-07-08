@@ -62,7 +62,7 @@ void setup() {
   renderer = new featherstream::Renderer();
   opcHandler = new featherstream::OPCHandler(*renderer);
   offlineAnimation = new featherstream::TwinkleAnimation(*renderer);
-  wiFiHandler = new featherstream::WiFiHandler();
+  wiFiHandler = new featherstream::WiFiHandler(*featherstreamerManager);
 
   Serial.print("My name is ");
   Serial.println(opcHandler->getDeviceID());
@@ -79,33 +79,24 @@ void setup() {
   renderer->clear();
   Serial.println("Turned off LEDs");
 
-  // Check if we should enter pairing mode.
-  bool isPairingModeActive = false;
-  if (!wiFiHandler->isPaired()) {
-    isPairingModeActive = true;
-  } else {
-    // Check for more than two clicks of the switch in 500ms.
-    uint32_t pairingPossibleUntil = millis() + 500;
-    uint32_t numClicks = 0;
+  // Check for more than two clicks of the switch in 500ms to force pairing mode.
+  uint32_t pairingPossibleUntil = millis() + 500;
+  uint32_t numClicks = 0;
 
-    int buttonState = digitalRead(SWITCH_PIN);
+  int buttonState = digitalRead(SWITCH_PIN);
 
-    while(millis() < pairingPossibleUntil) {
-      int nextButtonState = digitalRead(SWITCH_PIN);
-      if (nextButtonState != buttonState) {
-        numClicks++;
-      }
-    }
-
-    if (numClicks >= 2) {
-      isPairingModeActive = true;
+  while(millis() < pairingPossibleUntil) {
+    int nextButtonState = digitalRead(SWITCH_PIN);
+    if (nextButtonState != buttonState) {
+      numClicks++;
     }
   }
 
-  if (isPairingModeActive) {
+  if (numClicks >= 2) {
     // This will run forever, so we'll never enter the main loop.
     pairing();
   }
+
 }
 
 void loop() {
@@ -123,7 +114,13 @@ void loop() {
       opcHandler->disconnect();
     }
     offlineAnimation->loop();
+  } else if (!wiFiHandler->isPaired()) {
+
+    // Enter pairing mode, which runs forever.
+    pairing();
+
   } else {
+
     // While connected, show a slow blink. While not connected, just
     // always keep the LED on.
     bool opcConnected = opcHandler->isConnected();

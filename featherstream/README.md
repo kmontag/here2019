@@ -46,11 +46,14 @@ SSID and saves it to flash storage for future use, overwriting any
 existing config. The change will take effect when the device is rebooted.
 
 If the device has never been paired before (and if
-`SECRET_PAIRED_SSID` was not provided), the device will always boot
-into this mode.
+`SECRET_PAIRED_SSID` was not provided), the device will enter this
+mode as soon as the switch is closed (i.e. as soon as you attempt to
+enter OPC mode).
 
 If the device is already paired, flip the switch rapidly while booting
 to enter it.
+
+Once the device enters this mode, it won't leave until it's rebooted.
 
 LED indicators:
 

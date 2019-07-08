@@ -6,13 +6,15 @@
 #include <Arduino.h>
 #include <WiFi101.h>
 
+#include "FeatherstreamerManager.hpp"
+
 namespace featherstream {
   /**
    * Tries to establish a connection with our paired pi,
    */
   class WiFiHandler {
   public:
-    WiFiHandler();
+    WiFiHandler(const FeatherstreamerManager &);
     virtual ~WiFiHandler();
 
     /**
@@ -64,6 +66,8 @@ namespace featherstream {
     bool connect(const char *ssid, const char *passphrase);
 
     bool isLastConnectionToMaster;
+
+    const FeatherstreamerManager &featherstreamerManager;
 
     static const uint16_t EXPECTED_MAGIC = 4255;
   };
