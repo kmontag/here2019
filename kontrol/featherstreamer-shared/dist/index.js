@@ -19,7 +19,8 @@ exports.Mode = Mode;
 const NodeStatus = runtypes_1.Record({
     mode: Mode,
     isNetworkInterfaceUpdating: runtypes_1.Boolean,
-    isMasterVisible: runtypes_1.Boolean,
+    // Undefined means irrelevant for the current mode.
+    isMasterVisible: runtypes_1.Boolean.Or(runtypes_1.Undefined),
 });
 exports.NodeStatus = NodeStatus;
 const ServerState = runtypes_1.Record({

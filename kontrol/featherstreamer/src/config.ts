@@ -3,7 +3,7 @@ import * as env from 'env-var';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const CONFIG_FILE = env.get('CONFIG', '/etc/featherstreamer.conf').asString();
+const CONFIG_FILE = env.get('CONFIG', '/etc/featherstreamer.conf.json').asString();
 const Config = Record({
   /**
    * If true, don't actually call `feathernet` when changing

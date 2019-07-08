@@ -7,6 +7,8 @@ import { registerDeviceConnection, store as deviceStore, forgetDevice, setDevice
 import { Record as RuntypesRecord, String as RuntypesString } from 'runtypes';
 import { ServerState } from 'featherstreamer-shared';
 import nodeStatusManager from './nodeStatusManager';
+import logger from './logger';
+import masterVisibilityManager from './masterVisibilityManager';
 
 const getSSID = () => {
   return os.hostname();
@@ -43,13 +45,15 @@ export default function server({
       nodeStatus: {
         mode: nodeStatusManager.getMode(),
         isNetworkInterfaceUpdating: nodeStatusManager.isNetworkInterfaceUpdating(),
-        isMasterVisible: false,
+        isMasterVisible: masterVisibilityManager.isMasterVisible(),
       },
       ssid: getSSID(),
     };
-    // deviceState.get('channels').forEach((channel, id) => {
-    //   publicState.channels[id] = channel.toJS();
-    // });
+    for (const channel of opcManager.getChannels()) {
+      publicState.channels[channel] = {
+        description: channel,
+      };
+    }
     deviceState.get('devices').forEach((device, id) => {
       publicState.devices[id] = device.toJS();
     });
@@ -59,17 +63,61 @@ export default function server({
 
   /**
    * Get an ongoing stream of pixel data in OPC format for the given
-   * channel.
+   * channel. This is generally called by slave featherstreamer
+   * devices when we're in master mode; data is forwarded to connected
+   * feathers.
    */
-  app.get('/device/:id/opc', (req, res) => {
-    registerDeviceConnection(req.params.id);
-    const device = deviceStore.getState().get('devices').get(req.params.id);
-    if (!device) {
-      throw new Error('unexpected');
-    }
-
-    const removeStream = opcManager.stream(device.get('channelId'), res);
+  app.get('/channels/:id/opc', (req, res) => {
+    logger.info(`Direct channel connected: ${req.params.id} from ${req.ip}`);
+    const removeStream = opcManager.stream(req.params.id, res);
     const handleDisconnect = () => {
+      logger.info(`Direct channel disconnected: ${req.params.id} from ${req.ip}`);
+      removeStream();
+    };
+
+    // https://stackoverflow.com/questions/6572572/node-js-http-server-detect-when-clients-disconnect
+    req.on('close', handleDisconnect);
+    req.on('end', handleDisconnect);
+  });
+
+  /**
+   * Get an ongoing stream of pixel and command data in OPC format for
+   * the given device. Dynamically swaps the channel being streamed
+   * when the device channel changes. This is generally called by
+   * feather devices connected directly to LEDs.
+   */
+  app.get('/devices/:id/opc', (req, res) => {
+    logger.info(`Device connected: ${req.params.id}`);
+    registerDeviceConnection(req.params.id);
+
+    let removeStream: () => any = () => {};
+    let lastChannelId: string|undefined = undefined;
+
+    // Setup function to be invoked on init, and then whenever the
+    // channel associated with this device may have changed.
+    const setup = () => {
+      // Get the latest device state.
+      const device = deviceStore.getState().get('devices').get(req.params.id);
+      if (!device) {
+        throw new Error('unexpected');
+      }
+      const channelId = device.get('channelId');
+
+      if (channelId !== lastChannelId) {
+        // Clear out previous stream, if any.
+        removeStream();
+        removeStream = opcManager.stream(channelId, res);
+        lastChannelId = channelId;
+      }
+    };
+
+    deviceStore.subscribe(() => {
+      setup();
+    });
+    setup();
+
+    const handleDisconnect = () => {
+      logger.info(`Device disconnected: ${req.params.id}`);
       removeStream();
       registerDeviceDisconnection(req.params.id);
     };
@@ -79,12 +127,12 @@ export default function server({
     req.on('end', handleDisconnect);
   });
 
-  app.delete('/device/:id', (req, res) => {
+  app.delete('/devices/:id', (req, res) => {
     forgetDevice(req.params.id);
     res.status(204).send();
   });
 
-  app.put('/device/:id', (req, res) => {
+  app.put('/devices/:id', (req, res) => {
     const Params = RuntypesRecord({
       channelId: RuntypesString,
     });

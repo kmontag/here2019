@@ -1,14 +1,17 @@
-import { Writable } from 'stream';
-import { writableNoopStream } from 'noop-stream';
+import { Writable, Readable } from 'stream';
 import { getFrameplayers, FrameplayerDescriptor } from './media';
 import logger from './logger';
 import StrictEventEmitter from 'strict-event-emitter-types';
 import { EventEmitter } from 'events';
 import { getConfig } from './config';
 import { FrameEvent } from 'frameplayer';
+import nodeStatusManager, { NodeStatusManager } from './nodeStatusManager';
+import masterVisibilityManager, { MasterVisibilityManager } from './masterVisibilityManager';
+import axios from 'axios';
 
 const createOPCStream = require('opc');
 const createStrand = require('opc/strand');
+const createParser = require('opc/parser');
 
 interface MediaDescriptor {
   readonly name: string,
@@ -20,32 +23,51 @@ interface MediaIndexChangedEvent {
   mediaIndex: number;
 }
 
+interface LiveChangedEvent {
+  isLive: boolean;
+}
+
 interface Events {
   mediaIndexChanged: MediaIndexChangedEvent;
+  liveChanged: LiveChangedEvent;
 }
 
 export default class OPCManager {
-  private readonly opcStream: ReturnType<typeof createOPCStream>;
   private mediaIndex: number = 0;
+  private live: boolean = true;
+
   private channels: string[]|undefined = undefined;
+
   private readonly frameplayers: ReadonlyArray<FrameplayerDescriptor>;
+  private readonly masterVisibilityManager: MasterVisibilityManager;
+  private readonly nodeStatusManager: NodeStatusManager;
+
+
   private readonly eventEmitter: StrictEventEmitter<EventEmitter, Events> =
     new EventEmitter();
 
-  constructor(
+  constructor({
+    frameplayers,
+    masterVisibilityManager,
+    nodeStatusManager,
+  }: {
     frameplayers: Iterable<FrameplayerDescriptor>,
-  ) {
-    this.opcStream = createOPCStream(100);
-
-    // Don't let data get backed up.
-    this.opcStream.pipe(writableNoopStream());
+    masterVisibilityManager: MasterVisibilityManager,
+    nodeStatusManager: NodeStatusManager,
+  }) {
     this.frameplayers = Array.from(frameplayers);
+    this.masterVisibilityManager = masterVisibilityManager;
+    this.nodeStatusManager = nodeStatusManager;
   }
 
   private static instance: OPCManager|undefined = undefined;
   static getInstance() {
     if (!OPCManager.instance) {
-      OPCManager.instance = new OPCManager(getFrameplayers());
+      OPCManager.instance = new OPCManager({
+        frameplayers: getFrameplayers(),
+        masterVisibilityManager,
+        nodeStatusManager,
+      });
     }
     return OPCManager.instance;
   }
@@ -75,6 +97,21 @@ export default class OPCManager {
   }
 
   /**
+   * Turn the lights on or off.
+   */
+  toggleLive() {
+    this.live = !this.live;
+    this.eventEmitter.emit('liveChanged', {
+      isLive: this.isLive(),
+    })
+    logger.info(`Lights are ${this.isLive() ? 'on' : 'off'}`);
+  }
+
+  isLive() {
+    return this.live;
+  }
+
+  /**
    * Stream a channel to e.g. an express response object, swapping the
    * content as necessary when e.g. the playing video is cycled, the
    * mode is changed, etc.
@@ -82,17 +119,48 @@ export default class OPCManager {
    * Returns a callback to stop streaming.
    */
   stream(channel: string, toWritable: Writable): (() => void) {
-    // Remove any current listeners related to playback. Gets updated
-    // as state changes.
-    let teardown: (() => void) = () => {};
+
+    const stream = createOPCStream();
+    stream.pipe(toWritable);
+
+    /**
+     * Remove any current listeners related to playback. Gets updated
+     * as state changes.
+     */
+    let teardownCurrentState: (() => void) = () => {};
+
+    /**
+     * Internal state, so we can see if we need to change anything
+     * when events occur that might affect the stream source. Note the
+     * initial values will always trigger an action on the first call
+     * to `setup()`.
+     */
+    let lastMediaIndex: number = NaN;
+    let isStreamingMaster: boolean = false;
+    let isStrandCleared: boolean = true;
+
+    const notLiveSetup = () => {
+      teardownCurrentState();
+
+      // Just send a single clear-pixels mesage.
+      const maxPixels = 1024; // TODO: Could track this dynamically.
+      const strand = createStrand(maxPixels);
+      for (let i = 0; i < maxPixels; i++) {
+        strand.setPixel(i, 0, 0, 0);
+      }
+      stream.writePixels(0, strand.buffer);
+
+      teardownCurrentState = () => {};
+    }
 
     const localSetup = () => {
-      teardown();
+      teardownCurrentState();
 
       // Handle negative values, see
       // https://web.archive.org/web/20090717035140if_/javascript.about.com/od/problemsolving/a/modulobug.htm.
       const realMediaIndex = (this.mediaIndex % this.frameplayers.length + this.frameplayers.length) % this.frameplayers.length;
       const { frameplayer } = this.frameplayers[realMediaIndex];
+
       if (!(channel in frameplayer.channels)) {
         logger.warn(`Channel ${channel} not found, falling back to a default value`);
         const defaultChannel = OPCManager.getDefaultChannel();
@@ -102,13 +170,12 @@ export default class OPCManager {
           channel = Object.keys(frameplayer.channels).sort()[0];
         }
       }
-      const channelData = frameplayer.channels[channel];
-      if (!channelData) {
+      const channelDescriptor = frameplayer.channels[channel];
+      if (!channelDescriptor) {
         throw new Error('unexpected');
       }
 
-      const stream = createOPCStream(channelData.length);
-      const strand = createStrand(channelData.length);
+      const strand = createStrand(channelDescriptor.length);
 
       const handleFrame = (frame: FrameEvent) => {
         const channelData = frame.channels[channel];
@@ -121,23 +188,165 @@ export default class OPCManager {
       };
       frameplayer.on('frame', handleFrame);
 
-      stream.pipe(toWritable);
-      teardown = () => {
+      teardownCurrentState = () => {
         frameplayer.off('frame', handleFrame);
       };
-    }
+    };
+
+    const masterSetup = () => {
+      teardownCurrentState();
+
+      let isStillActive = true;
+      let endCurrentStream: () => any = () => {};
+
+      const url = `http://${getConfig().masterHost}:${getConfig().masterPort}/channels/${channel}/opc`;
+      (async () => {
+        // Stream data, repeatedly reconnecting if the connection
+        // drops or there's a problem with the endpoint.
+        while (isStillActive) {
+          try {
+            const response = await axios.get(url, {
+              responseType: 'stream',
+            });
+            // Make sure we haven't gone inactive in the meantime.
+            if (isStillActive) {
+              const responseStream: Readable = response.data;
+
+              // Promise controller actions and state. The callbacks
+              // will always work to complete the `whenDoneReceiving`
+              // promise, even if its callback hasn't yet fired.
+              let isResolved: boolean = false;
+              let isRejected: boolean = false;
+              let resolve: () => void = () => {
+                isResolved = true;
+              };
+              let reject: () => void = () => {
+                isRejected = true;
+              };
+              const whenDoneReceiving = new Promise<void>((_resolve, _reject) => {
+                if (isRejected) {
+                  _reject();
+                } else if (isResolved) {
+                  _resolve();
+                } else {
+                  const oldResolve = resolve;
+                  const oldReject = reject;
+                  resolve = () => {
+                    oldResolve();
+                    _resolve();
+                  };
+                  reject = () => {
+                    oldReject();
+                    _reject();
+                  }
+                }
+              });
+
+
+              // Pipe through a parser and stream only full messages,
+              // so we don't end up breaking the stream partway
+              // through a message if the connection is lost or torn
+              // down.
+              const handleData = (message: {
+                channel: number,
+                command: number,
+                data: Buffer,
+              }) => {
+                stream.writeMessage(message.channel, message.command, message.data);
+              };
+              const readable: Readable = responseStream.pipe(createParser());
+              readable.on('data', handleData);
+
+              // Let the teardown callback force us to exit this
+              // loop. No-op if called more than once.
+              endCurrentStream = () => {
+                readable.off('data', handleData);
+                resolve();
+              };
+
+              // Wait for `endCurrentStream` (via
+              // `teardownCurrentState`) to get called, or for the
+              // stream to end/error out "naturally."
+              await whenDoneReceiving;
+            }
+          } catch (e) {
+            // Pause briefly to avoid sending tons of failing requests in succession.
+            await new Promise<void>((resolve) => {
+              setTimeout(resolve, 500);
+            });
+          } finally {
+            // No-op if this function has already been called. Note we
+            // depend on this variable not being modified outside of
+            // this loop, even though it's accessible in the outer
+            // context as well.
+            endCurrentStream();
+          }
+        }
+      })();
+
+      teardownCurrentState = () => {
+        isStillActive = false;
+        endCurrentStream();
+      };
+
+    };
+
+    const setup = () => {
+      if (this.isLive()) {
+        const shouldStreamMaster = (
+          this.nodeStatusManager.getMode() === 'slave' &&
+            this.masterVisibilityManager.isMasterVisible() === true
+        );
+        if (shouldStreamMaster) {
+          if (!isStreamingMaster || isStrandCleared) {
+            logger.debug(`Streaming from master on channel ${channel}`);
+            isStreamingMaster = true;
+            masterSetup();
+          }
+        } else {
+          if (isStreamingMaster || lastMediaIndex !== this.mediaIndex || isStrandCleared) {
+            logger.debug(`Streaming local media on channel ${channel}`);
+            isStreamingMaster = false;
+            lastMediaIndex = this.mediaIndex;
+            localSetup();
+          }
+        }
+        isStrandCleared = false;
+      } else {
+        logger.debug(`Clearing pixels on channel ${channel}`);
+        notLiveSetup();
+        isStrandCleared = true;
+      }
+    };
+
+    const removeModeChangedListener = this.nodeStatusManager.onModeChanged((event) => {
+      setup();
+    });
+
+    const removeMasterVisibleChangedListener = this.masterVisibilityManager.onMasterVisibleChanged((event) => {
+      setup();
+    });
 
     const handleMediaIndexChanged = (event: MediaIndexChangedEvent) => {
-      logger.debug(`Switching channel "${channel}" to media index ${this.mediaIndex}`);
-      localSetup();
+      setup();
     };
     this.eventEmitter.on('mediaIndexChanged', handleMediaIndexChanged);
 
-    localSetup();
+    const handleLiveChanged = (event: LiveChangedEvent) => {
+      setup();
+    };
+    this.eventEmitter.on('liveChanged', handleLiveChanged);
+
+    setup();
 
     return () => {
-      teardown();
+      teardownCurrentState();
+      removeModeChangedListener();
+      removeMasterVisibleChangedListener();
       this.eventEmitter.off('mediaIndexChanged', handleMediaIndexChanged);
+      this.eventEmitter.off('liveChanged', handleLiveChanged);
+
+      stream.unpipe(toWritable);
     };
   }
 

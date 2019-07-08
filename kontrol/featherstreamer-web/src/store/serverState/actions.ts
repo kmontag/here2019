@@ -51,6 +51,26 @@ export const forgetDevice: ActionCreator<ForgetDeviceAction> = (id: string) => {
   };
 };
 
+export interface UpdateDeviceChannelAction extends Action {
+  type: '@@serverState/UPDATE_DEVICE_CHANNEL',
+  deviceId: string,
+  channelId: string,
+}
+
+export const updateDeviceChannel: ActionCreator<UpdateDeviceChannelAction> = ({
+  deviceId,
+  channelId,
+}: {
+  deviceId: string,
+  channelId: string,
+}) => {
+  return {
+    type: '@@serverState/UPDATE_DEVICE_CHANNEL',
+    deviceId,
+    channelId,
+  }
+};
+
 export type ServerStateAction =
   UpdateAction |
   RequestUpdateAction |

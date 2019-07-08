@@ -74,6 +74,7 @@
     - featherstreamer
     - featherstreamer-shared
     - featherstreamer-web
+    - frameplayer
 
 - name: install node modules
   shell: npm install --production
@@ -82,6 +83,22 @@
   when: item.changed
   with_items: "{{ copy_package_lock.results }}"
 
+- name: create media dir
+  file:
+    path: "{{ media_dir }}"
+    state: directory
+    owner: pi
+    group: pi
+  become: yes
+  become_user: root
+
+- name: add featherstreamer development config
+  copy:
+    dest: /etc/featherstreamer.conf.json
+    src: "{{ role_path }}/files/featherstreamer.development.conf.json"
+  become: yes
+  become_user: root
+  
 - name: create featherstreamer service
   copy:
     dest: /etc/systemd/system/featherstreamer.service
@@ -93,7 +110,7 @@
       [Service]
       ExecStart=/usr/local/bin/npm start
       WorkingDirectory={{ remote_modules_location }}/featherstreamer
-      User=pi
+      User=root
       Restart=always
 
       [Install]

@@ -2,11 +2,13 @@ import * as env from 'env-var';
 import { initMedia } from './media';
 import OPCManager from './OPCManager';
 import server from './server';
+import masterVisibilityManager from './masterVisibilityManager';
 
 (async () => {
   await initMedia();
 
-  const opcManager = OPCManager.getInstance();
+  masterVisibilityManager.start();
+  const opcManager: OPCManager = OPCManager.getInstance();
 
   const app = server({
     opcManager,

@@ -15,6 +15,8 @@ class ServerDescription extends React.Component<Props> {
     const networkInterfaceStableElement = (
       <span>configured</span>
     );
+    const isMasterVisible = this.props.nodeStatus ? this.props.nodeStatus.isMasterVisible : undefined;;
+    const masterVisibleText = (isMasterVisible === undefined) ? 'unknown' : (isMasterVisible ? 'yes' : 'no');
     return (
       <Segment inverted loading={this.props.isLoading}>
         <Grid>
@@ -32,7 +34,7 @@ class ServerDescription extends React.Component<Props> {
           </Grid.Column>
           <Grid.Column width={4}>
             <span className={style.prefix}>Master visible: </span>
-            <strong>{this.props.nodeStatus && this.props.nodeStatus.isMasterVisible ? 'yes' : 'no'}</strong>
+            <strong>{masterVisibleText}</strong>
           </Grid.Column>
         </Grid>
       </Segment>

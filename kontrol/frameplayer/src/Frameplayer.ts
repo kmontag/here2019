@@ -3,9 +3,9 @@ import magic from './magic';
 import StrictEventEmitter from 'strict-event-emitter-types';
 import { EventEmitter } from 'events';
 
-type Channel = {
-  readonly length: number,
-  readonly frames: ReadonlyArray<ReadonlyArray<Pixel>>,
+export interface Channel {
+  readonly length: number;
+  readonly frames: ReadonlyArray<ReadonlyArray<Pixel>>;
 };
 
 export interface FrameEvent {
@@ -18,10 +18,10 @@ export interface FrameEvent {
   };
 };
 
-type Pixel = {
-  readonly r: number,
-  readonly g: number,
-  readonly b: number,
+export interface Pixel {
+  readonly r: number;
+  readonly g: number;
+  readonly b: number;
 };
 
 function validatePresence<T>(

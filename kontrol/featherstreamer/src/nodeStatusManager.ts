@@ -16,7 +16,7 @@ const PromiseController: any = require('promise-controller');
 
 const PERSISTENT_STATE_MODE_KEY = 'mode';
 
-interface ModeChangeEvent {
+export interface ModeChangedEvent {
   prevMode: Mode;
   mode: Mode;
 
@@ -27,7 +27,7 @@ interface ModeChangeEvent {
 }
 
 interface Events {
-  modeChange: ModeChangeEvent;
+  modeChanged: ModeChangedEvent;
 }
 
 export class NodeStatusManager {
@@ -55,6 +55,11 @@ export class NodeStatusManager {
     if (Mode.guard(existingMode)) {
       return existingMode;
     } else {
+      if (existingMode) {
+        logger.warn(`Did not recognize existing mode: ${existingMode}`);
+      } else {
+        logger.info('No existing mode saved');
+      }
       return 'isolated';
     }
   }
@@ -75,6 +80,7 @@ export class NodeStatusManager {
    * "overridden" by another one as described above.
    */
   setMode(mode: Mode): Promise<boolean> {
+    logger.info(`Setting mode: ${mode}`);
     const prevMode = this.getMode();
 
     this.persistentState.set(PERSISTENT_STATE_MODE_KEY, mode);
@@ -82,7 +88,7 @@ export class NodeStatusManager {
     const currentSetModeIndex = this.setModeIndex;
 
     const whenSystemUpdated = new PromiseController();
-    this.eventEmitter.emit('modeChange', {
+    this.eventEmitter.emit('modeChanged', {
       prevMode,
       mode,
       whenSystemUpdated: whenSystemUpdated.promise,
@@ -141,11 +147,11 @@ export class NodeStatusManager {
    *
    * Returns a function which can be called to remove the listener.
    */
-  onModeChange(callback: (event: ModeChangeEvent) => any): (() => void) {
-    const wrapped = ((event: ModeChangeEvent) => callback(event));
-    this.eventEmitter.on('modeChange', wrapped);
+  onModeChanged(callback: (event: ModeChangedEvent) => any): (() => void) {
+    const wrapped = ((event: ModeChangedEvent) => callback(event));
+    this.eventEmitter.on('modeChanged', wrapped);
     return (() => {
-      this.eventEmitter.off('modeChange', wrapped);
+      this.eventEmitter.off('modeChanged', wrapped);
     });
   }
 }

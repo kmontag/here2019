@@ -8,7 +8,7 @@ import * as ndarray from 'ndarray';
 import magic from './magic';
 
 import { frameplayer as frameplayerProto } from './proto'
-import { Record, Number, Tuple, Dictionary, Static, Array as RuntypesArray } from 'runtypes';
+import { Record, Number as RuntypesNumber, Tuple, Dictionary, Static, Array as RuntypesArray } from 'runtypes';
 
 interface ProgressEvent {
   frames: number,
@@ -21,21 +21,22 @@ interface ProgressEvent {
 
 const ChannelConfig = Record({
   // Scale input to this many pixels before sampling.
-  height: Number,
-  width: Number,
+  height: RuntypesNumber,
+  width: RuntypesNumber,
 
   // Sample these pixels after scaling the input.
-  pixels: RuntypesArray(Tuple(Number, Number)),
+  pixels: RuntypesArray(Tuple(RuntypesNumber, RuntypesNumber)),
 });
 
-export const AnimationConfig = Record({
+const AnimationConfig = Record({
   // Sample framerate.
-  fps: Number,
+  fps: RuntypesNumber,
 
   // Animation is just a set of channels.
   channels: Dictionary(ChannelConfig, 'string'),
 });
-export type AnimationConfig = Static<typeof AnimationConfig>;
+type AnimationConfig = Static<typeof AnimationConfig>;
+export { AnimationConfig };
 
 export interface PrepareOptions {
   // ffmpeg callbacks

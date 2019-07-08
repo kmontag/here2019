@@ -10,7 +10,7 @@
     - ungrouped
   # strategy: free
   roles:
-    - expand_root_partition
+    # - expand_root_partition
     - access_point
     - featherstreamer
 

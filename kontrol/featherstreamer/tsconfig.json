@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "rootDirs": ["src", "generated"],
     "lib": ["es6", "dom"],
-    "target": "es6",
+    "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "dist",

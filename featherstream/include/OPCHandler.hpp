@@ -22,6 +22,11 @@ namespace featherstream {
      */
     bool connect(uint8_t channel, const IPAddress &address, uint16_t port);
 
+    /**
+     * Kill the existing connection, if any.
+     */
+    void disconnect();
+
     bool isConnected();
 
     /**

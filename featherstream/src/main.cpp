@@ -119,6 +119,9 @@ void loop() {
   if (switchState == HIGH) {
     blink(550932, 100, 3000, 0);
     blink(552411, 100, 3000, 300);
+    if (opcHandler->isConnected()) {
+      opcHandler->disconnect();
+    }
     offlineAnimation->loop();
   } else {
     // While connected, show a slow blink. While not connected, just

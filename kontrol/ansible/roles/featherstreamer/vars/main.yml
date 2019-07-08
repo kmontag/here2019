@@ -2,3 +2,5 @@
 node_version: 10.15.3
 local_modules_location: "{{ playbook_dir }}/.."
 remote_modules_location: /usr/local/src
+
+media_dir: /var/featherstreamer/media

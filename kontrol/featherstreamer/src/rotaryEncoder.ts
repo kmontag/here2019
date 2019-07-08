@@ -44,7 +44,7 @@ export function handleRelease() {
     // Switch the mode
     switch(turnsSincePress) {
       case 0:
-        logger.warn('TODO: turn off lights');
+        OPCManager.getInstance().toggleLive();
         break;
       case 1:
         nodeStatusManager.setMode('isolated');

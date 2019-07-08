@@ -29,21 +29,44 @@
   become: yes
   become_user: root
 
-# The IP range here is arbitrary, but the subnet must be consistent
-# with the configured node IP. The server address is just google DNS,
-# can really be anything since we won't actually be connected to the
-# internet.
-- name: configure dnsmasq
-  blockinfile:
-    path: /etc/dnsmasq.conf
-    block: |
+- name: create dnsmasq config direcotry
+  file:
+    path: "{{ custom_dnsmasq_directory }}"
+    state: directory
+  become: yes
+  become_user: root
+
+# The server address is just google DNS, can really be anything since
+# we won't actually be connected to the internet.
+- name: create dnsmasq configs
+  copy:
+    dest: "{{ custom_dnsmasq_directory }}/dnsmasq.{{ item.mode }}.conf"
+    content: |
       interface=lo,{{ ap_device_name }}
       no-dhcp-interface=lo,{{ wlan_device_name }}
       bind-interfaces
       server=8.8.8.8
       domain-needed
       bogus-priv
-      dhcp-range={{ ap_dhcp_range }}
+      dhcp-range={{ item.dhcp_range }}
+  become: yes
+  become_user: root
+  with_items:
+    - mode: pairing
+      dhcp_range: "{{ ap_dhcp_range }}"
+    - mode: master
+      dhcp_range: "{{ master_ap_dhcp_range }}"
+    - mode: default
+      dhcp_range: "{{ ap_dhcp_range }}"
+    - mode: slave
+      dhcp_range: "{{ ap_dhcp_range }}"
+
+- name: add default dnsmasq config if none exists
+  copy:
+    dest: /etc/dnsmasq.conf
+    src: "{{ custom_dnsmasq_directory }}/dnsmasq.default.conf"
+    remote_src: yes
+    force: no
   become: yes
   become_user: root
 
@@ -108,22 +131,35 @@
   become: yes
   become_user: root
 
-- name: add AP device config
+- name: add AP device configs
   copy:
-    dest: "/etc/network/interfaces.d/{{ ap_device_name }}"
+    dest: "{{ custom_interfaces_directory }}/{{ ap_device_name }}.{{ item.name }}"
     content: |
       auto {{ ap_device_name }}
 
       allow-hotplug {{ ap_device_name }}
       iface {{ ap_device_name }} inet static
-          address {{ ap_self_address }}
+          address {{ item.address }}
           netmask 255.255.255.0
           hostapd /etc/hostapd/hostapd.conf
-  # with_items:
-  #   - pairing
-  #   - master
-  #   - default
-  #   - slave
+  with_items:
+    - name: pairing
+      address: "{{ ap_self_address }}"
+    - name: master
+      address: "{{ master_ap_self_address }}"
+    - name: default
+      address: "{{ ap_self_address }}"
+    - name: slave
+      address: "{{ ap_self_address }}"
+  become: yes
+  become_user: root
+
+- name: use default AP device config
+  copy:
+    dest: "/etc/network/interfaces.d/{{ ap_device_name }}"
+    src: "{{ custom_interfaces_directory }}/{{ ap_device_name }}.default"
+    remote_src: true
+    force: no
   become: yes
   become_user: root
 

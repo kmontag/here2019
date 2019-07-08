@@ -1,4 +1,4 @@
-import { Record, Static, String, Number, Dictionary, Literal, Union, Boolean } from 'runtypes';
+import { Record, Static, String, Number, Dictionary, Literal, Union, Boolean, Undefined } from 'runtypes';
 
 const Channel = Record({
   description: String,
@@ -28,7 +28,9 @@ export { Mode };
 const NodeStatus = Record({
   mode: Mode,
   isNetworkInterfaceUpdating: Boolean,
-  isMasterVisible: Boolean,
+
+  // Undefined means irrelevant for the current mode.
+  isMasterVisible: Boolean.Or(Undefined),
 });
 type NodeStatus = Static<typeof NodeStatus>;
 export { NodeStatus };

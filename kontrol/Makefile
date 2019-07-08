@@ -42,9 +42,11 @@ ansible/local/id_rsa.pub ansible/local/id_rsa:
 	ssh-keygen -t rsa -N "" -f ansible/local/id_rsa
 
 # JS module builds.
+frameplayer/dist/index.js: frameplayer/tsconfig.json frameplayer/tslint.json $(shell find frameplayer/src/ -type f)
+	cd frameplayer && npm run build
 featherstreamer-shared/dist/index.js: featherstreamer-shared/tsconfig.json featherstreamer-shared/tslint.json $(shell find featherstreamer-shared/src/ -type f)
 	cd featherstreamer-shared && npm run build
-featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsconfig.json featherstreamer/tslint.json $(shell find featherstreamer/src -type f) featherstreamer-shared/dist/index.js
+featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsconfig.json featherstreamer/tslint.json $(shell find featherstreamer/src -type f) featherstreamer-shared/dist/index.js frameplayer/dist/index.js
 	cd featherstreamer && npm run build
 .make.featherstreamer-web: $(shell find	featherstreamer-web -type f) featherstreamer-shared/dist/index.js
 	cd featherstreamer-web && npm run build
@@ -62,9 +64,13 @@ deploy: featherstreamer/dist/index.js .make.featherstreamer-web
 ifndef PI
 	$(error Specify the host via the PI variable)
 endif
-	rsync -avz --exclude='node_modules' featherstreamer/ pi@$(PI):/usr/local/src/featherstreamer/
+	rsync -avz --exclude='node_modules' --exclude='state.json' featherstreamer/ pi@$(PI):/usr/local/src/featherstreamer/
 	rsync -avz --exclude='node_modules' featherstreamer-shared/ pi@$(PI):/usr/local/src/featherstreamer-shared/
 	rsync -avz --exclude='node_modules' featherstreamer-web/ pi@$(PI):/usr/local/src/featherstreamer-web/
+	rsync -avz --exclude='node_modules' frameplayer/ pi@$(PI):/usr/local/src/frameplayer/
+
+	rsync -avz media-build/ pi@$(PI):/var/featherstreamer/media/
+
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer-web"
 

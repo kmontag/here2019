@@ -20,7 +20,7 @@ export { Mode };
 declare const NodeStatus: Record<{
     mode: import("runtypes").Union4<Literal<"master">, Literal<"slave">, Literal<"isolated">, Literal<"pairing">>;
     isNetworkInterfaceUpdating: Boolean;
-    isMasterVisible: Boolean;
+    isMasterVisible: import("runtypes").Union2<Boolean, Literal<undefined>>;
 }, false>;
 declare type NodeStatus = Static<typeof NodeStatus>;
 export { NodeStatus };
@@ -35,7 +35,7 @@ declare const ServerState: Record<{
     nodeStatus: Record<{
         mode: import("runtypes").Union4<Literal<"master">, Literal<"slave">, Literal<"isolated">, Literal<"pairing">>;
         isNetworkInterfaceUpdating: Boolean;
-        isMasterVisible: Boolean;
+        isMasterVisible: import("runtypes").Union2<Boolean, Literal<undefined>>;
     }, false>;
     ssid: String;
 }, false>;

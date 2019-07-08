@@ -46,7 +46,7 @@ bool OPCHandler::connect(uint8_t channel, const IPAddress &address, uint16_t por
   this->client = WiFiClient();
 
   if (this->client.connect(address, port)) {
-    this->client.print("GET /device/");
+    this->client.print("GET /devices/");
     this->client.print(this->getDeviceID());
     this->client.println("/opc HTTP/1.0");
     this->client.println();
@@ -55,6 +55,10 @@ bool OPCHandler::connect(uint8_t channel, const IPAddress &address, uint16_t por
   } else {
     return false;
   }
+}
+
+void OPCHandler::disconnect() {
+  this->client.stop();
 }
 
 bool OPCHandler::isConnected() {
