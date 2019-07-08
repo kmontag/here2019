@@ -1,7 +1,7 @@
 import { Frameplayer } from 'frameplayer';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as fg from 'fast-glob';
+import fs from 'fs';
+import path from 'path';
+import fg from 'fast-glob';
 import logger from './logger';
 import { getConfig } from './config';
 

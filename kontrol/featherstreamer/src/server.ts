@@ -1,18 +1,33 @@
-import * as express from 'express';
-import * as os from 'os';
-import * as bodyParser from 'body-parser';
-import OPCManager from './OPCManager';
-import { handleTurnCW, handleTurnCCW, handlePress, handleRelease } from './rotaryEncoder';
-import { registerDeviceConnection, store as deviceStore, forgetDevice, setDeviceChannel, registerDeviceDisconnection } from './deviceState';
-import { Record as RuntypesRecord, String as RuntypesString } from 'runtypes';
+import bodyParser from 'body-parser';
+import { EventEmitter } from 'events';
+import express from 'express';
 import { ServerState } from 'featherstreamer-shared';
-import nodeStatusManager from './nodeStatusManager';
+import createOPCStream from 'opc';
+import createParser, { ParserMessage } from 'opc/parser';
+import os from 'os';
+import { Number as RuntypesNumber, Record as RuntypesRecord, String as RuntypesString, Undefined } from 'runtypes';
+import StrictEventEmitter from 'strict-event-emitter-types';
+import { forgetDevice, registerDeviceConnection, registerDeviceDisconnection, setDeviceChannel, store as deviceStore } from './deviceState';
 import logger from './logger';
 import masterVisibilityManager from './masterVisibilityManager';
+import nodeStatusManager from './nodeStatusManager';
+import OPCManager from './OPCManager';
+import { handlePress, handleRelease, handleTurnCCW, handleTurnCW } from './rotaryEncoder';
 
 const getSSID = () => {
   return os.hostname();
 };
+
+interface ColorEvent {
+  deviceId: string,
+  r: number,
+  g: number,
+  b: number,
+}
+
+interface Events {
+  color: ColorEvent,
+}
 
 /**
  * Server running in all operational modes.
@@ -22,6 +37,9 @@ export default function server({
 }: {
   opcManager: OPCManager,
 }) {
+  const eventEmitter: StrictEventEmitter<EventEmitter, Events> =
+    new EventEmitter();
+
   const app = express();
 
   // Parse POST options.
@@ -42,6 +60,10 @@ export default function server({
     const publicState: ServerState = {
       channels: {},
       devices: {},
+      media: {
+        names: [],
+        currentSelection: '',
+      },
       nodeStatus: {
         mode: nodeStatusManager.getMode(),
         isNetworkInterfaceUpdating: nodeStatusManager.isNetworkInterfaceUpdating(),
@@ -87,8 +109,10 @@ export default function server({
    * feather devices connected directly to LEDs.
    */
   app.get('/devices/:id/opc', (req, res) => {
-    logger.info(`Device connected: ${req.params.id}`);
-    registerDeviceConnection(req.params.id);
+    const deviceId = req.params.id;
+
+    logger.info(`Device connected: ${deviceId}`);
+    registerDeviceConnection(deviceId);
 
     let removeStream: () => any = () => {};
     let lastChannelId: string|undefined = undefined;
@@ -97,7 +121,7 @@ export default function server({
     // channel associated with this device may have changed.
     const setup = () => {
       // Get the latest device state.
-      const device = deviceStore.getState().get('devices').get(req.params.id);
+      const device = deviceStore.getState().get('devices').get(deviceId);
       if (!device) {
         throw new Error('unexpected');
       }
@@ -106,11 +130,74 @@ export default function server({
       if (channelId !== lastChannelId) {
         // Clear out previous stream, if any.
         removeStream();
-        removeStream = opcManager.stream(channelId, res);
+
+        const parser = createParser();
+
+        const output = createOPCStream();
+        output.pipe(res);
+
+        const removeOPCManagerStream = opcManager.stream(channelId, parser);
+        const brightness = device.get('brightness');
+
+        // Adjust brightness before sending to the device.. Note this
+        // only gets applied here, at the device level - so it won't
+        // get double-applied when streaming data from master.
+        parser.on('data', (message: ParserMessage) => {
+          // Only transform 8-bit color messages.
+          if (message.command === 0) {
+            output.writeMessage(
+              message.channel,
+              message.command,
+              message.data.map((v) => Math.floor(v * brightness)),
+            );
+          } else {
+            output.writeMessage(message.channel, message.command, message.data);
+          }
+        });
+
         lastChannelId = channelId;
+
+        removeStream = () => {
+          removeOPCManagerStream();
+          output.unpipe(res);
+          parser.end();
+        };
       }
     };
 
+    // Watch for color-change calls received for this device.
+    const handleColor = (event: ColorEvent) => {
+      if (event.deviceId === deviceId) {
+        // Stop streaming data momentarily to avoid interleaving.
+        removeStream();
+
+        const r = Math.floor(event.r) % 255;
+        const g = Math.floor(event.g) % 255;
+        const b = Math.floor(event.b) % 255;
+        logger.info(`Set device ${deviceId} color: #${r.toString(16)}${g.toString(16)}${b.toString(16)}`);
+
+        const stream = createOPCStream();
+        stream.pipe(res);
+
+        const data = new Uint8Array(5);
+
+        // Sysex command identifier 6.
+        data[0] = 0;
+        data[1] = 6;
+
+        // Color data for the sysex command.
+        data[2] = r;
+        data[3] = g;
+        data[4] = b;
+
+        stream.writeMessage(0, 255, data);
+        stream.unpipe(res);
+
+        setup();
+      }
+    };
+    eventEmitter.on('color', handleColor);
+    
     deviceStore.subscribe(() => {
       setup();
     });
@@ -120,6 +207,7 @@ export default function server({
       logger.info(`Device disconnected: ${req.params.id}`);
       removeStream();
       registerDeviceDisconnection(req.params.id);
+      eventEmitter.off('color', handleColor);
     };
 
     // https://stackoverflow.com/questions/6572572/node-js-http-server-detect-when-clients-disconnect
@@ -133,16 +221,29 @@ export default function server({
   });
 
   app.put('/devices/:id', (req, res) => {
+    const ColorDimension = RuntypesNumber.withConstraint((n) => {
+      return n >= 0 && n < 255 && Number.isInteger(n);
+    });
     const Params = RuntypesRecord({
-      channelId: RuntypesString,
+      channelId: RuntypesString.Or(Undefined),
+      color: RuntypesRecord({
+        r: ColorDimension,
+        g: ColorDimension,
+        b: ColorDimension,
+      }).Or(Undefined),
     });
 
     const body = req.body;
     if (Params.guard(body)) {
-      setDeviceChannel({
-        deviceId: req.params.id,
-        channelId: body.channelId
-      });
+      if (body.channelId) {
+        setDeviceChannel({
+          deviceId: req.params.id,
+          channelId: body.channelId
+        });
+      }
+      if (body.color) {
+
+      }
     } else {
       res.status(422).send();
     }

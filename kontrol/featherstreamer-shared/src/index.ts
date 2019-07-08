@@ -9,6 +9,7 @@ export { Channel };
 const Device = Record({
   connections: Number,
   channelId: String,
+  brightness: Number,
 });
 type Device = Static<typeof Device>;
 export { Device };

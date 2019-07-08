@@ -1,4 +1,4 @@
-import { Record, Boolean, String, Number, Static } from 'runtypes';
+import { Record, Boolean, String, Number as RuntypesNumber, Static } from 'runtypes';
 import * as env from 'env-var';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -29,12 +29,12 @@ const Config = Record({
    * Where to look for the master device.
    */
   masterHost: String,
-  masterPort: Number,
+  masterPort: RuntypesNumber,
 
   /**
-   * Number between 0 and 1.
+   * Number between 0 and 1. Brightness for newly attached devices.
    */
-  brightness: Number,
+  defaultBrightness: RuntypesNumber,
 });
 type Config = Static<typeof Config>;
 
@@ -45,7 +45,7 @@ const defaultConfig: Config = {
   mediaDir: path.join(__dirname, '..', '..', 'media-build'),
   masterHost: '192.168.9.1',
   masterPort: 44668,
-  brightness: 0.3,
+  defaultBrightness: 0.3,
 };
 
 let config: Config|undefined = undefined;

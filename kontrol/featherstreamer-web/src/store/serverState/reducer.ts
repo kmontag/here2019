@@ -11,6 +11,10 @@ export type ServerStateState = Omit<ServerState, 'nodeStatus'> & {
 
 export const initialState: ServerStateState = {
   channels: {},
+  media: {
+    currentSelection: '',
+    names: [],
+  },
   devices: {},
   nodeStatus: undefined,
   ssid: '',

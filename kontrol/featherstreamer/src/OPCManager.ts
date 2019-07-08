@@ -181,8 +181,7 @@ export default class OPCManager {
         const channelData = frame.channels[channel];
         for (let i = 0; i < channelData.pixels.length; i++) {
           const pixel = channelData.pixels[i];
-          const brightness = getConfig().brightness;
-          strand.setPixel(i, Math.floor(pixel.r * brightness), Math.floor(pixel.g * brightness), Math.floor(pixel.b * brightness));
+          strand.setPixel(i, Math.floor(pixel.r), Math.floor(pixel.g), Math.floor(pixel.b));
         }
         stream.writePixels(0, strand.buffer);
       };

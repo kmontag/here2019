@@ -1,4 +1,4 @@
-import { Dictionary, Static, InstanceOf, String, Number, Union, Boolean, Null } from 'runtypes';
+import { Dictionary, Static, InstanceOf, String, Number as RuntypesNumber, Union, Boolean, Null } from 'runtypes';
 import * as fs from 'fs';
 import * as path from 'path';
 import logger from './logger';
@@ -6,7 +6,7 @@ import logger from './logger';
 const StoredObject = Union(
   InstanceOf(Object),
   String,
-  Number,
+  RuntypesNumber,
   Boolean,
   Null,
 );

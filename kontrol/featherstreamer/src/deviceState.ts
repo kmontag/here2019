@@ -9,15 +9,17 @@
 import { createStore, Reducer, Action } from 'redux';
 import { Device } from 'featherstreamer-shared';
 import { Map, Record as ImmutableRecord } from 'immutable';
-import { Dictionary, Record as RuntypesRecord, String as RuntypesString, Static } from 'runtypes';
+import { Dictionary, Number as RuntypesNumber, Record as RuntypesRecord, String as RuntypesString, Static } from 'runtypes';
 import persistentState from './persistentState';
 import logger from './logger';
 import OPCManager from './OPCManager';
+import { getConfig } from './config';
 
-const SavedState = RuntypesRecord({
-  // ID -> channel number
-  devices: Dictionary(RuntypesString, 'string'),
-});
+// Key is the device ID.
+const SavedState = Dictionary(RuntypesRecord({
+  channelId: RuntypesString,
+  brightness: RuntypesNumber,
+}), 'string');
 type SavedState = Static<typeof SavedState>;
 
 const PERSISTENT_STATE_KEY = 'devices';
@@ -75,7 +77,8 @@ const getDefaultState = (): ApplicationState => {
     for (const deviceId in savedState.devices) {
       devices[deviceId] = ImmutableRecord({
         connections: 0,
-        channelId: savedState.devices[deviceId],
+        channelId: savedState[deviceId].channelId,
+        brightness: savedState[deviceId].brightness,
       })();
     }
   }
@@ -97,11 +100,13 @@ const reducer: Reducer<ApplicationState, ApplicationAction> = (state = getDefaul
           savedStateChanged = true;
         }
         const device: Device = existingDevice ? {
-          ...existingDevice.toJS(),
+          channelId: existingDevice.get('channelId'),
+          brightness: existingDevice.get('brightness'),
           connections: existingDevice.get('connections') + 1,
         } : {
           connections: 1,
-          channelId: DEFAULT_CHANNEL_ID
+          channelId: DEFAULT_CHANNEL_ID,
+          brightness: getConfig().defaultBrightness,
         };
         newState = state.set('devices', state.get('devices').set(action.id, ImmutableRecord(device)()));
       })();
@@ -113,11 +118,13 @@ const reducer: Reducer<ApplicationState, ApplicationAction> = (state = getDefaul
           savedStateChanged = true;
         }
         const device: Device = existingDevice ? {
-          ...existingDevice.toJS(),
+          channelId: existingDevice.get('channelId'),
+          brightness: existingDevice.get('brightness'),
           connections: Math.max(0, existingDevice.get('connections') - 1),
         } : {
           connections: 0,
-          channelId: DEFAULT_CHANNEL_ID
+          channelId: DEFAULT_CHANNEL_ID,
+          brightness: getConfig().defaultBrightness,
         };
         newState = state.set('devices', state.get('devices').set(action.id, ImmutableRecord(device)()));
       })();
@@ -139,10 +146,12 @@ const reducer: Reducer<ApplicationState, ApplicationAction> = (state = getDefaul
       (() => {
         const existingDevice = state.get('devices').get(action.deviceId);
         const device: Device = existingDevice ? {
-          ...existingDevice.toJS(),
+          connections: existingDevice.get('connections'),
+          brightness: existingDevice.get('brightness'),
           channelId: action.channelId,
         } : {
           connections: 0,
+          brightness: getConfig().defaultBrightness,
           channelId: action.channelId,
         };
         newState = state.set('devices', state.get('devices').set(action.deviceId, ImmutableRecord(device)()));
@@ -155,11 +164,12 @@ const reducer: Reducer<ApplicationState, ApplicationAction> = (state = getDefaul
   }
 
   if (savedStateChanged) {
-    const savedState: SavedState = {
-      devices: {},
-    };
+    const savedState: SavedState = {};
     newState.get('devices').forEach((device, id) => {
-      savedState.devices[id] = device.get('channelId');
+      savedState[id] = {
+        brightness: device.get('brightness'),
+        channelId: device.get('channelId'),
+      };
     });
     persistentState.set(PERSISTENT_STATE_KEY, savedState);
 
