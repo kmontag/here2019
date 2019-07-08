@@ -209,7 +209,14 @@ void Renderer::commit() {
   this->timeBetweenFrames = t - this->lastFrameTime;
   this->lastFrameTime = t;
 
+  const uint8_t prevRGBBufferIndex = this->currentRGBBufferIndex;
   this->currentRGBBufferIndex = (this->currentRGBBufferIndex + 1) % NUM_RGB_BUFFERS;
+
+  // Copy all data from the current frame, so if we don't set all
+  // pixels on the next frame, the ones that don't get set will
+  // maintain their value from this frame.
+  memcpy(this->getRGBBuffer(), this->rgbBuffers[prevRGBBufferIndex], MAX_LEDS * 3);
+
 }
 
 void Renderer::render() {

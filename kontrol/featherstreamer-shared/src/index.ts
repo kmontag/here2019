@@ -1,4 +1,4 @@
-import { Record, Static, String, Number, Dictionary, Literal, Union, Boolean, Undefined } from 'runtypes';
+import { Record, Static, String, Number, Dictionary, Literal, Union, Boolean, Undefined, Array } from 'runtypes';
 
 const Channel = Record({
   description: String,
@@ -40,6 +40,10 @@ const ServerState = Record({
   devices: Dictionary(Device, 'string'),
   nodeStatus: NodeStatus,
   ssid: String,
+  media: Record({
+    names: Array(String),
+    currentSelection: String,
+  }),
 });
 type ServerState = Static<typeof ServerState>;
 export { ServerState };

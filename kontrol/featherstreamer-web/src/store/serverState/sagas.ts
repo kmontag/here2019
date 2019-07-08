@@ -2,7 +2,7 @@ import { List } from 'immutable';
 import axios from 'axios';
 import { SagaIterator, Saga } from 'redux-saga';
 import { delay, put, takeEvery } from 'redux-saga/effects';
-import { requestUpdate, RequestUpdateAction, update, ForgetDeviceAction, UpdateDeviceChannelAction } from './actions';
+import { requestUpdate, RequestUpdateAction, update, ForgetDeviceAction, SetDeviceChannelAction } from './actions';
 import { BACKEND_PREFIX } from '../../routing';
 import { ServerState } from 'featherstreamer-shared';
 
@@ -32,7 +32,7 @@ function * watchForgetDevice(): SagaIterator {
   yield takeEvery<ForgetDeviceAction>('@@serverState/FORGET_DEVICE', doForgetDevice);
 }
 
-function * doUpdateDeviceChannel(action: UpdateDeviceChannelAction) {
+function * doSetDeviceChannel(action: SetDeviceChannelAction) {
   yield axios({
     url: `${BACKEND_PREFIX}/devices/${action.deviceId}`,
     method: 'PUT',
@@ -43,13 +43,13 @@ function * doUpdateDeviceChannel(action: UpdateDeviceChannelAction) {
   yield put(requestUpdate());
 }
 
-function * watchUpdateDeviceChannel(): SagaIterator {
-  yield takeEvery<UpdateDeviceChannelAction>('@@serverState/UPDATE_DEVICE_CHANNEL', doUpdateDeviceChannel);
+function * watchSetDeviceChannel(): SagaIterator {
+  yield takeEvery<SetDeviceChannelAction>('@@serverState/SET_DEVICE_CHANNEL', doSetDeviceChannel);
 }
 
 export default List<Saga>([
   watchRequestUpdate,
   requestUpdatePeriodically,
   watchForgetDevice,
-  watchUpdateDeviceChannel,
+  watchSetDeviceChannel,
 ]);

@@ -340,6 +340,9 @@ export default class OPCManager {
     setup();
 
     return () => {
+      // Clear all LEDs.
+      notLiveSetup();
+
       teardownCurrentState();
       removeModeChangedListener();
       removeMasterVisibleChangedListener();
