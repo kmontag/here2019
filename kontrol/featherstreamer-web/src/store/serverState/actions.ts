@@ -39,6 +39,38 @@ export const setDeviceChannel: ActionCreator<SetDeviceChannelAction> = (opts: {
   };
 }
 
+export interface SetDeviceBrightnessAction extends Action {
+  type: '@@serverState/SET_DEVICE_BRIGHTNESS',
+  deviceId: string,
+  brightness: number,
+}
+
+export const setDeviceBrightness: ActionCreator<SetDeviceBrightnessAction> = (opts: {
+  deviceId: string,
+  brightness: number,
+}) => {
+  return {
+    type: '@@serverState/SET_DEVICE_BRIGHTNESS',
+    ...opts,
+  };
+}
+
+export interface SetDeviceColorAction extends Action {
+  type: '@@serverState/SET_DEVICE_COLOR',
+  deviceId: string,
+  color: { r: number, g: number, b: number, }
+}
+
+export const setDeviceColor: ActionCreator<SetDeviceColorAction> = (opts: {
+  deviceId: string,
+  color: SetDeviceColorAction['color'],
+}) => {
+  return {
+    type: '@@serverState/SET_DEVICE_COLOR',
+    ...opts,
+  };
+}
+
 export interface ForgetDeviceAction extends Action {
   type: '@@serverState/FORGET_DEVICE',
   id: string,
@@ -55,5 +87,7 @@ export type ServerStateAction =
   UpdateAction |
   RequestUpdateAction |
   SetDeviceChannelAction |
+  SetDeviceBrightnessAction |
+  SetDeviceColorAction |
   ForgetDeviceAction |
   never;

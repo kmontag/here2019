@@ -33,15 +33,11 @@ namespace featherstream {
 
     static const uint16_t FRAMES_BETWEEN_TWINKLES = 200;
 
-    // To avoid float math, we move brightness up and down by an
-    // integral amount, then divide it by BRIGHTNESS_MULTIPLIER before
-    // rendering.
     static const uint16_t BRIGHTNESS_DELTA_PER_FRAME = 3;
-    static const uint16_t BRIGHTNESS_MULTIPLIER = 5;
-    static const uint16_t MAX_BRIGHTNESS = 250;
+    static const uint16_t MAX_BRIGHTNESS = 255;
     static const uint16_t MIN_BRIGHTNESS = 50;
 
-    static const uint16_t LOOP_DELAY = 32;
+    static const uint16_t FRAME_LENGTH_MS = 9;
 
     settings_t settings;
     static const uint16_t EXPECTED_MAGIC = 5250;

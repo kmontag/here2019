@@ -50,11 +50,18 @@ interface SetDeviceChannelAction extends Action {
   channelId: string,
 }
 
+interface SetDeviceBrightnessAction extends Action {
+  type: 'SET_DEVICE_BRIGHTNESS',
+  deviceId: string,
+  brightness: number,
+}
+
 type ApplicationAction =
   RegisterDeviceConnectionAction |
   RegisterDeviceDisconnectionAction |
   ForgetDeviceAction |
   SetDeviceChannelAction |
+  SetDeviceBrightnessAction |
   never;
 
 const getDefaultState = (): ApplicationState => {
@@ -74,7 +81,7 @@ const getDefaultState = (): ApplicationState => {
     [id: string]: ImmutableRecord<Device>,
   } = {};
   if (savedState) {
-    for (const deviceId in savedState.devices) {
+    for (const deviceId in savedState) {
       devices[deviceId] = ImmutableRecord({
         connections: 0,
         channelId: savedState[deviceId].channelId,
@@ -158,6 +165,22 @@ const reducer: Reducer<ApplicationState, ApplicationAction> = (state = getDefaul
       })();
       savedStateChanged = true;
       break;
+    case 'SET_DEVICE_BRIGHTNESS':
+      (() => {
+        const existingDevice = state.get('devices').get(action.deviceId);
+        const device: Device = existingDevice ? {
+          connections: existingDevice.get('connections'),
+          brightness: action.brightness,
+          channelId: existingDevice.get('channelId'),
+        } : {
+          connections: 0,
+          brightness: action.brightness,
+          channelId: OPCManager.getDefaultChannel(),
+        };
+        newState = state.set('devices', state.get('devices').set(action.deviceId, ImmutableRecord(device)()));
+      })();
+      savedStateChanged = true;
+      break;
     default:
       newState = state;
       break;
@@ -213,5 +236,19 @@ export function setDeviceChannel({
     type: 'SET_DEVICE_CHANNEL',
     deviceId,
     channelId,
+  });
+}
+
+export function setDeviceBrightness({
+  deviceId,
+  brightness,
+}: {
+  deviceId: string,
+  brightness: number,
+}) {
+  store.dispatch({
+    type: 'SET_DEVICE_BRIGHTNESS',
+    deviceId,
+    brightness,
   });
 }

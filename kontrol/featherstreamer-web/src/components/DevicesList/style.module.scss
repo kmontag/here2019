@@ -1,3 +1,24 @@
 .delete {
   float: right;
 }
+
+.input {
+  font-size: 12px !important;
+}
+
+.popover {
+  position: absolute;
+  zIndex: 2;
+}
+
+.cover {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.splotchIcon {
+  background: black !important;
+}

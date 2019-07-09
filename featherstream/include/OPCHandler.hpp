@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <WiFi101.h>
 #include "Renderer.hpp"
+#include "TwinkleAnimation.hpp"
 
 namespace featherstream {
   /**
@@ -10,7 +11,7 @@ namespace featherstream {
    */
   class OPCHandler {
   public:
-    OPCHandler(Renderer &renderer);
+    OPCHandler(Renderer &, TwinkleAnimation &);
     virtual ~OPCHandler();
 
     /**
@@ -48,6 +49,8 @@ namespace featherstream {
 
   private:
     Renderer &renderer;
+    TwinkleAnimation &twinkleAnimation;
+
     WiFiClient client;
 
     String deviceId;

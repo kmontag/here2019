@@ -14,8 +14,9 @@ using namespace featherstream;
 #define CMD_SYSEX 255
 
 OPCHandler::OPCHandler(
-  Renderer &renderer
-): renderer(renderer) {
+  Renderer &renderer,
+  TwinkleAnimation &twinkleAnimation
+): renderer(renderer), twinkleAnimation(twinkleAnimation) {
   this->mode = MODE_HEADER;
   this->numLEDs = this->nextNumLEDs = renderer.getLength();
 
@@ -144,7 +145,13 @@ bool OPCHandler::loop() {
                 if (this->dataSize < 2) {
                   Serial.println("Sysex command payload size too small, ignoring...");
                 } else {
-                  uint16_t sysexCmd = *(uint16_t *)(&rgbBuf);
+                  // Read a little-endian command ID, see
+                  // https://forum.arduino.cc/index.php?topic=508999.0.
+                  // uint16_t sysexCmd = rgbBuf[0] << 8 | rgbBuf[1];
+                  uint16_t sysexCmd = *(uint16_t *)rgbBuf;
+
+                  Serial.print("Got sysex command: ");
+                  Serial.println(sysexCmd);
 
                   if (sysexCmd == 6) { // Change offline animation color.
                     if (this->dataSize == 5) {
@@ -155,11 +162,16 @@ bool OPCHandler::loop() {
                       Serial.print(g);
                       Serial.print(" B");
                       Serial.println(b);
+
+                      this->twinkleAnimation.setColor(r, g, b);
                     } else {
                       Serial.println("Sysex command 6 requires exactly 5 bytes in payload, ignoring...");
                     }
                   }
                 }
+              } else {
+                Serial.print("Unknown or unprocessable command: ");
+                Serial.println(this->cmd);
               }
               this->bytesRead           = 0; // Reset index
               this->mode = bytesToDiscard ? MODE_DISCARD : MODE_HEADER;

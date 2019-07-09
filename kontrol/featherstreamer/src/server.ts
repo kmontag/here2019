@@ -7,7 +7,7 @@ import createParser, { ParserMessage } from 'opc/parser';
 import os from 'os';
 import { Number as RuntypesNumber, Record as RuntypesRecord, String as RuntypesString, Undefined } from 'runtypes';
 import StrictEventEmitter from 'strict-event-emitter-types';
-import { forgetDevice, registerDeviceConnection, registerDeviceDisconnection, setDeviceChannel, store as deviceStore } from './deviceState';
+import { forgetDevice, registerDeviceConnection, registerDeviceDisconnection, setDeviceChannel, store as deviceStore, setDeviceBrightness } from './deviceState';
 import logger from './logger';
 import masterVisibilityManager from './masterVisibilityManager';
 import nodeStatusManager from './nodeStatusManager';
@@ -116,6 +116,7 @@ export default function server({
 
     let removeStream: () => any = () => {};
     let lastChannelId: string|undefined = undefined;
+    let lastBrightness: number|undefined = undefined;
 
     // Setup function to be invoked on init, and then whenever the
     // channel associated with this device may have changed.
@@ -126,8 +127,9 @@ export default function server({
         throw new Error('unexpected');
       }
       const channelId = device.get('channelId');
+      const brightness = device.get('brightness');
 
-      if (channelId !== lastChannelId) {
+      if (channelId !== lastChannelId || brightness !== lastBrightness) {
         // Clear out previous stream, if any.
         removeStream();
 
@@ -137,7 +139,6 @@ export default function server({
         output.pipe(res);
 
         const removeOPCManagerStream = opcManager.stream(channelId, parser);
-        const brightness = device.get('brightness');
 
         // Adjust brightness before sending to the device.. Note this
         // only gets applied here, at the device level - so it won't
@@ -156,6 +157,7 @@ export default function server({
         });
 
         lastChannelId = channelId;
+        lastBrightness = brightness;
 
         removeStream = () => {
           removeOPCManagerStream();
@@ -171,9 +173,9 @@ export default function server({
         // Stop streaming data momentarily to avoid interleaving.
         removeStream();
 
-        const r = Math.floor(event.r) % 255;
-        const g = Math.floor(event.g) % 255;
-        const b = Math.floor(event.b) % 255;
+        const r = Math.floor(event.r) % 256;
+        const g = Math.floor(event.g) % 256;
+        const b = Math.floor(event.b) % 256;
         logger.info(`Set device ${deviceId} color: #${r.toString(16)}${g.toString(16)}${b.toString(16)}`);
 
         const stream = createOPCStream();
@@ -182,23 +184,31 @@ export default function server({
         const data = new Uint8Array(5);
 
         // Sysex command identifier 6.
-        data[0] = 0;
-        data[1] = 6;
+        data[0] = 6;
+        data[1] = 0;
 
         // Color data for the sysex command.
         data[2] = r;
         data[3] = g;
         data[4] = b;
 
-        stream.writeMessage(0, 255, data);
-        stream.unpipe(res);
+        // @ts-ignore
+        logger.debug(`Sending bytes: ${Array.apply([], data).join(",")}`);
 
+        // 255 is the generic sysex command.
+        stream.writeMessage(0, 255, data);
+
+        removeStream = () => {
+          stream.unpipe(res);
+        };
+
+        lastChannelId = undefined;
         setup();
       }
     };
     eventEmitter.on('color', handleColor);
     
-    deviceStore.subscribe(() => {
+    const unsubscribeDeviceStore = deviceStore.subscribe(() => {
       setup();
     });
     setup();
@@ -208,6 +218,7 @@ export default function server({
       removeStream();
       registerDeviceDisconnection(req.params.id);
       eventEmitter.off('color', handleColor);
+      unsubscribeDeviceStore();
     };
 
     // https://stackoverflow.com/questions/6572572/node-js-http-server-detect-when-clients-disconnect
@@ -221,8 +232,9 @@ export default function server({
   });
 
   app.put('/devices/:id', (req, res) => {
+    const deviceId = req.params.id;
     const ColorDimension = RuntypesNumber.withConstraint((n) => {
-      return n >= 0 && n < 255 && Number.isInteger(n);
+      return n >= 0 && n < 256 && Number.isInteger(n);
     });
     const Params = RuntypesRecord({
       channelId: RuntypesString.Or(Undefined),
@@ -231,20 +243,29 @@ export default function server({
         g: ColorDimension,
         b: ColorDimension,
       }).Or(Undefined),
+      brightness: RuntypesNumber.Or(Undefined),
     });
 
     const body = req.body;
     if (Params.guard(body)) {
       if (body.channelId) {
         setDeviceChannel({
-          deviceId: req.params.id,
+          deviceId,
           channelId: body.channelId
         });
       }
       if (body.color) {
-
+        eventEmitter.emit('color', { deviceId, ...body.color });
       }
+      if (body.brightness) {
+        setDeviceBrightness({
+          deviceId,
+          brightness: body.brightness,
+        });
+      }
+      res.status(204).send();
     } else {
+      logger.warn(`Invalid request body: ${JSON.stringify(body)}`);
       res.status(422).send();
     }
   });

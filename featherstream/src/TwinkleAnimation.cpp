@@ -11,7 +11,7 @@ TwinkleAnimation::TwinkleAnimation(Renderer &renderer) : renderer(renderer) {
 
   // Default to white.
   if (this->settings.magic != EXPECTED_MAGIC) {
-    this->settings.r = this->settings.g = this->settings.b = 255;
+    this->settings.r = this->settings.g = this->settings.b = 50;
   }
 
   this->twinkleStatuses = new twinkleStatus[renderer.getLength()];
@@ -27,6 +27,7 @@ TwinkleAnimation::~TwinkleAnimation() {
 }
 
 void TwinkleAnimation::loop() {
+  uint32_t initMillis = millis();
   for (uint16_t i = 0; i < this->renderer.getLength(); i++) {
     // Randomly turn on twinkles.
     if (!this->twinkleStatuses[i].isActive && random(FRAMES_BETWEEN_TWINKLES) == 0) {
@@ -50,12 +51,21 @@ void TwinkleAnimation::loop() {
         }
       }
     }
-    uint8_t renderedBrightness = (uint8_t)(this->twinkleStatuses[i].brightness / BRIGHTNESS_MULTIPLIER);
-    this->renderer.setPixel(i, renderedBrightness, renderedBrightness, renderedBrightness);
+    //uint8_t renderedBrightness = (uint8_t)(this->twinkleStatuses[i].brightness / BRIGHTNESS_MULTIPLIER);
+    this->renderer.setPixel(
+      i,
+      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->settings.r / 255),
+      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->settings.g / 255),
+      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->settings.b / 255)
+    );
   }
   this->renderer.commit();
   this->renderer.render();
-  //delay(LOOP_DELAY);
+
+  uint32_t finalMillis = millis();
+  if (finalMillis - initMillis < FRAME_LENGTH_MS) {
+    delay(FRAME_LENGTH_MS - (finalMillis - initMillis));
+  }
 }
 
 void TwinkleAnimation::setColor(uint8_t r, uint8_t g, uint8_t b) {

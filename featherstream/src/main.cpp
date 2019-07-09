@@ -60,8 +60,8 @@ void setup() {
 
   featherstreamerManager = new featherstream::FeatherstreamerManager();
   renderer = new featherstream::Renderer();
-  opcHandler = new featherstream::OPCHandler(*renderer);
   offlineAnimation = new featherstream::TwinkleAnimation(*renderer);
+  opcHandler = new featherstream::OPCHandler(*renderer, *offlineAnimation);
   wiFiHandler = new featherstream::WiFiHandler(*featherstreamerManager);
 
   Serial.print("My name is ");
