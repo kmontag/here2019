@@ -69,10 +69,16 @@ endif
 	rsync -avz --exclude='node_modules' featherstreamer-web/ pi@$(PI):/usr/local/src/featherstreamer-web/
 	rsync -avz --exclude='node_modules' frameplayer/ pi@$(PI):/usr/local/src/frameplayer/
 
-	rsync -avz media-build/ pi@$(PI):/var/featherstreamer/media/
-
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer-web"
+
+.PHONY: deploy-media
+deploy-media:
+ifndef PI
+	$(error Specify the host via the PI variable)
+endif
+	rsync -avz media-build/ pi@$(PI):/var/featherstreamer/media/
+	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
 
 # Build any new media from the media-src/ directory to media-build/,
 # and remove any files in the build directory which weren't built from

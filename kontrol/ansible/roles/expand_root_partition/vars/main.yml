@@ -1,2 +1,13 @@
-expand_root_partition_gb: 4
+---
 device: /dev/mmcblk0
+
+# i.e. the partition lives at "{{ device }}p{{ root_partition_number }}
+root_partition_number: 2
+
+# Note - careful changing this - if you increase it, it may trigger an
+# unnecessarily large expansion (see the "expand root partition"
+# task).
+expand_root_partition_gb: 4
+
+data_partition_gb: 2
+data_filesystem_label: data

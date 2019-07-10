@@ -1,6 +1,0 @@
-{
-  "mediaDir": "/var/featherstreamer/media",
-  "masterHost": "192.168.9.1",
-  "fakeSystemCalls": false,
-  "eagerSlave": false
-}

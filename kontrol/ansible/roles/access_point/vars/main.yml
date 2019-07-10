@@ -1,7 +1,7 @@
 ---
 primary_ap_name: "{{ ansible_hostname }}"
-pairing_ap_name: _featherstreamer-pairing
-master_ap_name: _featherstreamer-master
+pairing_ap_name: "_{{ base_name }}-pairing"
+master_ap_name: "_{{ base_name }}-master"
 
 ap_device_name: ap0
 wlan_device_name: wlan0

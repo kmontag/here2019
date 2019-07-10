@@ -93,12 +93,21 @@
   become_user: root
 
 - name: add featherstreamer development config
-  copy:
-    dest: /etc/featherstreamer.conf.json
-    src: "{{ role_path }}/files/featherstreamer.development.conf.json"
+  template:
+    dest: "{{ item.dest }}"
+    force: "{{ item.force }}"
+    src: "{{ role_path }}/template/featherstreamer.development.conf.json.tpl"
+  with_items:
+    # In any case, create a copy of this config so we can easily
+    - dest: "/usr/local/etc/featherstreamer.development.conf.json"
+      force: yes
+    # Use this as the actual config unless there's already something
+    # there.
+    - dest: "{{ config_file }}"
+      force: no
   become: yes
   become_user: root
-  
+
 - name: create featherstreamer service
   copy:
     dest: /etc/systemd/system/featherstreamer.service
@@ -110,6 +119,7 @@
       [Service]
       ExecStart=/usr/local/bin/npm start
       WorkingDirectory={{ remote_modules_location }}/featherstreamer
+      Environment="CONFIG={{ config_file }}"
       User=root
       Restart=always
 

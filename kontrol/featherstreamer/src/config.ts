@@ -3,7 +3,7 @@ import * as env from 'env-var';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const CONFIG_FILE = env.get('CONFIG', '/etc/featherstreamer.conf.json').asString();
+const CONFIG_FILE = env.get('CONFIG').required().asString();
 const Config = Record({
   /**
    * If true, don't actually call `feathernet` when changing
@@ -26,6 +26,11 @@ const Config = Record({
   mediaDir: String,
 
   /**
+   * Filename to store persistent state.
+   */
+  stateFile: String,
+
+  /**
    * Where to look for the master device.
    */
   masterHost: String,
@@ -43,6 +48,7 @@ const defaultConfig: Config = {
   fakeSystemCalls: true,
   eagerSlave: false,
   mediaDir: path.join(__dirname, '..', '..', 'media-build'),
+  stateFile: path.join(__dirname, '..', 'state.json'),
   masterHost: '192.168.9.1',
   masterPort: 44668,
   defaultBrightness: 0.3,

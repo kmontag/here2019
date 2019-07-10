@@ -1,6 +1,6 @@
 ---
 - name: get current root partition size
-  shell: fdisk -l {{ device }}p2 | head -1 | sed 's/.* \(.*\) bytes.*/\1/'
+  shell: fdisk -l {{ device }}p{{ root_partition_number }} | head -1 | sed 's/.* \(.*\) bytes.*/\1/'
   register: current_root_partition_size
   changed_when: False
   become: yes
@@ -10,13 +10,71 @@
 # failures, see
 # https://raspberrypi.stackexchange.com/questions/68082/why-wont-my-raspberrypi-boot-if-i-use-parted-to-adjust-the-partition.
 - name: expand root partition
-  shell: "echo ', +{{ expand_root_partition_gb }}G' | sfdisk --force -N 2 {{ device }}"
+  shell: "echo ', +{{ expand_root_partition_gb }}G' | sfdisk --force -N {{ root_partition_number }} {{ device }}"
   when: (current_root_partition_size.stdout | int) < (expand_root_partition_gb + 1) * 1000000000
-  notify:
-    - reboot system before resize
-    - resize root fs
+  register: expand_root_partition
   become: yes
   become_user: root
 
-- name: force root fs resize before continuing
-  meta: flush_handlers
+- name: reboot system before resize
+  reboot:
+  when: expand_root_partition.changed
+  become: yes
+  become_user: root
+
+- name: resize root fs
+  command: "resize2fs {{ device }}p{{ root_partition_number }}"
+  when: expand_root_partition.changed
+  become: yes
+  become_user: root
+
+- name: get final partition end sector
+  # Selects the end sector of the current final partition
+  shell: "parted -m {{ device }} 'unit s print' | tail -1 | cut -d ':' -f 3 | tr -d 's'"
+  changed_when: False
+  register: final_partition_end_sector
+  become: yes
+  become_user: root
+
+- name: check for data partition
+  stat:
+    path: "{{ device }}p{{ root_partition_number + 1 }}"
+  register: check_for_data_partition
+
+- name: create data partition
+  # Note sfdisk only supports sectors as the unit. 512B is the sector
+  # size.
+  shell: "echo '{{ (final_partition_end_sector.stdout | int) + 1 }} {{ (data_partition_gb * 1000000000 / 512) | int }}' | sfdisk --force -N {{ root_partition_number + 1 }} {{ device }}"
+  when: not check_for_data_partition.stat.exists
+  register: create_data_partition
+  become: yes
+  become_user: root
+
+- name: reboot system before creating filesystem
+  reboot:
+  when: create_data_partition.changed
+  become: yes
+  become_user: root
+
+- name: create data filesystem
+  filesystem:
+    dev: "{{ device }}p{{ root_partition_number + 1 }}"
+    fstype: vfat
+  register: create_data_filesystem
+  become: yes
+  become_user: root
+
+- name: label data filesystem
+  shell: "dosfslabel {{ device }}p{{ root_partition_number + 1 }} {{ data_filesystem_label }}"
+  when: create_data_filesystem.changed
+  become: yes
+  become_user: root
+
+- name: mount data filesystem
+  mount:
+    fstype: vfat
+    state: mounted
+    path: "{{ data_partition_mount_point }}"
+    src: "{{ device }}p{{ root_partition_number + 1 }}"
+  become: yes
+  become_user: root

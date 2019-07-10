@@ -17,3 +17,13 @@ ansible_connection=paramiko
 ansible_user=pi
 ansible_ssh_pass=raspberry
 ansible_host_key_checking=false
+
+# Set up variables which need to be shared across several roles,
+# and/or which we may wish to override in the local hosts file.
+[all:vars]
+
+# Where to put the vfat data partition
+data_partition_mount_point=/var/featherstreamer
+
+# Use this to generate hostnames, AP names, etc.
+base_name=featherstreamer

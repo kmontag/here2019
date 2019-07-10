@@ -2,7 +2,7 @@
 # 1-14.
 network_channel: 6
 
-network_name: featherstreamer
+network_name: "{{ base_name }}"
 
 # Anything following this format is valid.
 network_ap: 02:31:43:62:44:A2

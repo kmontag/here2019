@@ -1,7 +1,7 @@
 import { Dictionary, Static, InstanceOf, String, Number as RuntypesNumber, Union, Boolean, Null } from 'runtypes';
 import * as fs from 'fs';
-import * as path from 'path';
 import logger from './logger';
+import { getConfig } from './config';
 
 const StoredObject = Union(
   InstanceOf(Object),
@@ -55,5 +55,5 @@ export class PersistentState {
   }
 }
 
-const persistentState = new PersistentState(path.join(__dirname, '..', 'state.json'));
+const persistentState = new PersistentState(getConfig().stateFile);
 export default persistentState;
