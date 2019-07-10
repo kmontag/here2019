@@ -11,3 +11,6 @@ expand_root_partition_gb: 4
 
 data_partition_gb: 2
 data_filesystem_label: data
+
+data_filesystem_uid: pi
+data_filesystem_gid: pi

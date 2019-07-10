@@ -1,0 +1,98 @@
+---
+# Allows the user to place a file in the boot partition which will force a reset of:
+#
+# - the device hostname
+# - the name of the device's primary access point
+- name: allow resetting hostname
+  copy:
+    dest: /usr/local/bin/check-for-reset
+    content: |
+      #!/bin/bash
+
+      echo "check-for-reset: !!!"
+
+      # Check for a reset file on boot
+      if [[ -f "{{ reset_file }}" ]]; then
+        echo "check-for-reset: found reset file at {{ reset_file }}"
+        new_name=$(shuf -n 1 "{{ available_hostnames_file }}")
+        # If the file has contents, use them as the hostname instead.
+        if [[ -s "{{ reset_file }}" ]]; then
+          new_name=$(cat "{{ reset_file }}" | tr -d "\n")
+        fi
+
+        # Set the new hostname and remove the old one.
+        echo "${new_name}" > /etc/hostname
+        sed -i.tmp '/127.0.1.1/d' /etc/hosts
+        rm /etc/hosts.tmp
+        echo "127.0.1.1	${new_name}" >> /etc/hosts
+
+        # Update the hostname before reboot. Note rebooting within a
+        # cronjob appears not to work. To SSH into the pi by hostname,
+        # you might still have to explicitly reboot one more time.
+        hostname "${new_name}"
+
+        # In case someone needs to know...
+        echo "${new_name}" > /boot/hostname-after-reset
+
+        # Update the relevant hostapd configs; when the
+        # featherstreamer service starts, it'll overwrite the existing
+        # "real" config with one of these if appropriate.
+        sed -i.tmp "s/ssid=.*/ssid=${new_name}/" "{{ custom_hostapd_directory }}/hostapd.default.conf"
+        sed -i.tmp "s/ssid=.*/ssid=${new_name}/" "{{ custom_hostapd_directory }}/hostapd.slave.conf"
+        rm "{{ custom_hostapd_directory }}/hostapd.default.conf.tmp"
+        rm "{{ custom_hostapd_directory }}/hostapd.slave.conf.tmp"
+
+        # Don't do this again on the next boot.
+        rm "{{ reset_file }}"
+      else
+        echo "check-for-reset: no file found"
+      fi
+    mode: '0755'
+  register: allow_resetting_hostname
+  become: yes
+  become_user: root
+
+- name: allow replacing wpa_supplicant
+  copy:
+    dest: /usr/local/bin/check-for-wpa-supplicant
+    content: |
+      #!/bin/bash
+
+      # Check for a wpa_supplicant.conf file on boot
+      if [[ -f "{{ wpa_supplicant_file }}" ]]; then
+        echo "check-for-wpa-supplicant: replacing file"
+        cp "{{ wpa_supplicant_file }}" /etc/wpa_supplicant/wpa_supplicant.conf
+        rm "{{ wpa_supplicant_file }}"
+      else
+        echo "check-for-wpa-supplicant: no file found"
+      fi
+    mode: '0755'
+  register: allow_replacing_wpa_supplicant
+  become: yes
+  become_user: root
+
+- name: run checkers on boot
+  cron:
+    job: "{{ item }}"
+    special_time: reboot
+    name: "{{ item.split('/') | last }}"
+  with_items:
+    - /usr/local/bin/check-for-reset
+    - /usr/local/bin/check-for-wpa-supplicant
+  become: yes
+  become_user: root
+
+- name: create prepare script
+  copy:
+    dest: /usr/local/bin/featherstreamer-prepare
+    content: |
+      #!/bin/sh
+      rm /etc/wpa_supplicant/wpa_supplicant.conf
+      cp /usr/local/etc/featherstreamer.production.conf.json /etc/featherstreamer.conf.json
+      touch /boot/reset
+      echo 'The device hostname, AP name, featherstreamer config, and'
+      echo 'WiFi config will be reset on next boot. To choose a'
+      echo 'specific hostname/AP name, place it in /boot/reset.'
+    mode: '0755'
+  become: yes
+  become_user: root

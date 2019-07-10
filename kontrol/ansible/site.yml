@@ -13,3 +13,4 @@
     - expand_root_partition
     - access_point
     - featherstreamer
+    - allow_reconfigure_on_boot

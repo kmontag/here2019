@@ -96,7 +96,7 @@
   template:
     dest: "{{ item.dest }}"
     force: "{{ item.force }}"
-    src: "{{ role_path }}/template/featherstreamer.development.conf.json.tpl"
+    src: "{{ role_path }}/templates/featherstreamer.development.conf.json.tpl"
   with_items:
     # In any case, create a copy of this config so we can easily
     - dest: "/usr/local/etc/featherstreamer.development.conf.json"
@@ -105,6 +105,14 @@
     # there.
     - dest: "{{ config_file }}"
       force: no
+  become: yes
+  become_user: root
+
+- name: add featherstreamer production config
+  template:
+    dest: "/usr/local/etc/featherstreamer.production.conf.json"
+    force: yes
+    src: "{{ role_path }}/templatesfeatherstreamer.production.conf.json.tpl"
   become: yes
   become_user: root
 

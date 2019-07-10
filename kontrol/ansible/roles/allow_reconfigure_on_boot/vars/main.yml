@@ -1,0 +1,3 @@
+---
+reset_file: /boot/reset
+wpa_supplicant_file: /boot/wpa_supplicant.conf

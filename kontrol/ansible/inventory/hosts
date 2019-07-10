@@ -25,5 +25,10 @@ ansible_host_key_checking=false
 # Where to put the vfat data partition
 data_partition_mount_point=/var/featherstreamer
 
+# A big list of hostnames to choose from when necessary.
+available_hostnames_file=/opt/hostnames-available
+
 # Use this to generate hostnames, AP names, etc.
 base_name=featherstreamer
+
+custom_hostapd_directory=/usr/local/etc/hostapd

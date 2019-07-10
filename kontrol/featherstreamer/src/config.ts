@@ -2,6 +2,7 @@ import { Record, Boolean, String, Number as RuntypesNumber, Static } from 'runty
 import * as env from 'env-var';
 import * as fs from 'fs';
 import * as path from 'path';
+import logger from './logger';
 
 const CONFIG_FILE = env.get('CONFIG').required().asString();
 const Config = Record({
@@ -57,11 +58,13 @@ const defaultConfig: Config = {
 let config: Config|undefined = undefined;
 export function getConfig(): Readonly<Config> {
   if (!config) {
+    logger.debug(`Reading config file: ${CONFIG_FILE}`);
     try {
       const configStr = fs.readFileSync(CONFIG_FILE, { encoding: 'utf8' });
       config = Config.check(Object.assign({}, defaultConfig, JSON.parse(configStr)));
     } catch (e) {
       // Defaults for dev.
+      logger.warn(`Could not read config file: ${CONFIG_FILE}`);
       config = defaultConfig;
     }
   }
