@@ -13,6 +13,9 @@
 
       # Check for a reset file on boot
       if [[ -f "{{ reset_file }}" ]]; then
+        # Make the file system temporarily writable
+        /usr/local/bin/rw
+
         echo "check-for-reset: found reset file at {{ reset_file }}"
         new_name=$(shuf -n 1 "{{ available_hostnames_file }}")
         # If the file has contents, use them as the hostname instead.
@@ -44,6 +47,9 @@
 
         # Don't do this again on the next boot.
         rm "{{ reset_file }}"
+
+        # Revert to read-only file system
+        /usr/local/bin/ro
       else
         echo "check-for-reset: no file found"
       fi
@@ -60,9 +66,15 @@
 
       # Check for a wpa_supplicant.conf file on boot
       if [[ -f "{{ wpa_supplicant_file }}" ]]; then
+        # Make the file system temporarily writable
+        /usr/local/bin/rw
+
         echo "check-for-wpa-supplicant: replacing file"
         cp "{{ wpa_supplicant_file }}" /etc/wpa_supplicant/wpa_supplicant.conf
         rm "{{ wpa_supplicant_file }}"
+
+        # Revert to read-only file system
+        /usr/local/bin/ro
       else
         echo "check-for-wpa-supplicant: no file found"
       fi
@@ -71,14 +83,34 @@
   become: yes
   become_user: root
 
-- name: run checkers on boot
-  cron:
-    job: "{{ item }}"
-    special_time: reboot
-    name: "{{ item.split('/') | last }}"
+- name: create services to run checkers on boot
+  copy:
+    dest: "/etc/systemd/system/{{ item }}.service"
+    content: |
+      [Unit]
+      Description={{ item }}
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/{{ item }}
+
+      [Install]
+      WantedBy=multi-user.target
   with_items:
-    - /usr/local/bin/check-for-reset
-    - /usr/local/bin/check-for-wpa-supplicant
+    - check-for-reset
+    - check-for-wpa-supplicant
+  register: create_services
+  become: yes
+  become_user: root
+
+- name: run checker services at boot
+  service:
+    name: "{{ item }}"
+    daemon_reload: "{{ create_services.changed }}"
+    enabled: yes
+  with_items:
+    - check-for-reset
+    - check-for-wpa-supplicant
   become: yes
   become_user: root
 
@@ -87,6 +119,10 @@
     dest: /usr/local/bin/featherstreamer-prepare
     content: |
       #!/bin/sh
+
+      # Make both the boot and normal file systems writable until reboot
+      /usr/local/bin/rw
+
       rm /etc/wpa_supplicant/wpa_supplicant.conf
       cp /usr/local/etc/featherstreamer.production.conf.json /etc/featherstreamer.conf.json
       touch /boot/reset

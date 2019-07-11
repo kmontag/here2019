@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Temporarily enter read-write mode
+/usr/local/bin/rw
+
 mode=$1
 
 [[ ! -z "$mode" ]] || { echo "One argument (the mode name) is required" ; exit 1; }
@@ -73,3 +76,6 @@ if [[ "${restart_wlan}" == true ]]; then
     echo "starting {{ wlan_device_name }}..."
     ifup {{ wlan_device_name }}
 fi
+
+# Go back to read-only mode
+/usr/local/bin/ro

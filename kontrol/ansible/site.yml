@@ -14,3 +14,4 @@
     - access_point
     - featherstreamer
     - allow_reconfigure_on_boot
+    - read_only_fs

@@ -1,3 +1,23 @@
+### Setup from a distributed image
+
+If you won't be doing any development, you can just burn the image to
+an SD card and boot the pi - everything is already installed.
+
+Then put the device into pairing mode (four clockwise clicks while
+pressing the rotary encoder), put one or more feathers into pairing
+mode (flip the switch repeatedly at boot), and wait for the light on
+the feathers to start blinking quickly.
+
+Optionally, in the `boot` volume that mounts when you insert the SD
+card into your laptop:
+
+- edit the `reset` file with a custom SSID for your device.
+- create a file called `wpa_supplicant.conf` (see the example in this
+  directory) containing your home WiFi credentials, to make the device
+  connect to your network when it's in `master` or `pairing` mode.
+
+These optional steps can be performed at any time.
+
 ### From-scratch Pi setup
 
 - Download the latest Raspbian lite:
@@ -31,13 +51,28 @@ $ make bootstrap
 ```
 
 - Perform all additional provisioning to set up the node. Add the
-  outputted hostname to `ansible/inventory/hosts.local` (create the
-  file if it doesn't exist), comment out any hosts you don't want to
-  set up, and run:
+  outputted hostname from the previous step to
+  `ansible/inventory/hosts.local` (create the file if it doesn't
+  exist), comment out any hosts you don't want to set up, and run:
   
 ``` shell
 $ make setup
 ```
+
+- If you want to create an image for distribution, run (using your
+  hostname from above):
+
+``` shell
+$ PI=featherstreamer-foo.local make prepare
+```
+
+  This will remove all sensitive info (i.e. WiFi credentials) from the
+  Pi, and place a blank file at `/boot/reset` to trigger a new
+  hostname/AP name being set on the next boot.
+  
+  You can now shut down the Pi and remove its SD card, and use it to
+  make an image which will generate a unique AP name every time it's
+  installed.
 
 ### Network overview
 

@@ -1,0 +1,64 @@
+---
+# This role sets up the main filesystems (but not the data partition)
+# as read-only at boot. This makes the pi more robust to being turned
+# off without being properly shut down.
+
+- name: create commands to switch between read-only/read-write modes
+  copy:
+    dest: "/usr/local/bin/{{ item }}"
+    content: |
+      #!/bin/sh
+      mount -o remount,{{ item }} /
+      mount -o remount,{{ item }} /boot
+    mode: '0755'
+  with_items:
+    - ro
+    - rw
+  become: yes
+  become_user: root
+
+# See https://askubuntu.com/questions/935036/dnsmasq-in-read-only-mode
+- name: install dependencies
+  apt:
+    cache_valid_time: 86400
+    name:
+      - resolvconf
+  become: yes
+  become_user: root
+
+# See https://askubuntu.com/questions/935036/dnsmasq-in-read-only-mode
+- name: make dnsmasq directory writable
+  lineinfile:
+    path: /etc/fstab
+    line: tmpfs /var/lib/misc tmpfs nodev,nosuid 0 0
+  become: yes
+  become_user: root
+
+- name: check if read-only-fs script already exists
+  stat:
+    path: /usr/local/bin/read-only-fs
+  register: script_exists
+
+- name: copy read-only-fs script
+  copy:
+    dest: /usr/local/bin/read-only-fs
+    src: "{{ role_path }}/files/read-only-fs.sh"
+    mode: '0755'
+  become: yes
+  become_user: root
+
+- name: run read-only-fs script
+  shell: /usr/local/bin/read-only-fs
+  # Hacky way to only run this once. If you make any changes to the
+  # script, you'll need to apply them manually or start from a fresh
+  # install.
+  when: not script_exists.stat.exists
+  register: script_run
+  become: yes
+  become_user: root
+
+- name: reboot system
+  reboot:
+  when: script_run.changed
+  become: yes
+  become_user: root
