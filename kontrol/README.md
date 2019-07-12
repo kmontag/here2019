@@ -18,6 +18,19 @@ card into your laptop:
 
 These optional steps can be performed at any time.
 
+### Runtime configuration
+
+Connect to the pi's access point and go to http://192.168.8.1 (or
+http://192.168.9.1 if the device is in `master` mode) to see a
+configuration UI. 
+
+Once a feather is connected, you'll be able to set the channel that
+should be streamed to it, the brightness, and the persistent color of
+its offline animation.
+
+You can also see some debug info about the device, and simulate
+interactions with the rotary encoder.
+
 ### From-scratch Pi setup
 
 - Download the latest Raspbian lite:
@@ -73,6 +86,36 @@ $ PI=featherstreamer-foo.local make prepare
   You can now shut down the Pi and remove its SD card, and use it to
   make an image which will generate a unique AP name every time it's
   installed.
+
+### SSH
+
+It's generally easiest to interact with the Pi over SSH. Probably the
+cleanest way to do this is to connect to the pi's hosted access point,
+and then log in using `ssh pi@192.168.8.1` (or `ssh pi@192.168.9.1` if
+the device is in master mode).
+
+If you place a `wpa_supplicant.conf` file in the boot partition (see
+the example file in this directory), you can also interact with the Pi
+over your home network. The Pi will connect to your home network in
+`pairing`, `master`, and `default` network modes. The first two always
+correspond to the `pairing` and `master` application modes. If you're
+using the development config (which is the case if you set things up
+from scratch using ansible), the `isolated` application mode will also
+correspond to the `default` mode. (Note the production config uses the
+`slave` networking mode while in the `isolated` application mode, to
+make it faster to switch over to the `slave` application mode when
+requested).
+
+On your local network, you can probably find the pi at `ssh pi@[access
+point name].local` (since the access point name is the same as the
+pi's hostname).
+
+### Development
+
+If you're able to connect to the Pi via SSH, you can use `make deploy`
+and `make deploy-media` to push code changes and media changes,
+respectively. You can also still run the ansible playbook using `make
+setup`.
 
 ### Network overview
 
