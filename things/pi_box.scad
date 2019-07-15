@@ -18,6 +18,7 @@ wallWidth = 1;
 length = 75;
 width = 35;
 height = 35;
+fadecandyExtraWidth =
 
 fillet = 1;
 
@@ -124,191 +125,195 @@ module positionNutHolder(i) {
   }
 }
 
-up(wallWidth) right(wallWidth) back(wallWidth) {
-  //circuit();
-  difference() {
-    union() {
-
-      // Pi and battery platforms
+module piBox(fadecandy=false) {
+  up(wallWidth) right(wallWidth) back(wallWidth) {
+    //circuit();
+    difference() {
       union() {
-        piPlatformInset = 20;
-        piPlatformHeight = 10;
-        piHeaderInset = 7;
-        cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, piPlatformHeight], p1=[0, 0, 0]);
-        back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, piPlatformHeight], p1=[0, 0, 0]);
-      }
 
-      // PowerBoost platform
-      union() {
-        size = powerBoost1000CSize();
-        backAngleStartHeight = powerBoostFloatHeight + 2;
-        backAngleHeight = 4.5;
-        backAngleSupportLength = 4;
-        backAngleInternalLength = 3;
-        platformInset = size[2] + 2;//  - wallWidth; // - wallWidth covers the adjustment of the board to push the switch through the wall.
-        platformWidth = 4 + pcbHeight;
+        // Pi and battery platforms
+        union() {
+          piPlatformInset = 20;
+          piPlatformHeight = 10;
+          piHeaderInset = 7;
+          cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, piPlatformHeight], p1=[0, 0, 0]);
+          back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, piPlatformHeight], p1=[0, 0, 0]);
+        }
 
-        translate([
-                    width - platformInset,
-                    length - size[1],
-                    0,
-                  ]) {
+        // PowerBoost platform
+        union() {
+          size = powerBoost1000CSize();
+          backAngleStartHeight = powerBoostFloatHeight + 2;
+          backAngleHeight = 4.5;
+          backAngleSupportLength = 4;
+          backAngleInternalLength = 3;
+          platformInset = size[2] + 2;//  - wallWidth; // - wallWidth covers the adjustment of the board to push the switch through the wall.
+          platformWidth = 4 + pcbHeight;
 
-          // Back support
-          forward(backAngleSupportLength) {
-            cuboid(size=[
-                     platformInset,
-                     backAngleSupportLength,
-                     backAngleStartHeight + backAngleHeight,
-                   ], p1=[0, 0, 0]);
-            back(backAngleSupportLength)
+          translate([
+                      width - platformInset,
+                      length - size[1],
+                      0,
+                    ]) {
+
+            // Back support
+            forward(backAngleSupportLength) {
+              cuboid(size=[
+                       platformInset,
+                       backAngleSupportLength,
+                       backAngleStartHeight + backAngleHeight,
+                     ], p1=[0, 0, 0]);
+              back(backAngleSupportLength)
+                cuboid(size=[
+                         platformWidth,
+                         backAngleInternalLength,
+                         powerBoostFloatHeight,
+                       ], p1=[0, 0, 0]);
+              back(backAngleSupportLength)
+                up(backAngleStartHeight + backAngleHeight)
+                right(platformInset)
+                zrot(90)
+                zflip()
+                right_triangle([backAngleInternalLength, platformInset, backAngleHeight]);
+            }
+
+            // Middle support
+            back(12)
               cuboid(size=[
                        platformWidth,
-                       backAngleInternalLength,
-                       powerBoostFloatHeight,
+                       8,
+                       powerBoostFloatHeight + 4,
                      ], p1=[0, 0, 0]);
-            back(backAngleSupportLength)
-              up(backAngleStartHeight + backAngleHeight)
-              right(platformInset)
-              zrot(90)
-              zflip()
-              right_triangle([backAngleInternalLength, platformInset, backAngleHeight]);
+
+            // Front support
+            frontSupportLength = 4;
+            back(size[1] - frontSupportLength)
+              cuboid(size=[
+                       platformInset,
+                       frontSupportLength,
+                       powerBoostFloatHeight + 6,
+                     ], p1=[0, 0, 0]);
           }
+        }
 
-          // Middle support
-          back(12)
-            cuboid(size=[
-                     platformWidth,
-                     8,
-                     powerBoostFloatHeight + 4,
-                   ], p1=[0, 0, 0]);
+        // Rotary encoder platform
+        union() {
+          size = rotaryEncoderBoxSize();
+          channelLength = 15 + size[1];
+          holderWallWidth = 2;
+          holderWallHeight = 6;
+          backWallWidth = 3;
+          backSupportWidth = 4;
+          backSupportLength = 8;
+          platformWidth = 2 * holderWallWidth + size[0];
+          right(width - size[0] - rotaryEncoderInset - holderWallWidth) {
 
-          // Front support
-          frontSupportLength = 4;
-          back(size[1] - frontSupportLength)
-            cuboid(size=[
-                     platformInset,
-                     frontSupportLength,
-                     powerBoostFloatHeight + 6,
-                   ], p1=[0, 0, 0]);
+            // Main platform
+            cuboid(size=[platformWidth, size[1] + channelLength, rotaryEncoderFloatHeight], p1=[0, 0, 0]);
+
+            // Walls near output
+            for (i = [0, 1]) {
+              right(i * (platformWidth - holderWallWidth))
+                up(rotaryEncoderFloatHeight)
+                cuboid(size=[holderWallWidth, size[1], holderWallHeight], p1=[0, 0, 0]);
+            }
+
+            // Screw goes through here and attaches to a spacer
+            back(channelLength + size[1]) difference() {
+              cuboid(size=[platformWidth, backWallWidth, rotaryEncoderFloatHeight + size[2]], p1=[0, 0, 0]);
+              up(rotaryEncoderFloatHeight + size[2] / 2)
+                right(size[0] / 2 + holderWallWidth)
+                back(epsilon)
+                ycyl(d=screwDiameter, h=backWallWidth * 2);
+            }
+
+            // Extra supports for the screw wall.
+            for (i = [0, 1]) {
+              right(i * (platformWidth - backSupportWidth))
+                back(channelLength + size[1] + backWallWidth)
+                right_triangle(
+                  size=[backSupportWidth, backSupportLength, rotaryEncoderFloatHeight + size[2]],
+                  orient=ORIENT_X
+                );
+
+            }
+          }
         }
       }
 
-      // Rotary encoder platform
-      union() {
-        size = rotaryEncoderBoxSize();
-        channelLength = 15 + size[1];
-        holderWallWidth = 2;
-        holderWallHeight = 6;
-        backWallWidth = 3;
-        backSupportWidth = 4;
-        backSupportLength = 8;
-        platformWidth = 2 * holderWallWidth + size[0];
-        right(width - size[0] - rotaryEncoderInset - holderWallWidth) {
-
-          // Main platform
-          cuboid(size=[platformWidth, size[1] + channelLength, rotaryEncoderFloatHeight], p1=[0, 0, 0]);
-
-          // Walls near output
-          for (i = [0, 1]) {
-            right(i * (platformWidth - holderWallWidth))
-              up(rotaryEncoderFloatHeight)
-              cuboid(size=[holderWallWidth, size[1], holderWallHeight], p1=[0, 0, 0]);
-          }
-
-          // Screw goes through here and attaches to a spacer
-          back(channelLength + size[1]) difference() {
-            cuboid(size=[platformWidth, backWallWidth, rotaryEncoderFloatHeight + size[2]], p1=[0, 0, 0]);
-            up(rotaryEncoderFloatHeight + size[2] / 2)
-              right(size[0] / 2 + holderWallWidth)
-              back(epsilon)
-              ycyl(d=screwDiameter, h=backWallWidth * 2);
-          }
-
-          // Extra supports for the screw wall.
-          for (i = [0, 1]) {
-            right(i * (platformWidth - backSupportWidth))
-              back(channelLength + size[1] + backWallWidth)
-              right_triangle(
-                size=[backSupportWidth, backSupportLength, rotaryEncoderFloatHeight + size[2]],
-                orient=ORIENT_X
-              );
-
-          }
-        }
-      }
+      circuit();
     }
 
-    circuit();
-  }
-
-  // Outer box
-  difference() {
-    color(alpha=0.3) outerBox(
-      wallWidth=wallWidth,
-      size=[width, length, height],
-      fillet=fillet
-    );
-    circuit();
-    for (i = [1, 2]) {
-      positionNutHolder(i) nutHolderMask(
-        nutVertexDistance=nutVertexDistance,
-        nutEdgeDistance=nutEdgeDistance,
-        screwDiameter=screwDiameter,
-        l=(length / 2)
-      );
-    }
-  }
-
-  // Lid
-  right(2 * width + 10) yrot(180) down(height)
+    // Outer box
     difference() {
-    union() {
-      outerBoxLid(
+      color(alpha=0.3) outerBox(
         wallWidth=wallWidth,
         size=[width, length, height],
-        fillet=fillet,
-        insetWidth=lidInsetWidth,
-        insetDepth=lidInsetDepth
+        fillet=fillet
       );
-
+      circuit();
       for (i = [1, 2]) {
-        positionNutHolder(i) {
-          forward(wallWidth) cuboid(size=[nutDepth + 2 * wallWidth, nutVertexDistance + wallWidth, lidInsetDepth], p1=[0, 0, -lidInsetDepth]);
-          nutHolder(
-            nutVertexDistance=nutVertexDistance,
-            nutEdgeDistance=nutEdgeDistance,
-            nutDepth=nutDepth,
-
-            screwDiameter=screwDiameter,
-
-            wallWidthLeft=wallWidth,
-            wallWidthFront=wallWidth,
-            wallWidthRight=wallWidth,
-            wallWidthTop=wallWidth
-          );
-        }
+        positionNutHolder(i) nutHolderMask(
+          nutVertexDistance=nutVertexDistance,
+          nutEdgeDistance=nutEdgeDistance,
+          screwDiameter=screwDiameter,
+          l=(length / 2)
+        );
       }
-
-      holderWallWidth = 2;
-
-      // Hold pi in place vertically
-      right(piXInset + pcbHeight / 2)
-        up(height)
-        zflip()
-        back(length - 35)
-        cuboid(size=[pcbHeight + holderWallWidth * 2, 10, height - piWidth + 3], p1=[-holderWallWidth - pcbHeight / 2, 0, 0]);
-
-      // Hold PowerBoost in place vertically
-      right(width)
-        up(height)
-        zflip()
-        back(length)
-        yflip()
-        xflip()
-        cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, height - powerBoost1000CSize()[0] - powerBoostFloatHeight + 2], p1=[0, 0, 0]);
-
     }
-    circuit();
+
+    // Lid
+    right(2 * width + 10) yrot(180) down(height)
+      difference() {
+      union() {
+        outerBoxLid(
+          wallWidth=wallWidth,
+          size=[width, length, height],
+          fillet=fillet,
+          insetWidth=lidInsetWidth,
+          insetDepth=lidInsetDepth
+        );
+
+        for (i = [1, 2]) {
+          positionNutHolder(i) {
+            forward(wallWidth) cuboid(size=[nutDepth + 2 * wallWidth, nutVertexDistance + wallWidth, lidInsetDepth], p1=[0, 0, -lidInsetDepth]);
+            nutHolder(
+              nutVertexDistance=nutVertexDistance,
+              nutEdgeDistance=nutEdgeDistance,
+              nutDepth=nutDepth,
+
+              screwDiameter=screwDiameter,
+
+              wallWidthLeft=wallWidth,
+              wallWidthFront=wallWidth,
+              wallWidthRight=wallWidth,
+              wallWidthTop=wallWidth
+            );
+          }
+        }
+
+        holderWallWidth = 2;
+
+        // Hold pi in place vertically
+        right(piXInset + pcbHeight / 2)
+          up(height)
+          zflip()
+          back(length - 35)
+          cuboid(size=[pcbHeight + holderWallWidth * 2, 10, height - piWidth + 3], p1=[-holderWallWidth - pcbHeight / 2, 0, 0]);
+
+        // Hold PowerBoost in place vertically
+        right(width)
+          up(height)
+          zflip()
+          back(length)
+          yflip()
+          xflip()
+          cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, height - powerBoost1000CSize()[0] - powerBoostFloatHeight + 2], p1=[0, 0, 0]);
+
+      }
+      circuit();
+    }
   }
 }
+
+piBox();
