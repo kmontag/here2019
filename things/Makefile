@@ -1,5 +1,5 @@
 OPENSCAD_BIN = /Applications/OpenSCAD.app/Contents/MacOS/OpenScad
-SCAD_FILES = $(wildcard [a-zA-Z]*.scad)
+SCAD_FILES = $(filter-out math.scad outer_box.scad power_boost_1000c.scad pi_zero_w.scad rotary_encoder.scad, $(wildcard [a-zA-Z]*.scad))
 STL_FILES = $(patsubst %.scad,build/%.stl,$(SCAD_FILES))
 
 default: all

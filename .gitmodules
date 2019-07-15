@@ -1,3 +1,6 @@
 [submodule "things/vendor/BOSL"]
 	path = things/BOSL
 	url = https://github.com/revarbat/BOSL
+[submodule "things/openscad-rpi-library"]
+	path = things/openscad-rpi-library
+	url = https://github.com/RigacciOrg/openscad-rpi-library

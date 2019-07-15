@@ -2,7 +2,7 @@ include <MCAD/boxes.scad>
 use <nut_holder.scad>
 use <BOSL/transforms.scad>
 
-$fn=48;
+$fn=25;
 
 module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
   epsilon = 0.05;
@@ -48,13 +48,12 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
   platformEdgeSpace = 4;
 
   // Inset of the nut holder from an inner corner.
-  nutHolderInsetY = 20;
+  nutHolderInsetY = [20, 6];
   nutHolderInsetZ = 2;
 
-  nutVertexDistance = 6;
-  nutEdgeDistance = 5;
-  screwDiameter = 2.5;
-
+  nutVertexDistance = 6.5 + leeway;
+  nutEdgeDistance = 5.65 + leeway;
+  screwDiameter = 3 + leeway;
 
   translate([wallWidth, wallWidth, wallWidth]) {
     // strain relief walls
@@ -89,7 +88,7 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
 
     // lid
     translate(debug ? [0, 0, height]: [width + 5 * wallWidth, 0, 0]) {
-      mirror([0, 0, debug ? 1 : 0]) {
+      rotate([0, debug ? 180 : 0, debug ? 180 : 0]) forward(debug ? length : 0) {
         // main lid
         difference() {
           translate([-wallWidth, -wallWidth, -wallWidth]) {
@@ -112,17 +111,17 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
         }
 
         for (i = [0, 1]) {
-          right(i * width)
-            xscale(i == 0 ? 1 : -1) // conditional xflip
+          right((1 - i) * width)
+            xscale(i == 0 ? -1 : 1) // conditional xflip
             right(leeway)
-            back((1 - i) * length)
             yscale(i == 0 ? -1 : 1)
-            back(nutHolderInsetY) {
+            back(nutHolderInsetY[i])
+            back((i - 1) * length) {
 
             wallWidthLeft=wallWidth;
-            wallWidthRight=3;
-            wallWidthFront=wallWidth;
-            wallWidthTop=wallWidth;
+            wallWidthRight=wallWidth;
+            wallWidthFront=1;
+            wallWidthTop=1;
             nutDepth=3;
 
             cuboid(
@@ -193,7 +192,7 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
       for (i = [-1, 1]) {
         back((i + 1) * length / 2)
           right((1 - i) * width / 2)
-          forward(i * nutHolderInsetY)
+          forward(i * nutHolderInsetY[(1 + i) / 2])
           yscale(-i)
           up(height - nutHolderInsetZ) zflip()
           nutHolderMask(
@@ -210,11 +209,5 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
   }
 }
 
-
-// too many customizations needed
-// include <_box_low_profile.scad>
-
 leeway = 0.3;
-
-$fs = 0.5;
 boxLowProfile(53.65 + 2 * leeway, 22.8 + 2 * leeway, 2);
