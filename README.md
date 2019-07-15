@@ -1,55 +1,114 @@
+## Usage
+
+See `featherstream/README.md` and `kontrol/README.md` for usage
+overviews of the two main devices.
+
 ## Assembly
 
-### Feather
+In addition to the build instructions in `featherstream/README.md` and
+`kontrol/README.md`:
+  
+### DotStar strip
 
-These get connected directly to DotStar strips.
-
-- Compile and print `<things/feather_box.scad>`
-- Solder wires to the ground and + pins of a 5.5mm x 2.1mm DC female
-  jack, e.g. https://www.amazon.com/dp/B07C4TG74T/.
-- Solder wires to both pins of a rocker switch,
-  e.g. https://www.amazon.com/dp/B0725Z6FR7/, and snap it into the
-  hole on the long side of the box.
-- Run the male side of a 4-wire cable set
-  (https://www.adafruit.com/product/744) into the smaller circular
-  hole on the box. Once soldered, you won't be able to remove this
-  cable, so make sure to place the over-screw on the cable before
-  running it through.
-- Splice together the red wire from the 4-wire cable and the + wire
-  from the DC jack, and run a single wire out from the splice
-  (i.e. form a "Y").
-- Splice together the black wire from the 4-wire cable, the ground
-  wire from the DC jack, and one of the wires from the rocker switch,
-  and run a single wire out from the splice.
-- Break off a chunk of 6 header pins from the headers that came with
-  your feather, and solder:
-  - The yellow wire from the 4-wire cable to the first pin
-  - The white wire from the 4-wire cable to the third pin
-  - To the sixth pin:
-    - The spliced +/red wire, AND
-    - the + terminal of a 1000uf 6.3v capacitor
-      (https://www.amazon.com/dp/B01DYJEHZ2/?coliid=I2PEL8XAB07K15&colid=DYOU0HYUIA97&psc=1&ref_=lv_ov_lig_dp_it)
-      Be sure to cover the capacitor leg with heat shrink wrap before
+- Compile and print `things/dot_star_endcap.scad`.
+- Cut the strip (https://www.adafruit.com/product/2237) to
+  the desired number of LEDs along the midpoint of the metal contacts.
+- Input side:
+  - Run the female end of a 4-wire cable set
+    (https://www.adafruit.com/product/744) through the large endcap
+    fitting, with the free wire ends coming out of the larger end.
+  - Run the wires through the 4 holes in the smaller endcap
+    fitting. Check your strip to see the positions of the DI/CI
+    contacts, and order the wires such that:
+    - Red goes to VOC (+5V)
+    - White goes to CI
+    - Yellow goes to DI
+    - Black goes to GND
+  - Solder the wires to the contacts
+  - Test the connection by connecting to an assembled feather
+  - Put some hot glue or superglue onto the soldered connections for
+    extra security.
+  - Slide the smaller endcap over the strip, and place an M3 nut
+    (https://www.amazon.com/dp/B07JD4ZLFT/) into the receptacle.
+  - Put some hot glue or superglue on the outside of the endcap where
+    the wires enter.
+  - Wrap a bunch of electric tape around the 4-wire cable, between the
+    large endcap and the strip. The goal is to reduce strain on the
+    soldered connections once the endcap is fastened, so position it
+    such that it forces a little bit of slack in the wires when the
+    large endcap slides all the way up.
+  - Slide the large endcap over the small one, and screw an M3 screw
+    (https://www.amazon.com/dp/B01LZYC586/) through the hole, into the
+    nut, and down far enough that it presses agains the strip pretty
+    hard. The goal is to hold the endcap in place without placing
+    strain on the soldered connections.
+- Output side:
+  - If chaining strips together, this is the same as the input side
+    except:
+    - Use the male side of the 4-wire cable instead of the female.
+    - Make sure you place the over-screw onto the 4-wire cable before
       soldering.
-- Break off a chunk of 5 header pins, and solder:
-  - The remaining wire from the rocker switch to the first pin
-  - The positive terminal of a simple LED
-    (e.g. https://www.amazon.com/DiCUNO-450pcs-Colors-Emitting-Assorted/dp/B073QMYKDM/ref=sr_1_3?keywords=leds&qid=1563156561&s=gateway&sr=8-3)
-    to the third pin. Cover the leg with shrink wrap before soldering.
-  - To the fifth pin (again make sure to cover legs with shrink wrap):
-    - The spliced ground wire, AND
-    - the - terminal of the LED
-    - the - terminal of the capacitor
-- Solder the 6-pin header to the feather, starting at pin 11 (with the
-  yellow wire) and ending at BAT (with the spliced + wire)
-- Solder the 5-pin header to the feather, starting at pin A3 (with the
-  wire from the rocker switch), and ending at G (with the spliced
-  ground wire)
-- Put the DC jack through the remaining hole in the box, and use the
-  nut to fasten it into place. Rotate the jack so that the soldered
-  wires are at the highest point, otherwise the feather won't fit.
-- Stuff the feather into the box and onto the feather-shaped platform
-- Place M3 nuts
-  (https://www.amazon.com/dp/B07JD4ZLFT/?coliid=I32FX8801KYD7L&colid=DYOU0HYUIA97&psc=1&ref_=lv_ov_lig_dp_it)
-  into the holders in the box lid, and attach the lid using M3 screws
-  (https://www.amazon.com/dp/B01LZYC586/?coliid=I1LF69BW49LFAE&colid=DYOU0HYUIA97&psc=1&ref_=lv_ov_lig_dp_it).
+    - Make sure you're soldering to the CO/DO side of the contacts (not CI/DI).
+  - If not chaning strips together, you can just seal this off with
+    the smaller endcap piece or some shrink wrap / tape.
+    
+## Development - running a local `featherstreamer` server
+
+`featherstreamer` is what the Pis run to serve pixels to feathers. There are two components:
+
+### `featherstreamer`
+
+This is the main data server. Before running it:
+
+- Place any video files you want to stream in
+  `kontrol/media-src/`. These can be anything readable by `ffmpeg`.
+- Run `make media` to compile the files into raw pixel data that can
+  be streamed without processing overhead. The built files live in
+  `kontrol/media-build/`.
+- Run `make` in `kontrol/`.
+
+To run the program, in `kontrol/featherstreamer`:
+
+``` bash
+npm start
+```
+
+You can also use `npm run start-dev` during development, to pick up
+changes to source files automatically.
+
+To get a Feather to see your local `featherstreamer` server, you'll
+need to make compile-time changes. In your `secrets.h`, place the
+following:
+
+``` c++
+#define SECRET_PAIRED_SSID "Your home SSID"
+#define SECRET_PAIRED_PASSPHRASE "Your WiFi password"
+#define SECRET_SERVER_IP IPAddress(192, 168, 0, 1) // Or whatever your computer's local IP address is
+```
+
+And then compile and upload to your Feather.
+
+### `featherstreamer-web`
+
+This is the web interface that's normally accessible at
+http://192.168.8.1 on a Feather's hosted network. It shows details
+about connected devices, and allows you to simulate interactions with
+the hardware.
+
+Before starting, run `make` in `kontrol/`. Then start the server with
+`npm start` in `kontrol/featherstreamer-web`. The page should open
+automatically in your browser; if not, it's accessible at
+http://localhost:3000.
+
+Note the UI won't be functional unless the `featherstreamer` server is
+also running locally.
+
+## Development dependencies
+
+- PlatformIO for building the feather software: `brew install platformio`
+- OpenSCAD for building 3D-printable objects: `brew cask install openscad`
+- Ansible for configuring a Pi: `brew install ansible`
+- Node/NPM for running the `featherstreamer` server (the thing the Pi
+  uses to stream video) locally
+
+    

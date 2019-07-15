@@ -1,9 +1,12 @@
-default: bootstrap
+default: .make.featherstreamer-web featherstreamer/dist/index.js
 
 # Specify these to modify ansible commands.
 ANSIBLE_FLAGS:=
 
 BOOT_VOLUME_PATH:=/Volumes/boot
+
+# Default value when
+PI:=192.168.8.1
 
 # Set up the boot volume of a plain raspbian image. Tested with
 # raspbian stretch lite.
@@ -84,9 +87,9 @@ media:
 # quick command during development.
 .PHONY: deploy
 deploy: featherstreamer/dist/index.js .make.featherstreamer-web
-ifndef PI
-	$(error Specify the host via the PI variable)
-endif
+# Enter read-write mode.
+	ssh pi@$(PI) "sudo rw"
+
 	rsync -avz --exclude='node_modules' --exclude='state.json' featherstreamer/ pi@$(PI):/usr/local/src/featherstreamer/
 	rsync -avz --exclude='node_modules' featherstreamer-shared/ pi@$(PI):/usr/local/src/featherstreamer-shared/
 	rsync -avz --exclude='node_modules' featherstreamer-web/ pi@$(PI):/usr/local/src/featherstreamer-web/
@@ -95,11 +98,11 @@ endif
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer-web"
 
+# Go back to read-only mode.
+	ssh pi@$(PI) "sudo ro"
+
 .PHONY: deploy-media
 deploy-media:
-ifndef PI
-	$(error Specify the host via the PI variable)
-endif
 	rsync -avz media-build/ pi@$(PI):/var/featherstreamer/media/
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
 

@@ -108,8 +108,8 @@ void loop() {
   }
 
   if (switchState == HIGH) {
-    blink(550932, 100, 3000, 0);
-    blink(552411, 100, 3000, 300);
+    blink(1, 100, 3000, 0);
+    blink(2, 100, 3000, 300);
     if (opcHandler->isConnected()) {
       opcHandler->disconnect();
     }
@@ -125,9 +125,9 @@ void loop() {
     // always keep the LED on.
     bool opcConnected = opcHandler->isConnected();
     if (opcConnected) {
-      blink(552614, 100, 2000, 0);
+      blink(1, 100, 2000, 0);
     } else {
-      blink(552415, 100, 100, 0);
+      blink(1, 100, 100, 0);
     }
 
     if (wiFiHandler->ensureConnected()) {
@@ -150,7 +150,7 @@ void loop() {
         uint32_t delayUntil = millis() + delayMillis;
         while (millis() < delayUntil) {
           for (uint8_t i = 0; i < 3; i++) {
-            blink(556473, 100, delayMillis, 200 * i);
+            blink(i, 100, delayMillis, 200 * i);
           }
           delay(40);
         }
@@ -166,7 +166,7 @@ void loop() {
       uint32_t delayUntil = millis() + delayMillis;
       while (millis() < delayUntil) {
         for (uint8_t i = 0; i < 5; i++) {
-          blink(551231, 100, delayMillis, 200 * i);
+          blink(i, 100, delayMillis, 200 * i);
         }
       }
     }
@@ -206,20 +206,21 @@ void pairing() {
 
     // Fast blink indicates success.
     while (true) {
-      blink(551231, 100, 300, 0);
+      blink(1, 100, 300, 0);
     }
   } else {
     // Slower blink indicates error.
     while(true) {
-      blink(554244, 100, 1000, 0);
+      blink(1, 100, 1000, 0);
     }
   }
 }
 
 /**
- * Call this repeatedly to blink the notification LED. Pass a unique
- * consistent identifier (can be anything except 0) for each blink in
- * a series to prevent blinks from stomping on each other.
+ * Call this repeatedly to blink the notification LED at a consistent
+ * rate. To get multiple blinks with uneven timing, call blink() for
+ * each one with an offset, and pass a unique consistent identifier
+ * (can be anything except 0) for each blink in the series.
  */
 uint32_t activeBlink = 0;
 void blink(uint32_t identifier, uint32_t onDurationMs, uint32_t periodMs, uint32_t offsetMs) {

@@ -3,38 +3,133 @@ server.
 
 Inspiration: https://learn.adafruit.com/lightship-led-animation-over-wifi/software
 
-### Circuit
+### Usage overview
 
-TODO
+This device has a USB port, a rocker switch, a cable to connect to a
+DotStar LED strip, and a power input.
+
+The USB port is mainly just used to flash the chip, though you can
+also use it to power the device and a small number of lights. Don't
+push too much power through this, you'll fry the device and possibly
+your USB port.
+
+The power input should receive around 3.7-5V DC (don't exceed 5V,
+you'll fry the circuit). The easiest way to achieve this is to plug 3
+rechargeable AA batteries into the power input. This will power the
+chip, and up to about 100 attached LEDs depending on brightness.
+
+The device runs whenever power is connected, so if you want a power
+on/off switch, it's best to get a battery pack that has one built in.
+
+When the rocker switch is OFF, the device runs in "offline mode,"
+meaning it just shows a simple predefined animation. The animation
+color can be configured (persistently) from a `featherstreamer` web
+UI, once you pair with a Pi device.
+
+When the rocker switch is ON, the device attempts to connect to a
+Pi. There are two possibilities here:
+
+- If the device has not yet been paired, it immediately enters pairing
+  mode, meaning it searches for a network called (by default)
+  `_featherstreamer-pairing`. This network is hosted by a Pi when it's
+  in its own pairing mode. If this network is found, the
+  `featherstream` connects and retrieves/persists info that will let
+  it connect to this Pi in the future. You'll know the connection is
+  successful if the LED starts blinking rapidly - at this point you
+  should reboot the device.
+  
+  Note that if the device is already paired, you can also enter
+  pairing mode by flipping the rocker switch rapidly while booting the
+  device. This allows you to re-pair with a different Pi.
+  
+- If the device has been paired, it searches for its Pi, either on the
+  master network or on the Pi's "personal" access point. If found, it
+  starts pulling pixel data from the Pi.
+  
+You can usually flip the rocker switch on and off at runtime to change
+modes. There's one exception: if you enter pairing mode (e.g. if you
+boot the device with the switch on when it isn't paired), you'll have
+to reboot with the switch off in order to get back to offline mode.
+
+### Assembly
+
+- Connect to a Feather M0 WiFi w/ PCB antenna
+  (https://www.adafruit.com/product/3010) via USB, and upload the
+  `featherstream` program (`make upload` from this directory).
+- Compile and print `../things/feather_box.scad`.
+- Solder wires to the ground and + pins of a 5.5mm x 2.1mm DC female
+  jack, e.g. https://www.amazon.com/dp/B07C4TG74T/.
+- Solder wires to both pins of a rocker switch,
+  e.g. https://www.amazon.com/dp/B0725Z6FR7/, and snap it into the
+<64;72;15M  hole on the long side of the box.
+- Run the male side of a 4-wire cable set
+  (https://www.adafruit.com/product/744) into the smaller circular
+  hole on the box. Once soldered, you won't be able to remove this
+  cable, so make sure to place the over-screw on the cable before
+  running it through.
+- Splice together the red wire from the 4-wire cable and the + wire
+  from the DC jack, and run a single wire out from the splice
+64;164;17M64;170;14M  (i.e. form a "Y").
+- Splice together the black wire from the 4-wire cable, the ground
+  wire from the DC jack, and one of the wires from the rocker switch,
+  and run a single wire out from the splice.
+- Break off a chunk of 6 header pins from the headers that came with
+  your feather, and solder:
+  - The yellow wire from the 4-wire cable to the first pin (this will
+    connect pin 11 with DI on the strip)
+  - The white wire from the 4-wire cable to the third pin (this will
+    connect pin 13 with CI on the strip)
+  - To the sixth pin:
+    - The spliced +/red wire, AND
+    - the + terminal of a 1000uf 6.3v capacitor
+      (https://www.amazon.com/dp/B01DYJEHZ2/?coliid=I2PEL8XAB07K15&colid=DYOU0HYUIA97&psc=1&ref_=lv_ov_lig_dp_it)
+      Be sure to cover the capacitor leg with heat shrink wrap before
+      soldering.
+- Break off a chunk of 5 header pins, and solder:
+  - The remaining wire from the rocker switch to the first pin
+  - The positive terminal of a simple LED
+    (e.g. https://www.amazon.com/DiCUNO-450pcs-Colors-Emitting-Assorted/dp/B073QMYKDM/ref=sr_1_3?keywords=leds&qid=1563156561&s=gateway&sr=8-3)
+    to the third pin. Cover the leg with shrink wrap before soldering.
+  - To the fifth pin (again make sure to cover legs with shrink wrap):
+    - The spliced ground wire, AND
+    - the - terminal of the LED
+    - the - terminal of the capacitor
+- Solder the 6-pin header to the feather, starting at pin 11 (with the
+  yellow wire) and ending at BAT (with the spliced + wire)
+- Solder the 5-pin header to the feather, starting at pin A3 (with the
+  wire from the rocker switch), and ending at G (with the spliced
+  ground wire)
+- Put the DC jack through the remaining hole in the box, and use the
+  nut to fasten it into place from the outside. Rotate the jack so
+  that the soldered wires are at the highest point, otherwise the
+  feather won't fit.
+- Stuff the feather into the box and onto the feather-shaped platform.
+- Place M3 nuts (https://www.amazon.com/dp/B07JD4ZLFT/) into the
+  holders in the box lid, and attach the lid using M3 screws
+  (https://www.amazon.com/dp/B01LZYC586/).
 
 ### Setup
 
-Create `secrets.h` to provide baseline device configuration.
+Create `include/secrets.local.h`, and optionally override values from
+`include/secrets.h` to provide custom configuration. For example, if
+you're running a `featherstreamer` server locally and your machine has
+IP `192.168.0.10`:
 
 ``` c++
-#define SECRET_SERVER_PORT 44668
+// include/secrets.local.h
 
-// Define this to provide a default value. Otherwise the device will
-// always start in pairing mode until connection info is provided.
-// #define SECRET_PAIRED_SSID "featherstreamer-foo"
-#define SECRET_PAIRED_PASSPHRASE "gallowsbird"
-#define SECRET_PAIRED_SERVER_IP IPAddress(192, 168, 8, 1)
-
-#define SECRET_PAIRING_SSID "_featherstreamer-pairing"
-#define SECRET_PAIRING_PASSPHRASE "gallowsbird"
-#define SECRET_PAIRING_SERVER_IP IPAddress(192, 168, 8, 1)
-
-#define SECRET_MASTER_SSID "_featherstreamer-master"
-#define SECRET_MASTER_PASSPHRASE "gallowsbird"
-#define SECRET_MASTER_SERVER_IP IPAddress(192, 168, 9, 1)
+#define SECRET_PAIRED_SSID "my-ssid"
+#define SECRET_PAIRED_PASSPHRASE "my-passphrase"
+#define SECRET_PAIRED_SERVER_IP IPAddress(192, 168, 0, 10)
 ```
 
-In general these credentials will need to match the configuration on
-the featherstreamer(s) you're interfacing with. This means your
-featherstreamers should all have the same master/pairing credentials,
-and the same password but unique SSIDs for their "default" AP.
+By default, `include/secrets.h` provides credentials that match the
+default `featherstreamer` config. In general, to interface with a
+network of `featherstreamer`s, all `featherstreamer` devices need to
+have the same master/pairing credentials, and the same password but
+unique SSIDs for their "default" AP.
 
-### Behavior
+### Detailed behavior
 
 There are three operating modes.
 

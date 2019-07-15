@@ -1,3 +1,68 @@
+This directory contains config and software for a Pi ZeroW to:
+- run a `featherstreamer` server (and web UI) for `featherstream`
+  devices to connect to
+- host a local WiFi access point, and connect to (or host) a "master"
+  access point when in slave (or master) mode
+
+### Usage overview
+
+This device has an on/off switch, a USB port, an SD card slot, and a
+rotary encoder.
+
+The USB port is used to charge the battery (and can power the device
+at the same time).
+
+The SD card slot is just useful for flashing new images onto the Pi.
+
+The on/off switch is an on/off switch.
+
+The rotary encoder is the main controller for the device. Turn it to
+cycle through streamed videos. Press it (without turning it) to toggle
+any controlled LEDs on or off. Press it and turn it clockwise to
+switch between modes:
+
+- 1 click for isolated mode
+- 2 clicks for slave mode
+- 3 clicks for master mode
+- 4 clicks for pairing mode
+
+Once the device is booted up, you should be able to see a WiFi network
+called `featherstreamer-[something]`. That's your device's personal
+access point. By default, the password for this network (and all
+others) is `gallowsbird`. The device normally lives at
+http://192.168.8.1, or http://192.168.9.1 when in master mode.
+
+### Runtime configuration
+
+Connect to the pi's access point and go to http://192.168.8.1 (or
+http://192.168.9.1 if the device is in `master` mode) to see a
+configuration UI. 
+
+Once a feather is connected, you'll be able to set the channel that
+should be streamed to it, the brightness, and the persistent color of
+its offline animation.
+
+You can also see some debug info about the device, and simulate
+interactions with the rotary encoder.
+
+### Media setup
+
+Push videos to the device using `make deploy-media` while connected to
+the device's access point.
+
+Config for your lights should get added to `frameplayer.conf.js` in
+this directory. Each `featherstream` device receives pixel data for
+one channel (you can configure this in the Pi's web UI). For each of
+your `featherstream` devices, add a channel with a descriptive name to
+`frameplayer.conf.js`, set a height and width to scale video files
+before sampling pixels, and then provide a list of pixels (as x/y
+coordinates) to sample. Data from these pixels will get sent (in this
+order) to your LED strip(s).
+
+Commit any changes to `frameplayer.conf.js`, so that when you're
+receiving data from someone else in master mode, you'll get correctly
+positioned pixel data on your setup.
+
 ### Setup from a distributed image
 
 If you won't be doing any development, you can just burn the image to
@@ -17,19 +82,6 @@ card into your laptop:
   connect to your network when it's in `master` or `pairing` mode.
 
 These optional steps can be performed at any time.
-
-### Runtime configuration
-
-Connect to the pi's access point and go to http://192.168.8.1 (or
-http://192.168.9.1 if the device is in `master` mode) to see a
-configuration UI. 
-
-Once a feather is connected, you'll be able to set the channel that
-should be streamed to it, the brightness, and the persistent color of
-its offline animation.
-
-You can also see some debug info about the device, and simulate
-interactions with the rotary encoder.
 
 ### From-scratch Pi setup
 
@@ -92,7 +144,7 @@ $ PI=featherstreamer-foo.local make prepare
 It's generally easiest to interact with the Pi over SSH. Probably the
 cleanest way to do this is to connect to the pi's hosted access point,
 and then log in using `ssh pi@192.168.8.1` (or `ssh pi@192.168.9.1` if
-the device is in master mode).
+the device is in master mode). The default password is `buttmoop`.
 
 If you place a `wpa_supplicant.conf` file in the boot partition (see
 the example file in this directory), you can also interact with the Pi
@@ -106,9 +158,9 @@ correspond to the `default` mode. (Note the production config uses the
 make it faster to switch over to the `slave` application mode when
 requested).
 
-On your local network, you can probably find the pi at `ssh pi@[access
-point name].local` (since the access point name is the same as the
-pi's hostname).
+If the Pi is connected to your local network, you can probably find it
+at `ssh pi@[access point name].local` (since the access point name is
+the same as the pi's hostname).
 
 ### Development
 
@@ -116,6 +168,11 @@ If you're able to connect to the Pi via SSH, you can use `make deploy`
 and `make deploy-media` to push code changes and media changes,
 respectively. You can also still run the ansible playbook using `make
 setup`.
+
+Note that the Pi is normally running with its main volumes in
+read-only mode, to prevent damage when it's turned off without being
+properly shut down. To switch between read-write and read0only mode
+during development, use `sudo rw` and `sudo ro`.
 
 ### Network overview
 
