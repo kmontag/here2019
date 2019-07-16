@@ -14,25 +14,27 @@ $fn=30;
 
 epsilon = 0.1;
 
-wallWidth = 1;
-length = 75;
-width = 35;
+wallWidth = 2;
+length = 68;
+width = 31;
 height = 35;
-fadecandyExtraWidth =
 
-fillet = 1;
+fillet = 2;
 
 piWidth = 30;
 piLength = 65;
-piXInset = 3;
-piBatterySpacing = 8;
+piXInset = 9; // From the left wall
+piYInset = 1; // From the back wall, to make the SD card jut out a bit
+              // less
 
 batterySize = [5, 62, 34];
 
-powerBoostFloatHeight = 6;
+powerBoostFloatHeight = 7;
 
 rotaryEncoderFloatHeight = (height - rotaryEncoderBoxSize()[2]) / 2;
 rotaryEncoderInset = 2;
+rotaryEncoderPlatformLength = 22;
+
 
 pcbHeight = 1.4;
 
@@ -40,6 +42,13 @@ nutVertexDistance = 6.5 + PRINTER_SLOP;
 nutEdgeDistance = 5.65 + PRINTER_SLOP;
 nutDepth = 3;
 screwDiameter = 3 + PRINTER_SLOP;
+nutHolderWallWidth = 1;
+
+// Post to lock the rotary encoder.
+postWidth = nutHolderWallWidth + nutVertexDistance;
+postLength = 2 * nutHolderWallWidth + nutDepth;
+postExtraFloatHeight = 3;
+
 
 lidInsetWidth = 1;
 lidInsetDepth = 2;
@@ -51,7 +60,12 @@ showRealBoards = false;
 
 module circuit() {
   alpha = showRealBoards ? 0.1 : 1;
-  right(piXInset) back(length - PRINTER_SLOP) zrot(180) up(piWidth) yrot(-90) {
+
+  // Battery
+  batteryPosition = [PRINTER_SLOP + lidInsetWidth, length - batterySize[1] - 2 * PRINTER_SLOP - lidInsetWidth, PRINTER_SLOP];
+  color("red") translate(batteryPosition) slop(size=batterySize) cuboid(size=batterySize, p1=[0, 0, 0]);
+
+  right(piXInset) back(length - PRINTER_SLOP - piYInset) zrot(180) up(piWidth) yrot(-90) {
     zrot(90) {
       if (showRealBoards) {
         color("green") piZeroW();
@@ -68,15 +82,10 @@ module circuit() {
       xflip() cuboid(size=sdCardSize, p1=[0, 0, 0]);
   }
 
-  // Battery
-  batteryPosition = [piXInset + pcbHeight + piBatterySpacing, length - batterySize[1] - 2 * PRINTER_SLOP - lidInsetWidth, PRINTER_SLOP];
-  color("red") translate(batteryPosition) slop(size=batterySize) cuboid(size=batterySize, p1=[0, 0, 0]);
-
-
   // PowerBoost and plug
   union() {
     size = powerBoost1000CSize();
-    right(width - size[2])
+    right(width - size[2] + 1)
       up(powerBoostFloatHeight)
       back(length)
       yrot(90)
@@ -86,13 +95,20 @@ module circuit() {
         color("blue")  powerBoost1000C();
       }
       color("blue", alpha=alpha) powerBoost1000CMask();
+      down(wallWidth)
+        powerBoostBacker();
     }
-    back(length + wallWidth + 1)
+
+
+    // 1mm is the max wall width at the connection point.
+    back(length + 1)
       left(size[2] - pcbHeight - 1.5)
       up(powerBoostFloatHeight + size[0] / 2)
       right(width)
       yrot(90)
       zscale(1.1)
+      // Scale to leave a bit of extra space for the input.
+      scale([1.2, 1.2, 1.2])
       usb_male_micro_b_connector();
   }
 
@@ -101,9 +117,19 @@ module circuit() {
   union() {
     size = rotaryEncoderBoxSize();
     color("gray")
-      right(width - size[0] - rotaryEncoderInset)
+      right(width - size[0] - rotaryEncoderInset) {
       up(rotaryEncoderFloatHeight + PRINTER_SLOP)
-      rotaryEncoder();
+        rotaryEncoder();
+
+      back(rotaryEncoderPlatformLength - wallWidth)
+        right(size[0] / 2)
+        up(PRINTER_SLOP + postExtraFloatHeight)
+        // z-dimension isn't correct but doesn't really matter here
+        slop(size=[postWidth, postLength, rotaryEncoderFloatHeight])
+        rotaryEncoderPost();
+
+    }
+
   }
 }
 
@@ -111,18 +137,53 @@ module circuit() {
 module positionNutHolder(i) {
   if (i == 1) {
     up(height - lidInsetDepth)
-      right(piXInset + pcbHeight + piBatterySpacing + batterySize[0])
+      right(width)
+      back(rotaryEncoderPlatformLength)
+      xflip()
       zflip()
-      zrot(90)
       children();
   } else if (i == 2) {
     up(height - lidInsetDepth)
-      right(piXInset + pcbHeight + piBatterySpacing + batterySize[0] + nutVertexDistance + wallWidth * 2)
-      back(length - nutDepth - 2 * wallWidth)
+      right(piXInset + pcbHeight + nutVertexDistance + nutHolderWallWidth * 2)
+      back(length - nutDepth - 2 * nutHolderWallWidth)
       zflip()
       zrot(90)
       children();
   }
+}
+
+
+// Gets inserted behind the rotary encoder after placing it. Attach a
+// spacer to push the encoder into position.
+module rotaryEncoderPost() {
+  color("gray") {
+    cuboid(size=[postWidth, postLength, rotaryEncoderFloatHeight],
+           p1=[-postWidth / 2, -postLength, 0]);
+    up(rotaryEncoderFloatHeight)
+      right(postWidth / 2 - nutHolderWallWidth)
+      xflip()
+      zrot(-90)
+      nutHolder(
+        nutVertexDistance=nutVertexDistance,
+        nutEdgeDistance=nutEdgeDistance,
+        nutDepth=nutDepth,
+
+        screwDiameter=screwDiameter,
+
+        wallWidthLeft=nutHolderWallWidth,
+        wallWidthFront=nutHolderWallWidth,
+        wallWidthRight=nutHolderWallWidth,
+        wallWidthTop=wallWidth
+      );
+  }
+}
+
+// Gets inserted being the powerboost board after placing it. Makes it
+// easier to insert the board, otherwise there isn't really room to
+// place the switch through the wall.
+module powerBoostBacker() {
+  size = powerBoost1000CSize();
+  color("black") cuboid(size=[size[0] / 2, size[1], wallWidth], p1=[0, 0, 0]);
 }
 
 module piBox(fadecandy=false) {
@@ -134,10 +195,9 @@ module piBox(fadecandy=false) {
         // Pi and battery platforms
         union() {
           piPlatformInset = 20;
-          piPlatformHeight = 10;
           piHeaderInset = 7;
-          cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, piPlatformHeight], p1=[0, 0, 0]);
-          back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, piPlatformHeight], p1=[0, 0, 0]);
+          cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, 10], p1=[0, 0, 0]);
+          back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, 14], p1=[0, 0, 0]);
         }
 
         // PowerBoost platform
@@ -147,8 +207,7 @@ module piBox(fadecandy=false) {
           backAngleHeight = 4.5;
           backAngleSupportLength = 4;
           backAngleInternalLength = 3;
-          platformInset = size[2] + 2;//  - wallWidth; // - wallWidth covers the adjustment of the board to push the switch through the wall.
-          platformWidth = 4 + pcbHeight;
+          platformInset = size[2] + 2 * wallWidth; // - wallWidth covers the adjustment of the board to push the switch through the wall.
 
           translate([
                       width - platformInset,
@@ -165,7 +224,7 @@ module piBox(fadecandy=false) {
                      ], p1=[0, 0, 0]);
               back(backAngleSupportLength)
                 cuboid(size=[
-                         platformWidth,
+                         platformInset,
                          backAngleInternalLength,
                          powerBoostFloatHeight,
                        ], p1=[0, 0, 0]);
@@ -176,14 +235,6 @@ module piBox(fadecandy=false) {
                 zflip()
                 right_triangle([backAngleInternalLength, platformInset, backAngleHeight]);
             }
-
-            // Middle support
-            back(12)
-              cuboid(size=[
-                       platformWidth,
-                       8,
-                       powerBoostFloatHeight + 4,
-                     ], p1=[0, 0, 0]);
 
             // Front support
             frontSupportLength = 4;
@@ -199,43 +250,23 @@ module piBox(fadecandy=false) {
         // Rotary encoder platform
         union() {
           size = rotaryEncoderBoxSize();
-          channelLength = 15 + size[1];
-          holderWallWidth = 2;
+          holderWallWidth = [4, 2];
           holderWallHeight = 6;
+          holderWallLength = 2;
           backWallWidth = 3;
           backSupportWidth = 4;
           backSupportLength = 8;
-          platformWidth = 2 * holderWallWidth + size[0];
-          right(width - size[0] - rotaryEncoderInset - holderWallWidth) {
+          platformWidth = holderWallWidth[0] + holderWallWidth[1] + size[0];
+          right(width - size[0] - rotaryEncoderInset - holderWallWidth[0]) {
 
             // Main platform
-            cuboid(size=[platformWidth, size[1] + channelLength, rotaryEncoderFloatHeight], p1=[0, 0, 0]);
+            cuboid(size=[platformWidth, rotaryEncoderPlatformLength, rotaryEncoderFloatHeight], p1=[0, 0, 0]);
 
             // Walls near output
             for (i = [0, 1]) {
-              right(i * (platformWidth - holderWallWidth))
+              right(i * (platformWidth - holderWallWidth[i]))
                 up(rotaryEncoderFloatHeight)
-                cuboid(size=[holderWallWidth, size[1], holderWallHeight], p1=[0, 0, 0]);
-            }
-
-            // Screw goes through here and attaches to a spacer
-            back(channelLength + size[1]) difference() {
-              cuboid(size=[platformWidth, backWallWidth, rotaryEncoderFloatHeight + size[2]], p1=[0, 0, 0]);
-              up(rotaryEncoderFloatHeight + size[2] / 2)
-                right(size[0] / 2 + holderWallWidth)
-                back(epsilon)
-                ycyl(d=screwDiameter, h=backWallWidth * 2);
-            }
-
-            // Extra supports for the screw wall.
-            for (i = [0, 1]) {
-              right(i * (platformWidth - backSupportWidth))
-                back(channelLength + size[1] + backWallWidth)
-                right_triangle(
-                  size=[backSupportWidth, backSupportLength, rotaryEncoderFloatHeight + size[2]],
-                  orient=ORIENT_X
-                );
-
+                cuboid(size=[holderWallWidth[i], holderWallLength, holderWallHeight], p1=[0, 0, 0]);
             }
           }
         }
@@ -276,7 +307,7 @@ module piBox(fadecandy=false) {
 
         for (i = [1, 2]) {
           positionNutHolder(i) {
-            forward(wallWidth) cuboid(size=[nutDepth + 2 * wallWidth, nutVertexDistance + wallWidth, lidInsetDepth], p1=[0, 0, -lidInsetDepth]);
+            forward(wallWidth) cuboid(size=[nutDepth + 2 * nutHolderWallWidth, nutVertexDistance + wallWidth, lidInsetDepth], p1=[0, 0, -lidInsetDepth]);
             nutHolder(
               nutVertexDistance=nutVertexDistance,
               nutEdgeDistance=nutEdgeDistance,
@@ -284,9 +315,9 @@ module piBox(fadecandy=false) {
 
               screwDiameter=screwDiameter,
 
-              wallWidthLeft=wallWidth,
+              wallWidthLeft=nutHolderWallWidth,
               wallWidthFront=wallWidth,
-              wallWidthRight=wallWidth,
+              wallWidthRight=nutHolderWallWidth,
               wallWidthTop=wallWidth
             );
           }
@@ -313,6 +344,12 @@ module piBox(fadecandy=false) {
       }
       circuit();
     }
+  }
+
+  // Little parts.
+  right(width * 2 + 22) {
+    up(postWidth / 2) yrot(90) xrot(-90) rotaryEncoderPost();
+    back(25) powerBoostBacker();
   }
 }
 
