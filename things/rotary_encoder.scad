@@ -14,7 +14,7 @@ module rotaryEncoder(slop = PRINTER_SLOP) {
     
   }
 
-  knobDiameter = 6;
+  knobDiameter = 7;
   knobHeight = 15;
   right(boxSize[0] / 2) up(boxSize[2] / 2)
     yflip()
