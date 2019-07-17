@@ -29,7 +29,7 @@ piLength = 65;
 // From the left wall, clear the battery with some leeway for pins.
 piXInset = 9;
 
- // From the back wall, to make the SD card jut out a bit less.
+// From the back wall, to make the SD card jut out a bit less.
 piYInset = 0.5;
 
 batterySize = [5, 62, 34];
@@ -85,7 +85,7 @@ fadeCandyFloatHeight = 18 - fadeCandySize[2] / 2;
 // Might be useful for debugging, this makes renders much slower though.
 showRealBoards = false;
 
-module circuit(fadeCandy) {
+module circuit(fadeCandy, withMovement = false) {
   alpha = showRealBoards ? 0.1 : 1;
 
   // Battery
@@ -93,12 +93,16 @@ module circuit(fadeCandy) {
   color("red") translate(batteryPosition) slop(size=batterySize) cuboid(size=batterySize, p1=[0, 0, 0]);
 
   // Pi
-  right(piXInset) back(length - PRINTER_SLOP - piYInset) zrot(180) up(piWidth + PRINTER_SLOP) yrot(-90) {
+  right(piXInset)
+    back(length - PRINTER_SLOP - piYInset) zrot(180)
+    // - 2 ensures the USB port (which hangs 1mm over the pi) is accessible
+    up(height - PRINTER_SLOP + wallWidth - 2)
+    yrot(-90) {
     zrot(90) {
       if (showRealBoards) {
         color("green") piZeroW();
       }
-      color("green", alpha=alpha) piZeroWMask(PRINTER_SLOP);
+      color("green", alpha=alpha) piZeroWMask(dataUSBOverhang=wallWidth * 3);
     }
     sdCardLeeway = 0.7;
     // For the mask
@@ -106,20 +110,20 @@ module circuit(fadeCandy) {
     color(alpha=alpha)
       up(pcbHeight - sdCardLeeway)
       left(16.8 -(sdCardSize[0]) / 2)
-      {
+    {
       forward(wallWidth * 3)
         xflip() cuboid(size=sdCardSize, p1=[0, 0, 0]);
 
-        // Additional mask creates a 1mm inlay on the outer box.
-        inlayExtraWidth = 2;
-        inlayDepth = 1;
-        sdCardAdditionalMaskSize = [sdCardSize[0] + 2 * inlayExtraWidth, wallWidth, sdCardSize[2] + 2 * inlayExtraWidth];
-        color("purple", alpha=0.3)
-          forward(wallWidth + (wallWidth - inlayDepth))
-          left(sdCardAdditionalMaskSize[0] - inlayExtraWidth)
-          down(inlayExtraWidth)
-          cuboid(size=sdCardAdditionalMaskSize, p1=[0, 0, 0]);
-      }
+      // Additional mask creates a 1mm inlay on the outer box.
+      inlayExtraWidth = 2;
+      inlayDepth = 1;
+      sdCardAdditionalMaskSize = [sdCardSize[0] + 2 * inlayExtraWidth, wallWidth, sdCardSize[2] + 2 * inlayExtraWidth];
+      color("purple", alpha=0.3)
+        forward(wallWidth + (wallWidth - inlayDepth))
+        left(sdCardAdditionalMaskSize[0] - inlayExtraWidth)
+        down(inlayExtraWidth)
+        cuboid(size=sdCardAdditionalMaskSize, p1=[0, 0, 0]);
+    }
   }
 
   // PowerBoost and plug
@@ -144,19 +148,21 @@ module circuit(fadeCandy) {
       // the switch.
       switchTravel = 1.5;
 
-      // Create a mask for the region through which the chip needs to
-      // move to get it into position while the switch is attached.
-      color("purple", alpha=0.3) back(switchTravel) {
-        down(powerBoostGhostSize[2] - pcbHeight)
-          slop(size=powerBoostGhostSize)
+      if (withMovement) {
+        // Create a mask for the region through which the chip needs to
+        // move to get it into position while the switch is attached.
+        color("purple", alpha=0.3) back(switchTravel) {
+          down(powerBoostGhostSize[2] - pcbHeight)
+            slop(size=powerBoostGhostSize)
             cuboid(size=powerBoostGhostSize, p1=[0, 0, 0]);
 
-        // PowerBoost mask without the actual switch, to avoid
-        // creating a bigger outer hole than necessary.
-        difference() {
-          powerBoost1000CMask();
-          up(powerBoost1000CSize(true)[2] + PRINTER_SLOP)
-            cuboid(size=powerBoost1000CSize(), p1=[0, 0, 0]);
+          // PowerBoost mask without the actual switch, to avoid
+          // creating a bigger outer hole than necessary.
+          difference() {
+            powerBoost1000CMask();
+            up(powerBoost1000CSize(true)[2] + PRINTER_SLOP)
+              cuboid(size=powerBoost1000CSize(), p1=[0, 0, 0]);
+          }
         }
       }
 
@@ -168,11 +174,12 @@ module circuit(fadeCandy) {
         back(size[1] - 2.25) right(size[0] - 5)
         zcyl(d=3, l=12);
 
-      color("gray")
-        back(size[1]) right(size[0])
-        up(screwDiameter / 2 - pcbHeight / 2)
-        left(size[0] - powerBoostBackAngleHeight - wallWidth - nutVertexDistance / 2)
-        ycyl(d=screwDiameter, l=12, align=ALIGN_POS);
+      /* // Screw to push the board against the USB wall. */
+      /* color("gray") */
+      /*   back(size[1]) right(size[0]) */
+      /*   up(screwDiameter / 2 - pcbHeight / 2) */
+      /*   left(size[0] - powerBoostBackAngleHeight - wallWidth - nutVertexDistance / 2) */
+      /*   ycyl(d=screwDiameter, l=12, align=ALIGN_POS); */
     }
 
 
@@ -202,6 +209,17 @@ module circuit(fadeCandy) {
         rotaryEncoder();
     }
   }
+
+  // Here
+  color("green")
+    left(wallWidth - textInlay)
+    back(length / 2)
+    up(wallWidth)
+    xrot(90) yrot(-90)
+    linear_extrude(height=textInlay + wallWidth)
+    text("HERE", font="Helvetica", size=16, halign="center");
+
+
 
   if (fadeCandy) {
     // Fadecandy
@@ -257,9 +275,72 @@ module positionNutHolder(i, fadeCandy) {
   }
 }
 
+module lid() {
+  difference() {
+    union() {
+      outerBoxLid(
+        wallWidth=wallWidth,
+        size=[width, length, height],
+        fillet=fillet,
+        insetWidth=lidInsetWidth,
+        insetDepth=lidInsetDepth
+      );
+
+      for (i = [1, 2]) {
+        positionNutHolder(i=i) {
+          forward(wallWidth) cuboid(size=[nutDepth + 2 * nutHolderWallWidth, nutVertexDistance + wallWidth, lidInsetDepth], p1=[0, 0, -lidInsetDepth]);
+          nutHolder(
+            nutVertexDistance=nutVertexDistance,
+            nutEdgeDistance=nutEdgeDistance,
+            nutDepth=nutDepth,
+
+            screwDiameter=screwDiameter,
+
+            wallWidthLeft=nutHolderWallWidth,
+            wallWidthFront=wallWidth,
+            wallWidthRight=nutHolderWallWidth,
+            wallWidthTop=wallWidth
+          );
+        }
+      }
+
+      holderWallWidth = 2;
+
+      // Hold pi in place vertically
+      right(piXInset + pcbHeight / 2)
+        up(height)
+        zflip() {
+        back(length - 35)
+          cuboid(size=[pcbHeight + holderWallWidth * 2, 10, height - piWidth - 0.5], p1=[-holderWallWidth - pcbHeight / 2, 0, 0]);
+      }
+
+      // Hold PowerBoost in place vertically
+      union() {
+        right(width - PRINTER_SLOP)
+          up(height)
+          zflip()
+          back(length - PRINTER_SLOP)
+          yflip()
+          xflip() {
+          cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, height - powerBoost1000CSize()[0] - powerBoostFloatHeight + wallWidth],
+                 p1=[0, 0, 0]);
+
+          cornerInset = 1.5;
+          back(powerBoost1000CSize()[1])
+            right(powerBoost1000CSize()[2] - pcbHeight / 2)
+            cuboid(size=[wallWidth * 2, wallWidth * 2, height - powerBoost1000CSize()[0] - powerBoostFloatHeight + cornerInset],
+                   p1=[-wallWidth, -wallWidth, 0]);
+
+        }
+      }
+    }
+    circuit();
+  }
+}
+
 module piBox(fadeCandy=false) {
   up(wallWidth) right(wallWidth) back(wallWidth) {
-    //circuit(fadeCandy=fadeCandy);
+    // circuit(fadeCandy=fadeCandy);
     realHeight = height + (fadeCandy ? fadeCandyExtraHeight : 0);
 
     difference() {
@@ -311,7 +392,8 @@ module piBox(fadeCandy=false) {
               // Tower for screwing the board in
               towerExtraDistance = 1;
               towerWidth = 1.5;
-              towerLength = 7;
+              towerLength = 6;
+              pinInset = 2.5;
               right(platformInset - size[2] + pcbHeight + powerBoostWallInlayDepth + towerExtraDistance)
                 back(backAngleSupportLength) {
 
@@ -319,7 +401,7 @@ module piBox(fadeCandy=false) {
                 cuboid(size=[
                          towerWidth,
                          towerLength,
-                         powerBoostFloatHeight + size[0]
+                         powerBoostFloatHeight + size[0] - pinInset
                        ], p1=[0, 0, 0]
                 );
 
@@ -333,11 +415,11 @@ module piBox(fadeCandy=false) {
 
               // Tower for pushing the board agains the USB wall
               //right(platformInset - size[2] - screwDiameter / 2 - wallWidth / 2)
-                cuboid(size=[
-                       platformInset,
-                       towerWidth,
-                       powerBoostFloatHeight + 15
-                     ], p1=[0, backAngleSupportLength - nutDepth - 0.5 - towerWidth, 0]);
+              /* cuboid(size=[ */
+              /*          platformInset, */
+              /*          towerWidth, */
+              /*          powerBoostFloatHeight + 15 */
+              /*        ], p1=[0, backAngleSupportLength - nutDepth - 0.5 - towerWidth, 0]); */
             }
 
             // Front support
@@ -425,7 +507,7 @@ module piBox(fadeCandy=false) {
         }
       }
 
-      circuit(fadeCandy=fadeCandy);
+      circuit(fadeCandy=fadeCandy, withMovement=true);
     }
 
     // Outer box
@@ -435,7 +517,7 @@ module piBox(fadeCandy=false) {
         size=[width + (fadeCandy ? fadeCandyExtraWidth : 0), length, realHeight],
         fillet=fillet
       );
-      circuit(fadeCandy=fadeCandy);
+      circuit(fadeCandy=fadeCandy, withMovement=true);
       for (i = [1, 2]) {
         positionNutHolder(i) nutHolderMask(
           nutVertexDistance=nutVertexDistance,
@@ -444,65 +526,11 @@ module piBox(fadeCandy=false) {
           l=(length / 2)
         );
       }
-
-      // Here
-
     }
-
-    color("green") linear_extrude(height=textInlay + wallWidth)
-      text("HERE", font="Liberation Sans", size=16);
 
     // Lid
     right(2 * width + 10) yrot(180) down(realHeight)
-      difference() {
-      union() {
-        left(fadeCandy ? fadeCandyExtraWidth : 0) outerBoxLid(
-          wallWidth=wallWidth,
-          size=[width + (fadeCandy ? fadeCandyExtraWidth : 0), length, realHeight],
-          fillet=fillet,
-          insetWidth=lidInsetWidth,
-          insetDepth=lidInsetDepth
-        );
-
-        for (i = [1, 2]) {
-          positionNutHolder(i=i, fadeCandy=fadeCandy) {
-            forward(wallWidth) cuboid(size=[nutDepth + 2 * nutHolderWallWidth, nutVertexDistance + wallWidth, lidInsetDepth], p1=[0, 0, -lidInsetDepth]);
-            nutHolder(
-              nutVertexDistance=nutVertexDistance,
-              nutEdgeDistance=nutEdgeDistance,
-              nutDepth=nutDepth,
-
-              screwDiameter=screwDiameter,
-
-              wallWidthLeft=nutHolderWallWidth,
-              wallWidthFront=wallWidth,
-              wallWidthRight=nutHolderWallWidth,
-              wallWidthTop=wallWidth
-            );
-          }
-        }
-
-        holderWallWidth = 2;
-
-        // Hold pi in place vertically
-        right(piXInset + pcbHeight / 2)
-          up(realHeight)
-          zflip()
-          back(length - 35)
-          cuboid(size=[pcbHeight + holderWallWidth * 2, 10, realHeight - piWidth - 0.5], p1=[-holderWallWidth - pcbHeight / 2, 0, 0]);
-
-        // Hold PowerBoost in place vertically
-        right(width - PRINTER_SLOP)
-          up(realHeight)
-          zflip()
-          back(length - PRINTER_SLOP)
-          yflip()
-          xflip()
-          cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, realHeight - powerBoost1000CSize()[0] - powerBoostFloatHeight - 0.5], p1=[0, 0, 0]);
-
-      }
-      circuit(fadeCandy=fadeCandy);
-    }
+      lid();
   }
 }
 
