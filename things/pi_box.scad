@@ -59,33 +59,10 @@ lidInsetDepth = 2;
 
 textInlay = 0.75;
 
-// Accomodates pins and the USB mini plug w/ terminal block.
-fadeCandyRightSpacing = 10;
-fadeCandyLeftSpacing = 10;
-
-fadeCandyCableDiameter = 4 + 2 * PRINTER_SLOP;
-fadeCandyCableGapWidth = fadeCandyCableDiameter + 0.5;
-fadeCandySeparatorWallHeight = 6 * fadeCandyCableDiameter;
-fadeCandyNumOutputs = 8;
-
-fadeCandySize = [pcbHeight + 2 * PRINTER_SLOP, 38 + 2 * PRINTER_SLOP, 20 + 2 * PRINTER_SLOP];
-fadeCandyExtraWidth = // Computed from right to left
-  fadeCandyRightSpacing +
-  fadeCandySize[0] +
-  fadeCandyLeftSpacing +
-  wallWidth +
-  2 * fadeCandyCableGapWidth;
-
-// Covers the USB plug in the Pi.
-fadeCandyExtraHeight = 5;
-
-// Accomodates the USB mini plug w/ terminal block.
-fadeCandyFloatHeight = 18 - fadeCandySize[2] / 2;
-
 // Might be useful for debugging, this makes renders much slower though.
 showRealBoards = false;
 
-module circuit(fadeCandy, withMovement = false) {
+module circuit(withMovement = false) {
   alpha = showRealBoards ? 0.1 : 1;
 
   // Battery
@@ -218,55 +195,19 @@ module circuit(fadeCandy, withMovement = false) {
     xrot(90) yrot(-90)
     linear_extrude(height=textInlay + wallWidth)
     text("HERE", font="Helvetica", size=16, halign="center");
-
-
-
-  if (fadeCandy) {
-    // Fadecandy
-    color("lightblue") union() {
-      left(fadeCandyRightSpacing + fadeCandySize[0])
-        back(length - fadeCandySize[1])
-        up(fadeCandyFloatHeight)
-        cuboid(size=fadeCandySize, p1=[0, 0, 0]);
-    }
-
-    // Data cables and markers
-    color("gray") union() {
-      for (i = [0 : (fadeCandyNumOutputs / 2) - 1]) {
-        for (j = [0 : 1]) {
-          up(fadeCandySeparatorWallHeight * (j / 2 + 1 / 4))
-            back(fadeCandyCableGapWidth * (1.5 + i * 2) + i * wallWidth)
-            left(fadeCandyExtraWidth) {
-
-            right(PRINTER_SLOP)
-              xcyl(d=fadeCandyCableDiameter, l=wallWidth * 2, align=V_ALLNEG);
-
-            left(wallWidth - textInlay)
-              up(fadeCandyCableDiameter * 0.5)
-              xrot(90)
-              yrot(-90)
-              linear_extrude(height = textInlay + wallWidth)
-              text(str(fadeCandyNumOutputs - 2 * (i + 1) + (1 - j)), size=fadeCandyCableDiameter, font="Liberation Sans");
-          }
-        }
-      }
-    }
-
-  }
 }
 
 // Hacky helper so we can iteratively output nut holders.
-module positionNutHolder(i, fadeCandy) {
-  realHeight = height + (fadeCandy ? fadeCandyExtraHeight : 0);
+module positionNutHolder(i) {
   if (i == 1) {
-    up(realHeight - lidInsetDepth)
+    up(height - lidInsetDepth)
       right(width - PRINTER_SLOP)
       back(16)
       xflip()
       zflip()
       children();
   } else if (i == 2) {
-    up(realHeight - lidInsetDepth)
+    up(height - lidInsetDepth)
       right(piXInset + pcbHeight + nutVertexDistance + nutHolderWallWidth * 2)
       back(length - nutDepth - 2 * nutHolderWallWidth - PRINTER_SLOP)
       zflip()
@@ -338,10 +279,9 @@ module lid() {
   }
 }
 
-module piBox(fadeCandy=false) {
+module piBox() {
   up(wallWidth) right(wallWidth) back(wallWidth) {
-    // circuit(fadeCandy=fadeCandy);
-    realHeight = height + (fadeCandy ? fadeCandyExtraHeight : 0);
+    // circuit();
 
     difference() {
       union() {
@@ -456,68 +396,19 @@ module piBox(fadeCandy=false) {
             cuboid(size=[platformWidth, rotaryEncoderPlatformLength, rotaryEncoderFloatHeight], p1=[0, 0, 0]);
           }
         }
-
-        if (fadeCandy) {
-          // FadeCandy
-          union() {
-            left(fadeCandyRightSpacing + wallWidth + pcbHeight) {
-              platformWidth = pcbHeight + 2 * wallWidth;
-              // Platform near the pins with walls.
-
-              // This puts us at a spot on the board with no extra height above the PCB
-              back(length - 10)
-                cuboid(size=[
-                         platformWidth,
-                         3, // Covers the "empty" spot on the board
-                         fadeCandyFloatHeight + wallWidth],
-                       p1=[0, 0, 0]);
-
-              // Platform near the USB port with only a back wall.
-              back(length - fadeCandySize[1] - wallWidth - PRINTER_SLOP) {
-                cuboid(size=[pcbHeight + 2 * wallWidth,
-                             wallWidth * 2 + PRINTER_SLOP,
-                             fadeCandyFloatHeight],
-                       p1=[0, 0, 0]);
-                cuboid(size=[pcbHeight + 2 * wallWidth,
-                             wallWidth,
-                             fadeCandyFloatHeight + wallWidth],
-                       p1=[0, 0, 0]);
-              }
-            }
-          }
-
-          // Strain relief channels for cables.
-          left(fadeCandyExtraWidth) {
-            for (i = [0 : (fadeCandyNumOutputs / 2) - 1]) {
-              extraInset = 3;
-              back(i * (2 * fadeCandyCableGapWidth + wallWidth) - wallWidth) {
-                back(3 * fadeCandyCableGapWidth)
-                  cuboid(size=[fadeCandyCableGapWidth + wallWidth + extraInset, wallWidth, fadeCandySeparatorWallHeight],
-                         p1=[0, 0, 0]);
-                back(fadeCandyCableGapWidth) right(fadeCandyCableGapWidth)
-                  cuboid(size=[wallWidth, fadeCandyCableGapWidth, fadeCandySeparatorWallHeight], p1=[0, 0, 0]);
-              }
-            }
-            // Extra wall at the front
-            back(fadeCandyCableGapWidth - 2 * wallWidth)
-              cuboid(size=[fadeCandyCableGapWidth + wallWidth, wallWidth, fadeCandySeparatorWallHeight],
-                     p1=[0, 0, 0]);
-
-          }
-        }
       }
 
-      circuit(fadeCandy=fadeCandy, withMovement=true);
+      circuit(withMovement=true);
     }
 
     // Outer box
     difference() {
-      color(alpha=0.3) left(fadeCandy ? fadeCandyExtraWidth : 0) outerBox(
+      color(alpha=0.3) outerBox(
         wallWidth=wallWidth,
-        size=[width + (fadeCandy ? fadeCandyExtraWidth : 0), length, realHeight],
+        size=[width, length, height],
         fillet=fillet
       );
-      circuit(fadeCandy=fadeCandy, withMovement=true);
+      circuit(withMovement=true);
       for (i = [1, 2]) {
         positionNutHolder(i) nutHolderMask(
           nutVertexDistance=nutVertexDistance,
@@ -529,7 +420,7 @@ module piBox(fadeCandy=false) {
     }
 
     // Lid
-    right(2 * width + 10) yrot(180) down(realHeight)
+    right(2 * width + 10) yrot(180) down(height)
       lid();
   }
 }
