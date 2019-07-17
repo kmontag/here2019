@@ -28,6 +28,9 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
   chipClearanceHeight = chipHeight + wallWidth; // additional height needed for parts to clear the stuff on the board
   separatorHeight = 4;
 
+  // The chip needs to sit this far "into" the wall to allow USB inserts
+  chipYAdjustment = wallWidth - 1;
+
   switchWidth = 13.2;
   switchHeight = 8.6 + 2 * leeway;
   switchRadius = 0.5;
@@ -43,7 +46,7 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
 
   // inner dimensions
   width = max(chipWidth, 2 * panelMountEdgeRadius + 2 * wallWidth + cableStrainReliefMinLength + 2 * cableRadius, chipWidth);
-  length = chipLength + panelMountDepth;
+  length = chipLength - chipYAdjustment + panelMountDepth;
   height = max(channelHeight + chipHeight + usbPortHeight, 2 * panelMountEdgeRadius, channelHeight + switchHeight + switchOffsetHeight) + lidInsetDepth + 2 * leeway;
 
   platformWidth = chipWidth / 2;
@@ -113,7 +116,7 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
         }
 
         // Hold feather in place vertically.
-        postDim = 3;
+        postDim = 2.5;
         back(length - postDim - leeway)
           right(leeway)
           cuboid([postDim, postDim, height - channelHeight - chipHeight - leeway], p1=[0, 0, 0]);
@@ -200,6 +203,11 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
       /* translate([width - chipWidth / 2, length, chipHeight + channelHeight + usbPortHeight / 2]) { */
       /*   roundedBox([usbWidth, wallWidth + 2 * usbAccessRadius, usbHeight], usbAccessRadius, false); */
       /* } */
+
+      // care out inlay on the back wall so the USB port is accessible
+      right(width - chipWidth - wallWidth)
+        back(length - epsilon)
+        cuboid([chipWidth + wallWidth, chipYAdjustment + epsilon, height * 3 / 4], p1=[0, 0, 0]);
 
       // carve out screw holes
       for (i = [-1, 1]) {
