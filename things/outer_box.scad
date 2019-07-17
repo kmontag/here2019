@@ -1,3 +1,4 @@
+include <BOSL/constants.scad>
 use <BOSL/shapes.scad>
 use <BOSL/transforms.scad>
 
@@ -26,7 +27,8 @@ module outerBoxLid(
   wallWidth,
   fillet,
   insetWidth,
-  insetDepth
+  insetDepth,
+  slop=PRINTER_SLOP
 ) {
   difference() {
     cuboid(size=[size[0] + 2 * wallWidth, size[1] + 2 * wallWidth, size[2] + 2 * wallWidth], p1=[-wallWidth, -wallWidth, -wallWidth], fillet=fillet);
@@ -34,8 +36,8 @@ module outerBoxLid(
            p1=((-wallWidth - epsilon) * [1, 1, 1]));
   }
   up(size[2] - insetDepth) difference() {
-    cuboid(size=[size[0], size[1], insetDepth], p1=[0, 0, 0]);
-    cuboid(size=[size[0] - 2 * insetWidth, size[1] - 2 * insetWidth, insetDepth + epsilon], p1=[insetWidth, insetWidth, -epsilon]);
+    cuboid(size=[size[0] - 2 * slop, size[1] - 2 * slop, insetDepth], p1=[slop, slop, 0]);
+    cuboid(size=[size[0] - 2 * insetWidth - 2 * slop, size[1] - 2 * insetWidth - 2 * slop, insetDepth + epsilon], p1=[slop + insetWidth, slop + insetWidth, -epsilon]);
   }
 }
 

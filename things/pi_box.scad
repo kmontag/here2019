@@ -21,6 +21,8 @@ height = 35;
 
 fillet = 2;
 
+pcbHeight = 1.4;
+
 piWidth = 30;
 piLength = 65;
 
@@ -33,14 +35,11 @@ piYInset = 0.5;
 batterySize = [5, 62, 34];
 
 powerBoostFloatHeight = 7;
-powerBoostBackerSize=[powerBoost1000CSize()[0] / 2, powerBoost1000CSize()[1], wallWidth + 1];
+powerBoostGhostSize=[powerBoost1000CSize()[0], powerBoost1000CSize()[1], 3 + pcbHeight];
 
 rotaryEncoderFloatHeight = (height - rotaryEncoderBoxSize()[2]) / 2;
 rotaryEncoderInset = 2;
 rotaryEncoderPlatformLength = 22;
-
-
-pcbHeight = 1.4;
 
 nutVertexDistance = 6.5 + PRINTER_SLOP;
 nutEdgeDistance = 5.65 + PRINTER_SLOP;
@@ -49,9 +48,8 @@ screwDiameter = 3 + PRINTER_SLOP;
 nutHolderWallWidth = 1;
 
 // Post to lock the rotary encoder.
-postWidth = nutHolderWallWidth + nutVertexDistance;
-postLength = 2 * nutHolderWallWidth + nutDepth;
-postExtraFloatHeight = 3;
+postFloatHeight = 3;
+postSize = [screwDiameter * 2, 2, rotaryEncoderFloatHeight - postFloatHeight + screwDiameter * 2 + 3];
 
 
 lidInsetWidth = 1;
@@ -81,7 +79,7 @@ fadeCandyFloatHeight = 18 - fadeCandySize[2] / 2;
 // Might be useful for debugging, this makes renders much slower though.
 showRealBoards = false;
 
-module circuit(fadeCandy, powerBoostAdditionalMask = false) {
+module circuit(fadeCandy) {
   alpha = showRealBoards ? 0.1 : 1;
 
   // Battery
@@ -131,19 +129,18 @@ module circuit(fadeCandy, powerBoostAdditionalMask = false) {
         color("blue")  powerBoost1000C();
       }
       color("blue", alpha=alpha) powerBoost1000CMask();
-      down(powerBoostBackerSize[2]) {
-        slop(size=powerBoostBackerSize)
 
-          powerBoostBacker();
+      // We can get this much "extra" length-wise movement by flipping
+      // the switch.
+      switchTravel = 1.5;
 
-        if (powerBoostAdditionalMask) {
-          additionalMaskSize = [height + fadeCandyExtraHeight, wallWidth, powerBoostBackerSize[2] + powerBoost1000CSize(switch = false)[2] - 1];
-          // Taller/wider cutout at the back for an even inlay
-          color("purple", alpha=0.3) slop(size=additionalMaskSize) cuboid(
-            size=additionalMaskSize,
-            p1=[0, 0, 0]
-          );
-        }
+      // Create a mask for the region through which the chip needs to
+      // move to get it into position while the switch is attached.
+      color("purple", alpha=0.3) back(switchTravel) {
+        down(powerBoostGhostSize[2] - pcbHeight)
+          slop(size=powerBoostGhostSize)
+            cuboid(size=powerBoostGhostSize, p1=[0, 0, 0]);
+        powerBoost1000CMask();
       }
     }
 
@@ -169,13 +166,16 @@ module circuit(fadeCandy, powerBoostAdditionalMask = false) {
     color("gray")
       right(width - size[0] - rotaryEncoderInset) {
       up(rotaryEncoderFloatHeight + PRINTER_SLOP)
+        back(PRINTER_SLOP)
         rotaryEncoder();
 
       back(rotaryEncoderPlatformLength - wallWidth)
-        right(size[0] / 2)
-        up(PRINTER_SLOP + postExtraFloatHeight)
-        // z-dimension isn't correct but doesn't really matter here
-        slop(size=[postWidth, postLength, rotaryEncoderFloatHeight])
+        right(size[0] / 2 + 2)
+        up(PRINTER_SLOP + postFloatHeight)
+        // z-dimension isn't correct but doesn't really matter
+        // here. Leave a lot of extra space, this doesn't need to be
+        // completely snug.
+        slop(size=[postSize[0], postSize[1], rotaryEncoderFloatHeight], slop=0.5)
         rotaryEncoderPost();
 
     }
@@ -197,7 +197,7 @@ module positionNutHolder(i, fadeCandy) {
   realHeight = height + (fadeCandy ? fadeCandyExtraHeight : 0);
   if (i == 1) {
     up(realHeight - lidInsetDepth)
-      right(width)
+      right(width - PRINTER_SLOP)
       back(rotaryEncoderPlatformLength)
       xflip()
       zflip()
@@ -205,7 +205,7 @@ module positionNutHolder(i, fadeCandy) {
   } else if (i == 2) {
     up(realHeight - lidInsetDepth)
       right(piXInset + pcbHeight + nutVertexDistance + nutHolderWallWidth * 2)
-      back(length - nutDepth - 2 * nutHolderWallWidth)
+      back(length - nutDepth - 2 * nutHolderWallWidth - PRINTER_SLOP)
       zflip()
       zrot(90)
       children();
@@ -217,38 +217,18 @@ module positionNutHolder(i, fadeCandy) {
 // spacer to push the encoder into position.
 module rotaryEncoderPost() {
   color("gray") {
-    cuboid(size=[postWidth, postLength, rotaryEncoderFloatHeight],
-           p1=[-postWidth / 2, -postLength, 0]);
-    up(rotaryEncoderFloatHeight)
-      right(postWidth / 2 - nutHolderWallWidth)
-      xflip()
-      zrot(-90)
-      nutHolder(
-        nutVertexDistance=nutVertexDistance,
-        nutEdgeDistance=nutEdgeDistance,
-        nutDepth=nutDepth,
-
-        screwDiameter=screwDiameter,
-
-        wallWidthLeft=nutHolderWallWidth,
-        wallWidthFront=nutHolderWallWidth,
-        wallWidthRight=nutHolderWallWidth,
-        wallWidthTop=wallWidth
-      );
+    difference() {
+      cuboid(size=postSize,
+             p1=[-postSize[0] / 2, -postSize[1], 0]);
+      up(postSize[2] - screwDiameter * 1.5)
+        ycyl(d=screwDiameter, l=postSize[1] * 3);
+    }
   }
-}
-
-// Gets inserted being the powerboost board after placing it. Makes it
-// easier to insert the board, otherwise there isn't really room to
-// place the switch through the wall.
-module powerBoostBacker() {
-  size = powerBoost1000CSize();
-  color("black") cuboid(size=powerBoostBackerSize, p1=[0, 0, 0]);
 }
 
 module piBox(fadeCandy=false) {
   up(wallWidth) right(wallWidth) back(wallWidth) {
-    circuit(fadeCandy=fadeCandy);
+    //circuit(fadeCandy=fadeCandy);
     realHeight = height + (fadeCandy ? fadeCandyExtraHeight : 0);
 
     difference() {
@@ -269,7 +249,7 @@ module piBox(fadeCandy=false) {
           backAngleHeight = 4.5;
           backAngleSupportLength = 4;
           backAngleInternalLength = 3;
-          platformInset = size[2] + wallWidth + powerBoostBackerSize[2];
+          platformInset = size[2] + wallWidth + powerBoostGhostSize[2];
 
           translate([
                       width - platformInset,
@@ -286,7 +266,7 @@ module piBox(fadeCandy=false) {
                      ], p1=[0, 0, 0]);
               back(backAngleSupportLength)
                 cuboid(size=[
-                         wallWidth + powerBoostBackerSize[2],
+                         wallWidth + powerBoostGhostSize[2],
                          backAngleInternalLength,
                          backAngleStartHeight + backAngleHeight
                        ], p1=[0, 0, 0]);
@@ -307,12 +287,19 @@ module piBox(fadeCandy=false) {
 
             // Front support
             frontSupportLength = 4;
-            back(size[1] - frontSupportLength)
+            back(size[1] - frontSupportLength) {
               cuboid(size=[
                        platformInset,
                        frontSupportLength,
                        powerBoostFloatHeight + 6,
                      ], p1=[0, 0, 0]);
+              cuboid(size=[
+                       platformInset - powerBoost1000CSize()[2] + wallWidth,
+                       frontSupportLength,
+                       powerBoostFloatHeight + 15,
+                     ], p1=[0, 0, 0]);
+            }
+
           }
         }
 
@@ -351,7 +338,7 @@ module piBox(fadeCandy=false) {
         size=[width + (fadeCandy ? fadeCandyExtraWidth : 0), length, realHeight],
         fillet=fillet
       );
-      circuit(fadeCandy=fadeCandy, powerBoostAdditionalMask=true);
+      circuit(fadeCandy=fadeCandy);
       for (i = [1, 2]) {
         positionNutHolder(i) nutHolderMask(
           nutVertexDistance=nutVertexDistance,
@@ -399,16 +386,16 @@ module piBox(fadeCandy=false) {
           up(realHeight)
           zflip()
           back(length - 35)
-          cuboid(size=[pcbHeight + holderWallWidth * 2, 10, realHeight - piWidth + 3], p1=[-holderWallWidth - pcbHeight / 2, 0, 0]);
+          cuboid(size=[pcbHeight + holderWallWidth * 2, 10, realHeight - piWidth - 0.5], p1=[-holderWallWidth - pcbHeight / 2, 0, 0]);
 
         // Hold PowerBoost in place vertically
-        right(width)
+        right(width - PRINTER_SLOP)
           up(realHeight)
           zflip()
-          back(length)
+          back(length - PRINTER_SLOP)
           yflip()
           xflip()
-          cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, realHeight - powerBoost1000CSize()[0] - powerBoostFloatHeight + 2], p1=[0, 0, 0]);
+          cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, realHeight - powerBoost1000CSize()[0] - powerBoostFloatHeight - 0.5], p1=[0, 0, 0]);
 
       }
       circuit(fadeCandy=fadeCandy);
@@ -417,8 +404,7 @@ module piBox(fadeCandy=false) {
 
   // Little parts.
   right(width * 2 + 22 + (fadeCandy ? fadeCandyExtraWidth : 0)) {
-    up(postWidth / 2) yrot(90) xrot(-90) rotaryEncoderPost();
-    back(25) powerBoostBacker();
+    xrot(-90) rotaryEncoderPost();
   }
 }
 
