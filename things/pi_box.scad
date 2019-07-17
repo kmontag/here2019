@@ -36,10 +36,13 @@ batterySize = [5, 62, 34];
 
 powerBoostFloatHeight = 7;
 powerBoostGhostSize=[powerBoost1000CSize()[0], powerBoost1000CSize()[1], 3 + pcbHeight];
+powerBoostWallInlayDepth = 1;
+powerBoostBackAngleHeight = 4.5;
+
 
 rotaryEncoderFloatHeight = (height - rotaryEncoderBoxSize()[2]) / 2;
 rotaryEncoderInset = 2;
-rotaryEncoderPlatformLength = 22;
+rotaryEncoderPlatformLength = 6;
 
 nutVertexDistance = 6.5 + PRINTER_SLOP;
 nutEdgeDistance = 5.65 + PRINTER_SLOP;
@@ -121,14 +124,18 @@ module circuit(fadeCandy) {
     size = powerBoost1000CSize();
     right(width - size[2] + 1)
       up(powerBoostFloatHeight)
-      back(length - PRINTER_SLOP + wallWidth - 1)
+      back(length - PRINTER_SLOP + wallWidth - powerBoostWallInlayDepth)
       yrot(90)
       zrot(180)
     {
       if (showRealBoards) {
         color("blue")  powerBoost1000C();
       }
-      color("blue", alpha=alpha) powerBoost1000CMask();
+      color("blue", alpha=alpha) {
+        powerBoost1000CMask();
+        // Leave a small amount of wiggle room at the front
+        color("purple", alpha=0.3) down(PRINTER_SLOP) powerBoost1000CMask();
+      }
 
       // We can get this much "extra" length-wise movement by flipping
       // the switch.
@@ -140,13 +147,35 @@ module circuit(fadeCandy) {
         down(powerBoostGhostSize[2] - pcbHeight)
           slop(size=powerBoostGhostSize)
             cuboid(size=powerBoostGhostSize, p1=[0, 0, 0]);
-        powerBoost1000CMask();
+
+        // PowerBoost mask without the actual switch, to avoid
+        // creating a bigger outer hole than necessary.
+        difference() {
+          powerBoost1000CMask();
+          up(powerBoost1000CSize(true)[2] + PRINTER_SLOP)
+            cuboid(size=powerBoost1000CSize(), p1=[0, 0, 0]);
+        }
       }
+
+      // Through-screw with a bit of extra diameter (the real thing is
+      // 2.5mm), since our positioning isn't exact and it doesn't
+      // really matter if this hole is a bit too big. It just needs to
+      // hold the board in the x-direction.
+      color("gray")
+        back(size[1] - 2.25) right(size[0] - 5)
+        zcyl(d=3, l=12);
+
+      color("gray")
+        back(size[1]) right(size[0])
+        up(screwDiameter / 2 - pcbHeight / 2)
+        left(size[0] - powerBoostBackAngleHeight - wallWidth - nutVertexDistance / 2)
+        ycyl(d=screwDiameter, l=12, align=ALIGN_POS);
     }
 
 
-    back(length + wallWidth)
-      left(size[2] - pcbHeight - 1.5)
+
+    back(length + wallWidth + PRINTER_SLOP)
+      left(size[2] - pcbHeight - 2.5)
       up(powerBoostFloatHeight + size[0] / 2)
       right(width) {
 
@@ -155,7 +184,7 @@ module circuit(fadeCandy) {
         usb_male_micro_b_connector();
       // Need a bit of extra space around the actual port, the module
       // above doesn't quite cover it in practice.
-      color("purple", alpha=0.3) cuboid(size=[3, wallWidth * 2, 8]);
+      color("purple", alpha=0.3) back(wallWidth) right(0.25) cuboid(size=[3, wallWidth * 5, 8]);
     }
   }
 
@@ -169,14 +198,14 @@ module circuit(fadeCandy) {
         back(PRINTER_SLOP)
         rotaryEncoder();
 
-      back(rotaryEncoderPlatformLength - wallWidth)
-        right(size[0] / 2 + 2)
-        up(PRINTER_SLOP + postFloatHeight)
-        // z-dimension isn't correct but doesn't really matter
-        // here. Leave a lot of extra space, this doesn't need to be
-        // completely snug.
-        slop(size=[postSize[0], postSize[1], rotaryEncoderFloatHeight], slop=0.5)
-        rotaryEncoderPost();
+      /* back(rotaryEncoderPlatformLength - wallWidth) */
+      /*   right(size[0] / 2 + 2) */
+      /*   up(PRINTER_SLOP + postFloatHeight) */
+      /*   // z-dimension isn't correct but doesn't really matter */
+      /*   // here. Leave a lot of extra space, this doesn't need to be */
+      /*   // completely snug. */
+      /*   slop(size=[postSize[0], postSize[1], rotaryEncoderFloatHeight], slop=0.5) */
+      /*   rotaryEncoderPost(); */
 
     }
   }
@@ -198,7 +227,7 @@ module positionNutHolder(i, fadeCandy) {
   if (i == 1) {
     up(realHeight - lidInsetDepth)
       right(width - PRINTER_SLOP)
-      back(rotaryEncoderPlatformLength)
+      back(16)
       xflip()
       zflip()
       children();
@@ -236,7 +265,7 @@ module piBox(fadeCandy=false) {
 
         // Pi and battery platforms
         union() {
-          piPlatformInset = 20;
+          piPlatformInset = 15;
           piHeaderInset = 7;
           cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, 10], p1=[0, 0, 0]);
           back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, 14], p1=[0, 0, 0]);
@@ -246,10 +275,9 @@ module piBox(fadeCandy=false) {
         union() {
           size = powerBoost1000CSize();
           backAngleStartHeight = powerBoostFloatHeight + 2;
-          backAngleHeight = 4.5;
-          backAngleSupportLength = 4;
+          backAngleSupportLength = 5;
           backAngleInternalLength = 3;
-          platformInset = size[2] + wallWidth + powerBoostGhostSize[2];
+          platformInset = size[2] - powerBoostWallInlayDepth - pcbHeight + powerBoostGhostSize[2];
 
           translate([
                       width - platformInset,
@@ -262,42 +290,67 @@ module piBox(fadeCandy=false) {
               cuboid(size=[
                        platformInset,
                        backAngleSupportLength,
-                       backAngleStartHeight + backAngleHeight,
+                       backAngleStartHeight + powerBoostBackAngleHeight,
                      ], p1=[0, 0, 0]);
               back(backAngleSupportLength)
                 cuboid(size=[
                          wallWidth + powerBoostGhostSize[2],
                          backAngleInternalLength,
-                         backAngleStartHeight + backAngleHeight
+                         backAngleStartHeight,
                        ], p1=[0, 0, 0]);
 
               back(backAngleSupportLength)
-                cuboid(size=[
-                         platformInset,
-                         backAngleInternalLength,
-                         powerBoostFloatHeight,
-                       ], p1=[0, 0, 0]);
-              back(backAngleSupportLength)
-                up(backAngleStartHeight + backAngleHeight)
+                up(backAngleStartHeight + powerBoostBackAngleHeight)
                 right(platformInset)
                 zrot(90)
                 zflip()
-                right_triangle([backAngleInternalLength, platformInset, backAngleHeight]);
+                right_triangle([backAngleInternalLength, platformInset, powerBoostBackAngleHeight]);
+
+              // Tower for screwing the board in
+              towerExtraDistance = 1;
+              towerWidth = 1.5;
+              towerLength = 7;
+              right(platformInset - size[2] + pcbHeight + powerBoostWallInlayDepth + towerExtraDistance)
+                back(backAngleSupportLength) {
+
+
+                cuboid(size=[
+                         towerWidth,
+                         towerLength,
+                         powerBoostFloatHeight + size[0]
+                       ], p1=[0, 0, 0]
+                );
+
+                cuboid(size=[
+                         size[2] - pcbHeight - towerExtraDistance,
+                         towerLength,
+                         powerBoostFloatHeight + size[0] - 9,
+                       ], p1=[0, 0, 0]
+                );
+              }
+
+              // Tower for pushing the board agains the USB wall
+              //right(platformInset - size[2] - screwDiameter / 2 - wallWidth / 2)
+                cuboid(size=[
+                       platformInset,
+                       towerWidth,
+                       powerBoostFloatHeight + 15
+                     ], p1=[0, backAngleSupportLength - nutDepth - 0.5 - towerWidth, 0]);
             }
 
             // Front support
-            frontSupportLength = 4;
+            frontSupportLength = 2;
             back(size[1] - frontSupportLength) {
               cuboid(size=[
-                       platformInset,
+                       size[2] + powerBoostGhostSize[2] - pcbHeight,
                        frontSupportLength,
                        powerBoostFloatHeight + 6,
-                     ], p1=[0, 0, 0]);
+                     ], p1=[platformInset - size[2] - pcbHeight, 0, 0]);
               cuboid(size=[
-                       platformInset - powerBoost1000CSize()[2] + wallWidth,
+                       wallWidth + pcbHeight,
                        frontSupportLength,
-                       powerBoostFloatHeight + 15,
-                     ], p1=[0, 0, 0]);
+                       powerBoostFloatHeight + 12,
+                     ], p1=[platformInset - size[2] - pcbHeight, 0, 0]);
             }
 
           }
@@ -317,13 +370,6 @@ module piBox(fadeCandy=false) {
 
             // Main platform
             cuboid(size=[platformWidth, rotaryEncoderPlatformLength, rotaryEncoderFloatHeight], p1=[0, 0, 0]);
-
-            // Walls near output
-            for (i = [0, 1]) {
-              right(i * (platformWidth - holderWallWidth[i]))
-                up(rotaryEncoderFloatHeight)
-                cuboid(size=[holderWallWidth[i], holderWallLength, holderWallHeight], p1=[0, 0, 0]);
-            }
           }
         }
       }
@@ -402,10 +448,10 @@ module piBox(fadeCandy=false) {
     }
   }
 
-  // Little parts.
-  right(width * 2 + 22 + (fadeCandy ? fadeCandyExtraWidth : 0)) {
-    xrot(-90) rotaryEncoderPost();
-  }
+  /* // Little parts. */
+  /* right(width * 2 + 22 + (fadeCandy ? fadeCandyExtraWidth : 0)) { */
+  /*   xrot(-90) rotaryEncoderPost(); */
+  /* } */
 }
 
 piBox();

@@ -43,6 +43,16 @@ module powerBoost1000C(switch = true) {
 module powerBoost1000CMask(slop=PRINTER_SLOP, switch=true) {
   boardSize = [powerBoostSize[0], powerBoostSize[1], pcbHeight];
   slop(slop=slop, size=boardSize) cuboid(size=boardSize, p1=[0, 0, 0]);
+
+  // JST input, with some extra on the side for a plug.
+  plugWidth = 3;
+  jstSize = [7.4 + plugWidth, 8, 4.8];
+  back(6.95)
+    left(plugWidth)
+    up(pcbHeight)
+    slop(slop=slop, size=jstSize) cuboid(size=jstSize, p1=[0, 0, 0]);
+
+
   // Switch
   if (switch) {
     translate(switchBodyPosition) slop(slop=slop, size=switchBodySize) cuboid(size=switchBodySize, p1=[0, 0, 0]);
@@ -57,4 +67,4 @@ function powerBoost1000CSize(switch = true) = [
 ];
 
 powerBoost1000C();
-color("white", alpha=0.1) powerBoost1000CMask();
+color("white", alpha=0.2) powerBoost1000CMask();
