@@ -1,6 +1,8 @@
 include <MCAD/boxes.scad>
-use <nut_holder.scad>
+include <BOSL/constants.scad>
 use <BOSL/transforms.scad>
+use <math.scad>
+use <nut_holder.scad>
 
 $fn=25;
 
@@ -110,6 +112,12 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
           }
         }
 
+        // Hold feather in place vertically.
+        postDim = 3;
+        back(length - postDim - leeway)
+          right(leeway)
+          cuboid([postDim, postDim, height - channelHeight - chipHeight - leeway], p1=[0, 0, 0]);
+
         for (i = [0, 1]) {
           right((1 - i) * width)
             xscale(i == 0 ? -1 : 1) // conditional xflip
@@ -184,9 +192,14 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
 
 
       // carve out USB
-      translate([width - chipWidth / 2, length, chipHeight + channelHeight + usbPortHeight / 2]) {
-        roundedBox([usbWidth, wallWidth + 2 * usbAccessRadius, usbHeight], usbAccessRadius, false);
-      }
+      usbOverhang = 5;
+      usbSize = [7.5, 4.5 + usbOverhang, 2.6];
+      translate([width - chipWidth / 2, length, chipHeight + channelHeight + usbSize[2] / 2])
+        slop(slop=0.5, size=usbSize)
+        cuboid(usbSize);
+      /* translate([width - chipWidth / 2, length, chipHeight + channelHeight + usbPortHeight / 2]) { */
+      /*   roundedBox([usbWidth, wallWidth + 2 * usbAccessRadius, usbHeight], usbAccessRadius, false); */
+      /* } */
 
       // carve out screw holes
       for (i = [-1, 1]) {
