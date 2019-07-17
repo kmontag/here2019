@@ -54,16 +54,19 @@ nutHolderWallWidth = 1;
 postFloatHeight = 3;
 postSize = [screwDiameter * 2, 2, rotaryEncoderFloatHeight - postFloatHeight + screwDiameter * 2 + 3];
 
-
 lidInsetWidth = 1;
 lidInsetDepth = 2;
+
+textInlay = 0.75;
 
 // Accomodates pins and the USB mini plug w/ terminal block.
 fadeCandyRightSpacing = 10;
 fadeCandyLeftSpacing = 10;
 
-// Channel width, should be roughly the cable diameter.
-fadeCandyCableGapWidth = 6;
+fadeCandyCableDiameter = 4 + 2 * PRINTER_SLOP;
+fadeCandyCableGapWidth = fadeCandyCableDiameter + 0.5;
+fadeCandySeparatorWallHeight = 6 * fadeCandyCableDiameter;
+fadeCandyNumOutputs = 8;
 
 fadeCandySize = [pcbHeight + 2 * PRINTER_SLOP, 38 + 2 * PRINTER_SLOP, 20 + 2 * PRINTER_SLOP];
 fadeCandyExtraWidth = // Computed from right to left
@@ -197,27 +200,40 @@ module circuit(fadeCandy) {
       up(rotaryEncoderFloatHeight + PRINTER_SLOP)
         back(PRINTER_SLOP)
         rotaryEncoder();
-
-      /* back(rotaryEncoderPlatformLength - wallWidth) */
-      /*   right(size[0] / 2 + 2) */
-      /*   up(PRINTER_SLOP + postFloatHeight) */
-      /*   // z-dimension isn't correct but doesn't really matter */
-      /*   // here. Leave a lot of extra space, this doesn't need to be */
-      /*   // completely snug. */
-      /*   slop(size=[postSize[0], postSize[1], rotaryEncoderFloatHeight], slop=0.5) */
-      /*   rotaryEncoderPost(); */
-
     }
   }
 
-  // Fadecandy
   if (fadeCandy) {
+    // Fadecandy
     color("lightblue") union() {
       left(fadeCandyRightSpacing + fadeCandySize[0])
         back(length - fadeCandySize[1])
         up(fadeCandyFloatHeight)
         cuboid(size=fadeCandySize, p1=[0, 0, 0]);
     }
+
+    // Data cables and markers
+    color("gray") union() {
+      for (i = [0 : (fadeCandyNumOutputs / 2) - 1]) {
+        for (j = [0 : 1]) {
+          up(fadeCandySeparatorWallHeight * (j / 2 + 1 / 4))
+            back(fadeCandyCableGapWidth * (1.5 + i * 2) + i * wallWidth)
+            left(fadeCandyExtraWidth) {
+
+            right(PRINTER_SLOP)
+              xcyl(d=fadeCandyCableDiameter, l=wallWidth * 2, align=V_ALLNEG);
+
+            left(wallWidth - textInlay)
+              up(fadeCandyCableDiameter * 0.5)
+              xrot(90)
+              yrot(-90)
+              linear_extrude(height = textInlay + wallWidth)
+              text(str(fadeCandyNumOutputs - 2 * (i + 1) + (1 - j)), size=fadeCandyCableDiameter, font="Liberation Sans");
+          }
+        }
+      }
+    }
+
   }
 }
 
@@ -238,20 +254,6 @@ module positionNutHolder(i, fadeCandy) {
       zflip()
       zrot(90)
       children();
-  }
-}
-
-
-// Gets inserted behind the rotary encoder after placing it. Attach a
-// spacer to push the encoder into position.
-module rotaryEncoderPost() {
-  color("gray") {
-    difference() {
-      cuboid(size=postSize,
-             p1=[-postSize[0] / 2, -postSize[1], 0]);
-      up(postSize[2] - screwDiameter * 1.5)
-        ycyl(d=screwDiameter, l=postSize[1] * 3);
-    }
   }
 }
 
@@ -372,6 +374,55 @@ module piBox(fadeCandy=false) {
             cuboid(size=[platformWidth, rotaryEncoderPlatformLength, rotaryEncoderFloatHeight], p1=[0, 0, 0]);
           }
         }
+
+        if (fadeCandy) {
+          // FadeCandy
+          union() {
+            left(fadeCandyRightSpacing + wallWidth + pcbHeight) {
+              platformWidth = pcbHeight + 2 * wallWidth;
+              // Platform near the pins with walls.
+
+              // This puts us at a spot on the board with no extra height above the PCB
+              back(length - 10)
+                cuboid(size=[
+                         platformWidth,
+                         3, // Covers the "empty" spot on the board
+                         fadeCandyFloatHeight + wallWidth],
+                       p1=[0, 0, 0]);
+
+              // Platform near the USB port with only a back wall.
+              back(length - fadeCandySize[1] - wallWidth - PRINTER_SLOP) {
+                cuboid(size=[pcbHeight + 2 * wallWidth,
+                             wallWidth * 2 + PRINTER_SLOP,
+                             fadeCandyFloatHeight],
+                       p1=[0, 0, 0]);
+                cuboid(size=[pcbHeight + 2 * wallWidth,
+                             wallWidth,
+                             fadeCandyFloatHeight + wallWidth],
+                       p1=[0, 0, 0]);
+              }
+            }
+          }
+
+          // Strain relief channels for cables.
+          left(fadeCandyExtraWidth) {
+            for (i = [0 : (fadeCandyNumOutputs / 2) - 1]) {
+              extraInset = 3;
+              back(i * (2 * fadeCandyCableGapWidth + wallWidth) - wallWidth) {
+                back(3 * fadeCandyCableGapWidth)
+                  cuboid(size=[fadeCandyCableGapWidth + wallWidth + extraInset, wallWidth, fadeCandySeparatorWallHeight],
+                         p1=[0, 0, 0]);
+                back(fadeCandyCableGapWidth) right(fadeCandyCableGapWidth)
+                  cuboid(size=[wallWidth, fadeCandyCableGapWidth, fadeCandySeparatorWallHeight], p1=[0, 0, 0]);
+              }
+            }
+            // Extra wall at the front
+            back(fadeCandyCableGapWidth - 2 * wallWidth)
+              cuboid(size=[fadeCandyCableGapWidth + wallWidth, wallWidth, fadeCandySeparatorWallHeight],
+                     p1=[0, 0, 0]);
+
+          }
+        }
       }
 
       circuit(fadeCandy=fadeCandy);
@@ -393,7 +444,13 @@ module piBox(fadeCandy=false) {
           l=(length / 2)
         );
       }
+
+      // Here
+
     }
+
+    color("green") linear_extrude(height=textInlay + wallWidth)
+      text("HERE", font="Liberation Sans", size=16);
 
     // Lid
     right(2 * width + 10) yrot(180) down(realHeight)
@@ -447,11 +504,6 @@ module piBox(fadeCandy=false) {
       circuit(fadeCandy=fadeCandy);
     }
   }
-
-  /* // Little parts. */
-  /* right(width * 2 + 22 + (fadeCandy ? fadeCandyExtraWidth : 0)) { */
-  /*   xrot(-90) rotaryEncoderPost(); */
-  /* } */
 }
 
 piBox();
