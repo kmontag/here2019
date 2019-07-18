@@ -59,10 +59,12 @@ lidInsetDepth = 2;
 
 textInlay = 0.75;
 
+pinholeDiameter = 2;
+
 // Might be useful for debugging, this makes renders much slower though.
 showRealBoards = false;
 
-module circuit(withMovement = false) {
+module circuit(withMovement=false, pinholes=true) {
   alpha = showRealBoards ? 0.1 : 1;
 
   // Battery
@@ -81,6 +83,12 @@ module circuit(withMovement = false) {
       }
       color("green", alpha=alpha) piZeroWMask(dataUSBOverhang=wallWidth * 3);
     }
+
+    if (pinholes) {
+      color("yellow", alpha=0.2)
+        back(piLength - wallWidth * 1.5) up(pcbHeight) left(wallWidth) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+    }
+
     sdCardLeeway = 0.7;
     // For the mask
     sdCardSize = [11 + sdCardLeeway * 2, 15, 1 + sdCardLeeway * 2];
@@ -121,6 +129,14 @@ module circuit(withMovement = false) {
         color("purple", alpha=0.3) down(PRINTER_SLOP) powerBoost1000CMask();
       }
 
+      // Pinholes for lights
+      if (pinholes) {
+        color("yellow", alpha=0.2) {
+          back(wallWidth * 2) up(pcbHeight) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+          back(size[1] - 3 * wallWidth) up(pcbHeight) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+        }
+      }
+
       // We can get this much "extra" length-wise movement by flipping
       // the switch.
       switchTravel = 1.5;
@@ -133,13 +149,7 @@ module circuit(withMovement = false) {
             slop(size=powerBoostGhostSize)
             cuboid(size=powerBoostGhostSize, p1=[0, 0, 0]);
 
-          // PowerBoost mask without the actual switch, to avoid
-          // creating a bigger outer hole than necessary.
-          difference() {
-            powerBoost1000CMask();
-            up(powerBoost1000CSize(true)[2] + PRINTER_SLOP)
-              cuboid(size=powerBoost1000CSize(), p1=[0, 0, 0]);
-          }
+          powerBoost1000CMask();
         }
       }
 
@@ -281,7 +291,7 @@ module lid() {
 
 module piBox() {
   up(wallWidth) right(wallWidth) back(wallWidth) {
-    // circuit();
+    //circuit();
 
     difference() {
       union() {

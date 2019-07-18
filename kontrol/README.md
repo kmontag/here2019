@@ -45,6 +45,18 @@ its offline animation.
 You can also see some debug info about the device, and simulate
 interactions with the rotary encoder.
 
+### Assembly
+
+Rotary encoder:
+C -> Ground (34)
+B -> GPIO16 (36)
+A -> GPIO20 (38)
+Switch left -> Ground (34)
+Switch right -> GPIO21 (40)
+
+PowerBoost:
+
+
 ### Media setup
 
 Push videos to the device using `make deploy-media` while connected to
