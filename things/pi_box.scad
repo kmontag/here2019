@@ -86,7 +86,7 @@ module circuit(withMovement=false, pinholes=true) {
 
     if (pinholes) {
       color("yellow", alpha=0.2)
-        back(piLength - wallWidth * 1.5) up(pcbHeight) left(wallWidth) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+        back(piLength - wallWidth * 1.5) up(pcbHeight + pinholeDiameter / 2) left(wallWidth) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
     }
 
     sdCardLeeway = 0.7;
@@ -132,8 +132,8 @@ module circuit(withMovement=false, pinholes=true) {
       // Pinholes for lights
       if (pinholes) {
         color("yellow", alpha=0.2) {
-          back(wallWidth * 2) up(pcbHeight) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
-          back(size[1] - 3 * wallWidth) up(pcbHeight) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+          back(8) up(pcbHeight + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+          back(size[1] - 9) up(pcbHeight + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
         }
       }
 
@@ -291,7 +291,7 @@ module lid() {
 
 module piBox() {
   up(wallWidth) right(wallWidth) back(wallWidth) {
-    //circuit();
+    // circuit();
 
     difference() {
       union() {

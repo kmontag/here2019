@@ -92,70 +92,80 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
     }
 
     // lid
-    translate(debug ? [0, 0, height]: [width + 5 * wallWidth, 0, 0]) {
-      rotate([0, debug ? 180 : 0, debug ? 180 : 0]) forward(debug ? length : 0) {
-        // main lid
-        difference() {
-          translate([-wallWidth, -wallWidth, -wallWidth]) {
-            dims = [width + 2 * wallWidth, length + 2 * wallWidth, 2 * wallWidth];
-            translate(dims / 2) roundedBox(dims, radius, false);
-          }
-          translate([-wallWidth - epsilon, -wallWidth - epsilon, 0]) {
-            cube([2 * wallWidth + width + 2 * epsilon, 2 * wallWidth + length + 2 * epsilon, wallWidth + epsilon], false);
-          }
-        }
-
-        // inset
-        translate([leeway, leeway, 0]) {
+    translate(debug ? [0, 0, height]: [width + 5 * wallWidth, 0, 0]) difference() {
+      union() {
+        rotate([0, debug ? 180 : 0, debug ? 180 : 0]) forward(debug ? length : 0) {
+          // main lid
           difference() {
-            cube([width - 2 * leeway, length - 2 * leeway, lidInsetDepth - leeway], false);
-            translate([lidInsetWallWidth, lidInsetWallWidth, 0]) {
-              cube([width - 2 * leeway - 2 * lidInsetWallWidth, length - 2 * leeway - 2 * lidInsetWallWidth, lidInsetDepth + epsilon], false);
+            translate([-wallWidth, -wallWidth, -wallWidth]) {
+              dims = [width + 2 * wallWidth, length + 2 * wallWidth, 2 * wallWidth];
+              translate(dims / 2) roundedBox(dims, radius, false);
+            }
+            translate([-wallWidth - epsilon, -wallWidth - epsilon, 0]) {
+              cube([2 * wallWidth + width + 2 * epsilon, 2 * wallWidth + length + 2 * epsilon, wallWidth + epsilon], false);
+            }
+          }
+
+          // inset
+          translate([leeway, leeway, 0]) {
+            difference() {
+              cube([width - 2 * leeway, length - 2 * leeway, lidInsetDepth - leeway], false);
+              translate([lidInsetWallWidth, lidInsetWallWidth, 0]) {
+                cube([width - 2 * leeway - 2 * lidInsetWallWidth, length - 2 * leeway - 2 * lidInsetWallWidth, lidInsetDepth + epsilon], false);
+              }
+            }
+          }
+
+          // Hold feather in place vertically.
+          postDim = 2.5;
+          back(length - postDim - leeway)
+            right(leeway)
+            cuboid([postDim, postDim, height - channelHeight - chipHeight - leeway], p1=[0, 0, 0]);
+
+          for (i = [0, 1]) {
+            right((1 - i) * width)
+              xscale(i == 0 ? -1 : 1) // conditional xflip
+              right(leeway)
+              yscale(i == 0 ? -1 : 1)
+              back(nutHolderInsetY[i])
+              back((i - 1) * length) {
+
+              wallWidthLeft=wallWidth;
+              wallWidthRight=wallWidth;
+              wallWidthFront=1;
+              wallWidthTop=1;
+              nutDepth=3;
+
+              cuboid(
+                size=[nutDepth + wallWidthLeft + wallWidthRight, nutVertexDistance + wallWidthFront, nutHolderInsetZ],
+                p1=[0, -wallWidthFront, 0]
+              );
+
+              up(nutHolderInsetZ) nutHolder(
+                nutVertexDistance=nutVertexDistance,
+                nutEdgeDistance=nutEdgeDistance,
+
+                nutDepth=nutDepth,
+
+                screwDiameter=screwDiameter,
+
+                wallWidthLeft=wallWidthLeft,
+                wallWidthRight=wallWidthRight,
+                wallWidthFront=wallWidthFront,
+                wallWidthTop=wallWidthTop
+              );
             }
           }
         }
-
-        // Hold feather in place vertically.
-        postDim = 2.5;
-        back(length - postDim - leeway)
-          right(leeway)
-          cuboid([postDim, postDim, height - channelHeight - chipHeight - leeway], p1=[0, 0, 0]);
-
-        for (i = [0, 1]) {
-          right((1 - i) * width)
-            xscale(i == 0 ? -1 : 1) // conditional xflip
-            right(leeway)
-            yscale(i == 0 ? -1 : 1)
-            back(nutHolderInsetY[i])
-            back((i - 1) * length) {
-
-            wallWidthLeft=wallWidth;
-            wallWidthRight=wallWidth;
-            wallWidthFront=1;
-            wallWidthTop=1;
-            nutDepth=3;
-
-            cuboid(
-              size=[nutDepth + wallWidthLeft + wallWidthRight, nutVertexDistance + wallWidthFront, nutHolderInsetZ],
-              p1=[0, -wallWidthFront, 0]
-            );
-
-            up(nutHolderInsetZ) nutHolder(
-              nutVertexDistance=nutVertexDistance,
-              nutEdgeDistance=nutEdgeDistance,
-
-              nutDepth=nutDepth,
-
-              screwDiameter=screwDiameter,
-
-              wallWidthLeft=wallWidthLeft,
-              wallWidthRight=wallWidthRight,
-              wallWidthFront=wallWidthFront,
-              wallWidthTop=wallWidthTop
-            );
-          }
-        }
       }
+      // Pinhole
+      pinholeDiameter = 2;
+      back(length - pinholeDiameter - wallWidth - leeway)
+        right(width / 2)
+        zcyl(l=height, d=pinholeDiameter);
+
+
+
     }
 
 
