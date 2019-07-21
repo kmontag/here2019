@@ -1,25 +1,11 @@
-import * as env from 'env-var';
-import { initMedia } from './media';
-import OPCManager from './OPCManager';
-import RaspiManager from './RaspiManager';
-import server from './server';
-import masterVisibilityManager from './masterVisibilityManager';
-import nodeStatusManager from './nodeStatusManager';
+import * as commander from 'commander';
 
-(async () => {
-  await initMedia();
+let validCmd: boolean = false;
 
-  masterVisibilityManager.start();
-  const opcManager: OPCManager = OPCManager.getInstance();
-  const raspiManager: RaspiManager = new RaspiManager(nodeStatusManager);
-  raspiManager.start();
+commander.version('0.0.1');
 
-  const app = server({
-    opcManager,
+commander
+  .command('server')
+  .option('-c, --config <config>', 'config file')
+  .action(async (config: string, cmd) => {
   });
-
-  const port = env.get('PORT', '44668').asPortNumber();
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Server listening on port ${port}.`);
-  });
-})();

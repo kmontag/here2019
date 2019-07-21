@@ -24,7 +24,17 @@ const Config = Record({
   /**
    * Directory containing compiled frameplayer files.
    */
-  mediaDir: String,
+  mediaBuildDir: String,
+
+  /**
+   * Directory to watch for media sources to compile.
+   */
+  mediaSrcDir: String,
+
+  /**
+   * Config file to use when building media.
+   */
+  frameplayerConfigFile: String,
 
   /**
    * Filename to store persistent state.

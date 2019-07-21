@@ -8,7 +8,7 @@ import * as readline from 'readline';
 import Frameplayer from './Frameplayer';
 import prepare, { PrepareOptions } from './prepare';
 
-let validCmd:boolean = false;
+let validCmd: boolean = false;
 
 commander.version('0.0.1');
 

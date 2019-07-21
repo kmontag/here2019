@@ -27,6 +27,7 @@
   "dependencies": {
     "axios": "^0.19.0",
     "body-parser": "^1.19.0",
+    "commander": "^2.20.0",
     "debounce": "^1.2.0",
     "env-var": "^5.0.0",
     "express": "^4.17.1",

@@ -39,6 +39,11 @@ type AnimationConfig = Static<typeof AnimationConfig>;
 export { AnimationConfig };
 
 export interface PrepareOptions {
+  // Specify a different input file/buffer for individual channel IDs.
+  inputOverrides?: {
+    [channelId: string]: string | Readable,
+  }
+
   // ffmpeg callbacks
   onStart?: (commandLine: string) => any,
   onCodecData?: (codecData: object) => any,
@@ -78,9 +83,12 @@ export default async function(
       const channelMsg = new frameplayerProto.protobuf.Channel();
       await fs.promises.mkdir(`${tmpDir}/${channelId}`);
 
+      const channelInput = (opts.inputOverrides && opts.inputOverrides[channelId]) ?
+        opts.inputOverrides[channelId] : input;
+
       const exec = new Promise<void>(async (resolveLocal: Function, rejectLocal: Function) => {
         ffmpeg()
-          .input(input)
+          .input(channelInput)
           .output(`${tmpDir}/${channelId}/%09d.png`)
           .fps(fps)
           .outputOption('-pix_fmt rgb24')
