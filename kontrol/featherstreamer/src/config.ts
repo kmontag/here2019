@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import logger from './logger';
 
-const CONFIG_FILE = env.get('CONFIG').required().asString();
+const CONFIG_FILE = env.get('CONFIG', path.join(__dirname, '..', 'featherstreamer.conf.json')).asString();
 const Config = Record({
   /**
    * If true, don't actually call `feathernet` when changing

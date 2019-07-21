@@ -6,7 +6,7 @@ ANSIBLE_FLAGS:=
 BOOT_VOLUME_PATH:=/Volumes/boot
 
 # Default value when
-PI:=192.168.8.1
+PI ?= 192.168.8.1
 
 # Set up the boot volume of a plain raspbian image. Tested with
 # raspbian stretch lite.
@@ -51,7 +51,7 @@ featherstreamer-shared/dist/index.js: featherstreamer-shared/tsconfig.json feath
 	cd featherstreamer-shared && npm run build
 featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsconfig.json featherstreamer/tslint.json $(shell find featherstreamer/src -type f) featherstreamer-shared/dist/index.js frameplayer/dist/index.js
 	cd featherstreamer && npm run build
-.make.featherstreamer-web: $(shell find	featherstreamer-web -type f) featherstreamer-shared/dist/index.js
+.make.featherstreamer-web: $(shell find	featherstreamer-web/src -type f) featherstreamer-shared/dist/index.js
 	cd featherstreamer-web && npm run build
 	touch .make.featherstreamer-web
 

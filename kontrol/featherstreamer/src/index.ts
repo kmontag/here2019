@@ -1,6 +1,7 @@
 import * as env from 'env-var';
 import { initMedia } from './media';
 import OPCManager from './OPCManager';
+import RaspiManager from './RaspiManager';
 import server from './server';
 import masterVisibilityManager from './masterVisibilityManager';
 
@@ -9,6 +10,8 @@ import masterVisibilityManager from './masterVisibilityManager';
 
   masterVisibilityManager.start();
   const opcManager: OPCManager = OPCManager.getInstance();
+  const raspiManager: RaspiManager = new RaspiManager();
+  raspiManager.start();
 
   const app = server({
     opcManager,
