@@ -12,9 +12,10 @@ fillet = 2;
 
 pcbHeight = 1.6;
 
-cableDiameter = 4 + 2 * PRINTER_SLOP;
-cableGapWidth = cableDiameter + 0.5;
-cableExtraInset = 3;
+cableDiameter = 4.5 + 2 * PRINTER_SLOP;
+cableGapLeeway = 1;
+cableGapWidth = cableDiameter + cableGapLeeway;
+cableExtraInset = 5;
 separatorWallHeight = 6 * cableDiameter;
 numOutputs = 8;
 
@@ -24,8 +25,7 @@ nutDepth = 3;
 screwDiameter = 3 + PRINTER_SLOP;
 nutHolderWallWidth = 1;
 
-
-fadeCandySideSpacing = 20;
+fadeCandySideSpacing = 12;
 
 fadeCandySize = [20 + 2 * PRINTER_SLOP, 38 + 2 * PRINTER_SLOP, pcbHeight + 2 * PRINTER_SLOP];
 usbPortSize = [7.3, 9.85, 4];
@@ -168,7 +168,7 @@ right(wallWidth) back(wallWidth) up(wallWidth) {
                 cuboid(size=[cableGapWidth + wallWidth + cableExtraInset, wallWidth, separatorWallHeight],
                        p1=[0, 0, 0]);
               back(cableGapWidth) right(cableGapWidth)
-                cuboid(size=[wallWidth, cableGapWidth, separatorWallHeight], p1=[0, 0, 0]);
+                cuboid(size=[wallWidth, cableGapWidth + cableGapLeeway, separatorWallHeight], p1=[0, 0, 0]);
             }
           }
           // Extra wall at the front

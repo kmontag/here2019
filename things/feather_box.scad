@@ -65,8 +65,8 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
     translate([0, 2 * cableRadius, 0]) {
       difference() {
         cube([width - 2 * cableRadius - 2 * panelMountEdgeRadius - wallWidth, wallWidth, height], false);
-        translate([0, -epsilon, height - lidInsetDepth - leeway]) {
-          cube([lidInsetWallWidth, wallWidth + 2 * epsilon, lidInsetDepth + leeway + epsilon]);
+        translate([0, -epsilon, height - lidInsetDepth - 4 * leeway]) {
+          cube([lidInsetWallWidth + 4 * leeway, wallWidth + 2 * epsilon, lidInsetDepth + 4 * leeway + epsilon]);
         }
       }
 
@@ -74,8 +74,8 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
     translate([width - 2 * panelMountEdgeRadius - wallWidth, 0, 0]) {
       difference() {
         cube([wallWidth, panelMountDepth, height], false);
-        translate([-epsilon, 0, height - lidInsetDepth - leeway]) {
-          cube([wallWidth + 2 * epsilon, lidInsetWallWidth, lidInsetDepth + leeway + epsilon]);
+        translate([-epsilon, 0, height - lidInsetDepth - 4 * leeway]) {
+          cube([wallWidth + 2 * epsilon, lidInsetWallWidth + 4 * leeway, lidInsetDepth + 4 *leeway + epsilon]);
         }
 
       }
@@ -207,7 +207,8 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
       // carve out USB
       usbOverhang = 5;
       usbSize = [7.5, 4.5 + usbOverhang, 2.6];
-      translate([width - chipWidth / 2, length, chipHeight + channelHeight + usbSize[2] / 2])
+      // Slight adjustments needed to line up the port in practice
+      translate([width - chipWidth / 2 + 0.3, length, chipHeight + channelHeight + usbSize[2] / 2 + 0.3])
         slop(slop=0.5, size=usbSize)
         cuboid(usbSize);
       /* translate([width - chipWidth / 2, length, chipHeight + channelHeight + usbPortHeight / 2]) { */

@@ -299,7 +299,7 @@ module piBox() {
         // Pi and battery platforms
         union() {
           piPlatformInset = 15;
-          piHeaderInset = 7;
+          piHeaderInset = 5;
           cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, 10], p1=[0, 0, 0]);
           back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, 14], p1=[0, 0, 0]);
         }
