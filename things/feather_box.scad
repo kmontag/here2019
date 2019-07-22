@@ -118,8 +118,8 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
 
           // Hold feather in place vertically.
           postDim = 2.5;
-          back(length - postDim - leeway)
-            right(leeway)
+          back(leeway)
+            right(width - postDim - leeway)
             cuboid([postDim, postDim, height - channelHeight - chipHeight - leeway], p1=[0, 0, 0]);
 
           for (i = [0, 1]) {
@@ -160,7 +160,7 @@ module boxLowProfile(chipLength, chipWidth, lidInsetDepth) {
       }
       // Pinhole
       pinholeDiameter = 2;
-      back(length - pinholeDiameter - wallWidth - leeway)
+      back(pinholeDiameter + 2 * wallWidth + leeway)
         right(width / 2)
         zcyl(l=height, d=pinholeDiameter);
 

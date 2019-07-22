@@ -100,13 +100,13 @@ module circuit(withMovement=false, pinholes=true) {
         xflip() cuboid(size=sdCardSize, p1=[0, 0, 0]);
 
       // Additional mask creates a 1mm inlay on the outer box.
-      inlayExtraWidth = 2;
+      inlayExtraWidth = [2, 4];
       inlayDepth = 1;
-      sdCardAdditionalMaskSize = [sdCardSize[0] + 2 * inlayExtraWidth, wallWidth, sdCardSize[2] + 2 * inlayExtraWidth];
+      sdCardAdditionalMaskSize = [sdCardSize[0] + 2 * inlayExtraWidth[0], wallWidth, sdCardSize[2] + 2 * inlayExtraWidth[1]];
       color("purple", alpha=0.3)
         forward(wallWidth + (wallWidth - inlayDepth))
-        left(sdCardAdditionalMaskSize[0] - inlayExtraWidth)
-        down(inlayExtraWidth)
+        left(sdCardAdditionalMaskSize[0] - inlayExtraWidth[0])
+        down(inlayExtraWidth[1])
         cuboid(size=sdCardAdditionalMaskSize, p1=[0, 0, 0]);
     }
   }
@@ -132,8 +132,8 @@ module circuit(withMovement=false, pinholes=true) {
       // Pinholes for lights
       if (pinholes) {
         color("yellow", alpha=0.2) {
-          back(8) up(pcbHeight + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
-          back(size[1] - 9) up(pcbHeight + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+          back(8) up(pcbHeight - 1 + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+          back(size[1] - 9) up(pcbHeight - 1 + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
         }
       }
 
