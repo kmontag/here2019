@@ -4,13 +4,14 @@ import OPCManager from './OPCManager';
 import RaspiManager from './RaspiManager';
 import server from './server';
 import masterVisibilityManager from './masterVisibilityManager';
+import nodeStatusManager from './nodeStatusManager';
 
 (async () => {
   await initMedia();
 
   masterVisibilityManager.start();
   const opcManager: OPCManager = OPCManager.getInstance();
-  const raspiManager: RaspiManager = new RaspiManager();
+  const raspiManager: RaspiManager = new RaspiManager(nodeStatusManager);
   raspiManager.start();
 
   const app = server({

@@ -3,6 +3,7 @@ import logger from './logger';
 // @ts-ignore
 import { handleTurnCW, handleTurnCCW, handlePress, handleRelease } from './rotaryEncoder';
 import { Gpio } from 'pigpio';
+import { NodeStatusManager } from './nodeStatusManager';
 //import debounce from 'debounce';
 
 let raspi: any = undefined;
@@ -15,13 +16,15 @@ try {
   logger.warn(`Problem requiring rotary encoder lib: ${e.message}`);
 }
 
-// const ROTARY_GPIO_A = 'GPIO23';//'GPIO20';
-// const ROTARY_GPIO_B = 'GPIO24'; //'GPIO16';
+const LED_GPIO = 11;
 const ROTARY_GPIO_A = 20;
 const ROTARY_GPIO_B = 16;
 const BUTTON_GPIO = 21;
 
 export default class RaspiManager {
+  constructor(
+    private readonly nodeStatusManager: NodeStatusManager,
+  ) {}
   start() {
     if (raspi) { // && RotaryEncoder) {
       raspi.init(() => {
@@ -158,6 +161,35 @@ export default class RaspiManager {
             handleRelease();
           }
         });
+
+        const led = new Gpio(LED_GPIO, {
+          mode: Gpio.OUTPUT,
+          pullUpDown: Gpio.PUD_DOWN,
+        });
+        setInterval(async () => {
+          const delay =
+            (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+          const mode = this.nodeStatusManager.getMode();
+          const blinksMap = {
+            'isolated': 1,
+            'slave': 2,
+            'master': 3,
+            'pairing': 4,
+          };
+          const numBlinks = blinksMap[mode];
+          if (!numBlinks) {
+            throw new Error('unexpected');
+          }
+
+          for (let i = 0; i < numBlinks; i++) {
+            led.digitalWrite(1);
+            await delay(300);
+            led.digitalWrite(0);
+            await delay(300);
+          }
+
+
+        }, 3000);
       });
     } else {
       logger.warn('raspi library not found, skipping setup');
