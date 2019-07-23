@@ -112,7 +112,7 @@
   template:
     dest: "/usr/local/etc/featherstreamer.production.conf.json"
     force: yes
-    src: "{{ role_path }}/templatesfeatherstreamer.production.conf.json.tpl"
+    src: "{{ role_path }}/templates/featherstreamer.production.conf.json.tpl"
   become: yes
   become_user: root
 
