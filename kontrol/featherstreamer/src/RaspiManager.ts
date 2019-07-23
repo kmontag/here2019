@@ -1,6 +1,5 @@
 import logger from './logger';
 
-// @ts-ignore
 import { handleTurnCW, handleTurnCCW, handlePress, handleRelease } from './rotaryEncoder';
 import { NodeStatusManager } from './nodeStatusManager';
 //import debounce from 'debounce';
