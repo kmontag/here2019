@@ -2,16 +2,15 @@ import logger from './logger';
 
 // @ts-ignore
 import { handleTurnCW, handleTurnCCW, handlePress, handleRelease } from './rotaryEncoder';
-import { Gpio } from 'pigpio';
 import { NodeStatusManager } from './nodeStatusManager';
 //import debounce from 'debounce';
 
-let raspi: any = undefined;
-// @ts-ignore
-let RotaryEncoder: any = undefined;
+let raspi: typeof import('raspi');
+let Gpio: typeof import('pigpio').Gpio;
+
 try {
   raspi = require('raspi');
-  RotaryEncoder = require('raspi-rotary-encoder').RotaryEncoder;
+  Gpio = require('pigpio').Gpio;
 } catch (e) {
   logger.warn(`Problem requiring rotary encoder lib: ${e.message}`);
 }
