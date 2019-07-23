@@ -4,6 +4,7 @@
     cache_valid_time: 86400
     name:
       - stow
+      - git
   become: yes
   become_user: root
 
@@ -51,6 +52,27 @@
     - "{{ remote_modules_location }}/featherstreamer-web"
     # Need to access this directory during rsync
     - "{{ remote_modules_location }}"
+
+- name: check out fadecandy repo
+  git:
+    repo: https://github.com/scanlime/fadecandy.git
+    dest: "{{ remote_modules_location }}/fadecandy"
+    version: 79b0355a3628eace0f5b4dcffc1c3013e1f4ac6e
+    depth: 1
+  register: checkout_fadecandy
+
+- name: compile fcserver
+  command: /bin/bash -c "make submodules && make"
+  args:
+    chdir: "{{ remote_modules_location }}/fadecandy/server"
+  when: checkout_fadecandy.changed
+  register: compile_fadecandy
+
+- name: copy fadecandy binary
+  command: "cp \"{{ remote_modules_location }}/fadecandy/server/fcserver\" /usr/local/bin"
+  when: compile_fadecandy.changed
+  become: yes
+  become_user: root
 
 - name: copy package-lock.json individually
   copy:
