@@ -1,4 +1,4 @@
-This directory contains config and software for a Pi ZeroW to:
+This directory contains config and software for a Pi Zero W to:
 - run a `featherstreamer` server (and web UI) for `featherstream`
   devices to connect to
 - host a local WiFi access point, and connect to (or host) a "master"
@@ -12,14 +12,16 @@ rotary encoder.
 The USB port is used to charge the battery (and can power the device
 at the same time).
 
-The SD card slot is just useful for flashing new images onto the Pi.
+The SD card slot holds the card that runs the Pi.
 
 The on/off switch is an on/off switch.
 
-The rotary encoder is the main controller for the device. Turn it to
-cycle through streamed videos. Press it (without turning it) to toggle
-any controlled LEDs on or off. Press it and turn it clockwise to
-switch between modes:
+The rotary encoder is the main controller for the device. Any
+contiguous turn in one direcion is processed as a single clockwise or
+counter-clockwise "click" - the notches in the encoder don't really
+matter. Turn it to cycle through videos. Press it (without turning it)
+to toggle any controlled LEDs on or off. Press it and turn it
+clockwise to switch between modes:
 
 - 1 click for isolated mode
 - 2 clicks for slave mode
@@ -47,16 +49,104 @@ interactions with the rotary encoder.
 
 ### Assembly
 
-Rotary encoder:
-C -> Ground (34)
-B -> GPIO16 (36)
-A -> GPIO20 (38)
-Switch left -> Ground (34)
-Switch right -> GPIO21 (40)
+- First, run the software setup instructions below and make sure your
+  unmodified Pi Zero W (https://www.adafruit.com/product/3400) is
+  working. During setup, you can power it from the USB port farthest
+  from the SD card.
+- Get a rotary encoder (https://www.adafruit.com/product/377) and
+  solder a short wire between one of the push-switch pins (i.e. either
+  pin on the side with two pins) and the middle (common) pin on the
+  other side. This allows us to share the ground connection for the
+  rotary encoder and the push button.
+- Solder a chunk of headers to the last 4 pins (i.e. on the side
+  furthest from the SD card) of the outer row of the Pi. These pins, in order moving
+  away from the SD card, are Ground, GPIO 16, GPIO 20, and
+  GPIO 21. Solder ~5cm wires to all of the pins, and slide shrink wrap
+  down to secure the connections.
+- Solder the wires from the headers to these pins on the rotary encoder:
+  - Ground (innermost pin with headers) to Common (middle pin on the encoder side)
+  - GPIO16 to rotary pin B (right pin on the encoder side)
+  - GPIO20 to rotary pin A (left pin on the encoder side)
+  - GPIO21 to the remaining push switch pin
+  Make sure to secure the connections with shrink wrap.
+- Solder a SPDT slide switch (https://www.adafruit.com/product/805) to
+  the Vs, EN, and GND pins of a PowerBoost 1000 charger
+  (https://www.adafruit.com/product/2465).
+- Solder a 2-pin chunk of headers to the G and 5V pins on the
+  PowerBoost. Orient the headers "upside-down," so that the long side
+  (with plastic nub) comes out of the bottom of the chip.
+- Solder another 2-pin chunk of headers to the 2nd and 3rd pins on the
+  outer row of the Pi. These are 5V and G, respectively.
+- Solder ~3cm wires to connect the +5V and G pins of the PowerBoost to
+  the Pi.
+- Solder a ~1kOhm resistor in series with one leg of an LED, as
+  described in the featherstream assembly instructions.
+- Cover the resistor legs with shrink wrap. Solder the positive end to
+  the Pi's GPIO11 (12th pin on the inner row as you move away from the
+  SD card) and G (easiest option is the 13th pin on the inner row as
+  you move away from the SD card). Bend the LED legs so it lays across
+  the Pi and reaches near the USB ports.
+- Connect a 1200mAh LiPo battery
+  (https://www.adafruit.com/product/258) to the PowerBoost.  Do this
+  **before** plugging into the PowerBoost's USB port, otherwise you
+  may damage the board.
+- Plug USB power into the PowerBoost (make sure you're not also
+  plugged into the Pi's onboard USB power port). You should see an
+  orange light to indicate the battery is charging. If the switch is
+  in the ON position, you'll also see a blue light to indicate that
+  power is being provided at the 5V pin.
+- Test your circuit. With the PowerBoost plugged in and/or the battery
+  charged, flip the switch on. You should see:
+  - the green onboard LED light up immediately
+  - after a few minutes, the installed LED blinking once every ~3s to
+    indicate that the server has started and is running in isolated
+    mode
+    
+  To test that the rotary encoder is properly connected, turn it two
+  clicks (not rotary notches - see above) while pressing it to place
+  the device in slave mode. The LED should then start blinking twice
+  every 3s, instead of once.
 
-PowerBoost:
-
-
+- Print `../things/pi_box.scad` and put everything inside. The easiest
+  order to place things is probaby:
+  - PowerBoost placed against the wall opposite the `HERE` text, with
+    its switch seated in the small hole and its USB port accessible
+    through the back wall. If you want, you can use an M2.5 screw/nut
+    to hold the chip in place - seat the nut behind the little post
+    with a hole in it near the back of the chip, and run the screw
+    through the nearby hole in the chip and into the nut. This isn't
+    strictly necessary, but will make it easier to maintain the right
+    position while putting the lid on the box.
+    
+    Note you should leave the battery attached to the PowerBoost - the
+    wires should run under the board and behind it, so you can drop
+    the battery into the other side of the box once everything else is
+    in place.
+  - Pi placed in its seat in the middle of the box. The SD card needs
+    to be removed before you put the Pi in. It should sit so that the
+    USB ports are flush with the top of the box.
+  - Rotary encoder placed through the hole opposite the PowerBoost USB
+    port, with the square base rotated so that it sits neatly on the
+    nearby shelf (i.e. so the soldered pins are on the sides of the
+    box, not the top and bottom). **Make sure you put the washer on
+    before pushing the encoder through the hole.**
+    
+    This part can be tricky, be careful not to break any connections -
+    if everything is well-soldered and supported with shrink wrap, it
+    should be pretty stable. Once the encoder is propertly seated,
+    there shouldn't be much strain on any of the soldered connections.
+  - Battery placed in the remaining space near the wall with the
+    `HERE` text.
+- Secure the rotary encoder with the nut that came with it, and attach
+  the plastic cap.
+- Put the SD card back in the Pi through the box wall and test the
+  circuit again to make sure everything's still intact after
+  insertion.
+- Place M3 nuts (https://www.amazon.com/dp/B07JD4ZLFT) in the two
+  holders on the box lid.
+- Place the lid and secure it with M3 screws
+  (https://www.amazon.com/dp/B01LZYC586).
+    
 ### Media setup
 
 Push videos to the device using `make deploy-media` while connected to
