@@ -1,3 +1,4 @@
+include <BOSL/constants.scad>
 include <MCAD/boxes.scad>
 include <MCAD/triangles.scad>
 use <BOSL/transforms.scad>
@@ -36,7 +37,7 @@ conePlacement = debug ? 0 : capWidth + wallWidth * 2 + 5;
 coneAlpha = debug ? 0.8 : 1;
 
 coneCubeWallWidth = wallWidth;
-wireRadius = 2;
+wireRadius = 2.25 + PRINTER_SLOP;
 wireClench = 0.08;
 wireClenchLength = 5;
 coneLength = 33;
