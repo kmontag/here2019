@@ -74,7 +74,7 @@
   mount:
     fstype: vfat
     state: mounted
-    opts: "uid={{ data_filesystem_uid }},gid={{ data_filesystem_gid }}"
+    opts: "defaults,uid={{ data_filesystem_uid }},gid={{ data_filesystem_gid }},rw"
     path: "{{ data_partition_mount_point }}"
     src: "{{ device }}p{{ root_partition_number + 1 }}"
   become: yes
