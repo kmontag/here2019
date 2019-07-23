@@ -79,6 +79,13 @@ to reboot with the switch off in order to get back to offline mode.
 - Splice together the black wire from the 4-wire cable, the ground
   wire from the DC jack, and one of the wires from the rocker switch,
   and run a single wire out from the splice.
+- Bend either leg of a simple LED
+  (e.g. https://www.amazon.com/dp/B073QMYKDM/) and one side of a
+  ~1kOhm resistor (e.g. https://www.amazon.com/dp/B0185FIJ9A/) into
+  hooks. Hook them together, and solder them in place to "extend" the
+  LED leg with the resistor. You might want to trim them a bit so you
+  end up with two legs of approximately the same length coming from
+  the LED.
 - Break off a chunk of 6 header pins from the headers that came with
   your feather, and solder it between the BAT pin and pin 11. Then
   solder:
@@ -89,19 +96,18 @@ to reboot with the switch off in order to get back to offline mode.
   - To the BAT pin:
     - The spliced +/red wire, AND
     - the + terminal of a 1000uf 6.3v capacitor
-      (https://www.amazon.com/dp/B01DYJEHZ2/?coliid=I2PEL8XAB07K15&colid=DYOU0HYUIA97&psc=1&ref_=lv_ov_lig_dp_it)
+      (https://www.amazon.com/dp/B01DYJEHZ2/)
       Be sure to cover the capacitor leg with heat shrink wrap before
       soldering.
 - Break off a chunk of 5 header pins, and solder it between A3 and
   G. Then solder:
   - The remaining wire from the rocker switch to A3.
-  - The positive terminal of a simple LED
-    (e.g. https://www.amazon.com/DiCUNO-450pcs-Colors-Emitting-Assorted/dp/B073QMYKDM/ref=sr_1_3?keywords=leds&qid=1563156561&s=gateway&sr=8-3)
+  - The positive terminal of the LED/resistor combo
     to A1. Cover the leg with shrink wrap before soldering.
   - To the fifth pin (again make sure to cover legs with shrink wrap):
     - The spliced ground wire
-    - the - terminal of the LED
-    - the - terminal of the capacitor
+    - the ground terminal of the LED/resistor combo
+    - the gorund terminal of the capacitor
 - Put the DC jack through the remaining hole in the box, and use the
   nut to fasten it into place from the outside. Rotate the jack so
   that the soldered wires are at the highest point, otherwise the
