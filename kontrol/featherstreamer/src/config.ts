@@ -22,14 +22,10 @@ const Config = Record({
   eagerSlave: Boolean,
 
   /**
-   * Directory containing compiled frameplayer files.
+   * Directory containing sources and compiled frameplayer files. It
+   * will contain `src/`, `build/`, and `cache/` subdirectories.
    */
-  mediaBuildDir: String,
-
-  /**
-   * Directory to watch for media sources to compile.
-   */
-  mediaSrcDir: String,
+  mediaDir: String,
 
   /**
    * Filename to store persistent state.
@@ -53,8 +49,7 @@ type Config = Static<typeof Config>;
 const defaultConfig: Config = {
   fakeSystemCalls: true,
   eagerSlave: false,
-  mediaBuildDir: path.join(__dirname, '..', '..', 'media-build'),
-  mediaSrcDir: path.join(__dirname, '..', '..', 'media-src'),
+  mediaDir: path.join(__dirname, '..', '..', 'media'),
   stateFile: path.join(__dirname, '..', 'state.json'),
   masterHost: '192.168.9.1',
   masterPort: 44668,

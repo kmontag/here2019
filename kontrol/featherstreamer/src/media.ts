@@ -27,7 +27,7 @@ let frameplayers: FrameplayerDescriptor[] = [];
  * `getFrameplayers()` whenever they need an up-to-date list.
  */
 export async function initMedia() {
-  const mediaDirectory = path.resolve(getConfig().mediaBuildDir);
+  const mediaDirectory = getBuildDir();
   let lastFrameplayerFiles: ImmutableSet<string> = ImmutableSet<string>();
 
   const update = async () => {
@@ -70,4 +70,19 @@ export function getFrameplayers(): ReadonlyArray<FrameplayerDescriptor> {
     throw new Error('media not yet initialized');
   }
   return frameplayers;
+}
+
+// For videos to compile and include in the "current" dir
+export function getSrcDir(): string {
+  return path.join(getConfig().mediaDir, 'src');
+}
+
+// For not repeating ourselves with ffmpeg runs
+export function getCacheDir(): string {
+  return path.join(getConfig().mediaDir, 'cache');
+}
+
+// For live frameplayer files
+export function getBuildDir(): string {
+  return path.join(getConfig().mediaDir, 'build');
 }

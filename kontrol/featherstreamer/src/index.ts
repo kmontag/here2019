@@ -1,6 +1,7 @@
 import commander from 'commander';
 import server from './commands/server';
 import watch from './commands/watch';
+import compile from './commands/compile';
 
 let validCmd: boolean = false;
 
@@ -18,6 +19,13 @@ commander
   .action(async (cmd) => {
     validCmd = true;
     await watch();
+  });
+
+commander
+  .command('compile')
+  .action(async (cmd) => {
+    validCmd = true;
+    await compile();
   });
 
 commander.parse(process.argv);

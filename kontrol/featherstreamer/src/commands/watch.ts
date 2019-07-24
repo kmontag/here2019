@@ -1,15 +1,14 @@
 import chokidar from 'chokidar';
-import { getConfig } from '../config';
-import path from 'path';
 import { Lock } from 'semaphore-async-await';
 import compile from './compile';
+import { getSrcDir } from '../media';
 
 /**
  * Watch the media src directory for changes, and compile any video
  * files found there.
  */
 export default async function watch() {
-  const srcDirectory = path.resolve(getConfig().mediaSrcDir);
+  const srcDirectory = getSrcDir();
   const watcher = chokidar.watch(srcDirectory, {
     usePolling: true,
     interval: 5000,

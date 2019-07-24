@@ -175,7 +175,7 @@
       After=network.target
 
       [Service]
-      ExecStart=/usr/bin/node dist/index.js watcher
+      ExecStart=/usr/local/bin/npm run cli -- watch
       WorkingDirectory={{ remote_modules_location }}/featherstreamer
       Environment="CONFIG={{ config_file }}"
       User=root
@@ -183,7 +183,7 @@
 
       [Install]
       WantedBy=multi-user.target
-  register: featherstreamer_service
+  register: featherstreamer_watcher_service
   become: yes
   become_user: root
 
@@ -211,11 +211,12 @@
 - name: start featherstreamer services at boot
   service:
     name: "{{ item }}"
-    daemon_reload: "{{ featherstreamer_web_service.changed or featherstreamer_service.changed }}"
+    daemon_reload: "{{ featherstreamer_web_service.changed or featherstreamer_watcher_service.changed or featherstreamer_service.changed }}"
     enabled: yes
-    state: "{{ 'restarted' if featherstreamer_web_service.changed or featherstreamer_service.changed or update_sources.changed or copy_package_lock.changed else 'started' }}"
+    state: "{{ 'restarted' if featherstreamer_web_service.changed or featherstreamer_watcher_service.changed or featherstreamer_service.changed or update_sources.changed or copy_package_lock.changed else 'started' }}"
   with_items:
     - featherstreamer
+    - featherstreamer-watcher
     - featherstreamer-web
   become: yes
   become_user: root

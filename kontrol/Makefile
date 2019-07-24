@@ -63,24 +63,8 @@ setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.loc
 # and remove any files in the build directory which weren't built from
 # something in media-src/ for the current frameplayer config.
 .PHONY: media
-media:
-	@[ -d media-src/ ] || ( echo 'Create the media-src/ directory and place video files to build inside.' ; exit 1 )
-	$(eval CONF_MD5 = $(shell md5 -q frameplayer.conf.js))
-	mkdir -p media-build/$(CONF_MD5)
-
-# Remove anything built from a different config.
-	find media-build/ ! -name '$(CONF_MD5)' -type d -depth 1 -exec rm -r {} +
-
-# Create a clean directory to place built files.
-	mv media-build/$(CONF_MD5) media-build/$(CONF_MD5).orig
-	mkdir -p media-build/$(CONF_MD5)
-
-# Iterate through sources and use a pre-existing build, or build them
-# for the first time if necessary.
-	$(foreach file, $(wildcard media-src/*), $(eval DEST = $(subst media-src/,,$(file)).$(shell md5 -q $(file)).fpl) ([ -f media-build/$(CONF_MD5).orig/$(DEST) ] && mv media-build/$(CONF_MD5).orig/$(DEST) media-build/$(CONF_MD5)/$(DEST)) || featherstreamer/node_modules/.bin/frameplayer prepare -c frameplayer.conf.js -o media-build/$(CONF_MD5)/$(DEST) $(file); )
-
-# Clean up old files.
-	rm -r media-build/$(CONF_MD5).orig
+media: featherstreamer/dist/index.js
+	cd featherstreamer && npm run cli -- compile
 
 # Sync the JS modules to a pi, and restart the relevant services. This
 # happens during provisioning as well, but it's included here as a
@@ -90,12 +74,13 @@ deploy: featherstreamer/dist/index.js .make.featherstreamer-web
 # Enter read-write mode.
 	ssh pi@$(PI) "sudo rw"
 
-	rsync -avz --exclude='node_modules' --exclude='state.json' featherstreamer/ pi@$(PI):/usr/local/src/featherstreamer/
-	rsync -avz --exclude='node_modules' featherstreamer-shared/ pi@$(PI):/usr/local/src/featherstreamer-shared/
-	rsync -avz --exclude='node_modules' featherstreamer-web/ pi@$(PI):/usr/local/src/featherstreamer-web/
-	rsync -avz --exclude='node_modules' frameplayer/ pi@$(PI):/usr/local/src/frameplayer/
+	rsync -avz --delete --exclude='node_modules' --exclude='state.json' featherstreamer/ pi@$(PI):/usr/local/src/featherstreamer/
+	rsync -avz --delete --exclude='node_modules' featherstreamer-shared/ pi@$(PI):/usr/local/src/featherstreamer-shared/
+	rsync -avz --delete --exclude='node_modules' featherstreamer-web/ pi@$(PI):/usr/local/src/featherstreamer-web/
+	rsync -avz --delete --exclude='node_modules' frameplayer/ pi@$(PI):/usr/local/src/frameplayer/
 
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
+	ssh pi@$(PI) "sudo systemctl restart featherstreamer-watcher"
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer-web"
 
 # Go back to read-only mode.
@@ -103,9 +88,9 @@ deploy: featherstreamer/dist/index.js .make.featherstreamer-web
 
 .PHONY: deploy-media
 deploy-media:
-	rsync -avz media-build/ pi@$(PI):/var/featherstreamer/media-build/
-	rsync -avz media-src/ pi@$(PI):/var/featherstreamer/media-src/
-	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
+	rsync -avz --delete media/build/ pi@$(PI):/var/featherstreamer/media/build/
+	rsync -avz media/cache/ pi@$(PI):/var/featherstreamer/media/cache/
+	rsync -avz --delete media/src/ pi@$(PI):/var/featherstreamer/media/src/
 
 # Prepare a featherstreamer for "external" deployment - remove all
 # local WiFi info, switch to production featherstreamer config, and

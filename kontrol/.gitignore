@@ -4,5 +4,5 @@
 /node_modules/
 /.make.*
 
-/media-src/
-/media-build/
+/media/
+/media/
