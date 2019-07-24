@@ -3,6 +3,8 @@
   apt:
     cache_valid_time: 86400
     name:
+      # For an ffmpeg alternative
+      - libav-tools
       - stow
       - git
   become: yes
@@ -53,19 +55,24 @@
     # Need to access this directory during rsync
     - "{{ remote_modules_location }}"
 
+- name: check for fadecandy binary
+  stat:
+    path: /usr/local/bin/fcserver
+  register: stat_fcserver
+
 - name: check out fadecandy repo
   git:
     repo: https://github.com/scanlime/fadecandy.git
     dest: "{{ remote_modules_location }}/fadecandy"
     version: 79b0355a3628eace0f5b4dcffc1c3013e1f4ac6e
     depth: 1
-  register: checkout_fadecandy
+  when: not stat_fcserver.stat.exists
 
 - name: compile fcserver
   command: /bin/bash -c "make submodules && make"
   args:
     chdir: "{{ remote_modules_location }}/fadecandy/server"
-  when: checkout_fadecandy.changed
+  when: not stat_fcserver.stat.exists
   register: compile_fadecandy
 
 - name: copy fadecandy binary
@@ -148,6 +155,27 @@
 
       [Service]
       ExecStart=/usr/local/bin/npm start
+      WorkingDirectory={{ remote_modules_location }}/featherstreamer
+      Environment="CONFIG={{ config_file }}"
+      User=root
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  register: featherstreamer_service
+  become: yes
+  become_user: root
+
+- name: create featherstreamer-watcher service
+  copy:
+    dest: /etc/systemd/system/featherstreamer-watcher.service
+    content: |
+      [Unit]
+      Description=featherstreamer-watcher
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/bin/node dist/index.js watcher
       WorkingDirectory={{ remote_modules_location }}/featherstreamer
       Environment="CONFIG={{ config_file }}"
       User=root

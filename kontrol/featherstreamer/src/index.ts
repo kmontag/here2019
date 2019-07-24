@@ -1,6 +1,6 @@
 import commander from 'commander';
 import server from './commands/server';
-import watcher from './commands/watcher';
+import watch from './commands/watch';
 
 let validCmd: boolean = false;
 
@@ -14,10 +14,10 @@ commander
   });
 
 commander
-  .command('watcher')
+  .command('watch')
   .action(async (cmd) => {
     validCmd = true;
-    await watcher();
+    await watch();
   });
 
 commander.parse(process.argv);

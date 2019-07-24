@@ -34,10 +34,12 @@ export async function initMedia() {
     const filesInMediaDir = await fg('**/*', { cwd: mediaDirectory });
     const frameplayerFiles = ImmutableSet(filesInMediaDir.filter((f) => /\.fpl$/.test(f)));
 
+    logger.debug('Media build directory updated');
+
     if (frameplayerFiles.equals(lastFrameplayerFiles)) {
       logger.debug('No new media files found');
     } else {
-      frameplayers = await Promise.all(frameplayerFiles.map(async (f) => {
+      frameplayers = await Promise.all(frameplayerFiles.toArray().sort().map(async (f) => {
         logger.debug(`Loading ${f}`);
         const frameplayer = new Frameplayer(await fs.promises.readFile(path.join(mediaDirectory, f)));
         frameplayer.play();
@@ -47,21 +49,18 @@ export async function initMedia() {
         };
       }));
     }
+
+    lastFrameplayerFiles = frameplayerFiles;
   }
 
   await update();
 
-  const watcher = chokidar.watch(mediaDirectory);
+  const watcher = chokidar.watch(mediaDirectory, {
+    usePolling: true,
+    interval: 1000,
+    persistent: true,
+  });
   watcher.on('all', debounce(update, 2000));
-
-  // // Continually check for updates in the background.
-  // (async () => {
-  //   while (true) {
-  //     const nextCheck = new Promise((resolve) => setTimeout(resolve, 3000));
-  //     await update();
-  //     await nextCheck;
-  //   }
-  // })();
 
   didInit = true;
 }
