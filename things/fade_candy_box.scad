@@ -20,6 +20,9 @@ cableExtraInset = 7;
 separatorWallHeight = 4 * cableDiameter;
 numOutputs = 8;
 
+// Space behind the chip so the pins aren't pressing right up against the wall.
+pinLeeway = 1;
+
 nutVertexDistance = 6.5 + PRINTER_SLOP;
 nutEdgeDistance = 5.65 + PRINTER_SLOP;
 nutDepth = 3;
@@ -39,7 +42,7 @@ lidInsetDepth = 1;
 
 size = [
   fadeCandySize[2] + usbPortSize[2] + 2 * (fadeCandySideSpacing + cableExtraInset + wallWidth + cableGapWidth),
-  fadeCandySize[1] + 2 * PRINTER_SLOP,
+  fadeCandySize[1] + pinLeeway + 2 * PRINTER_SLOP,
   fadeCandySize[0] + 3 * PRINTER_SLOP + lidInsetDepth,
 ];
 
@@ -185,6 +188,8 @@ right(wallWidth) back(wallWidth) up(wallWidth) {
         left(pcbHeight + usbPortSize[2])
           cuboid(size=[platformWidth + pcbHeight + usbPortSize[2], usbPortSize[1] * 0.75, usbPortStartX + usbPortSize[0] * 0.75], p1=[0, 0, 0]);
         cuboid(size=[platformWidth, 3, 8], p1=[0, fadeCandySize[1] - 15, 0]);
+
+        cuboid(size=[pcbHeight + 6 * PRINTER_SLOP, pinLeeway, size[2] - 2 * wallWidth], p1=[usbPortSize[2] - PRINTER_SLOP * 2, fadeCandySize[1], 0]);
       }
 
 
