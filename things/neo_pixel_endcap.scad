@@ -37,7 +37,7 @@ conePlacement = debug ? 0 : capWidth + wallWidth * 2 + 5;
 coneAlpha = debug ? 0.8 : 1;
 
 coneCubeWallWidth = wallWidth;
-wireRadius = 2.25 + PRINTER_SLOP;
+wireRadius = 2.2;
 wireClench = 0.08;
 wireClenchLength = 5;
 coneLength = 33;
