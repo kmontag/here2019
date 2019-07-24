@@ -10,7 +10,7 @@ import prepare, { PrepareOptions } from './prepare';
 
 let validCmd: boolean = false;
 
-commander.version('0.0.1');
+commander.version('0.0.0-dev');
 
 commander
   .command('prepare <input>')

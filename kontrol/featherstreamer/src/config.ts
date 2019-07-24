@@ -32,11 +32,6 @@ const Config = Record({
   mediaSrcDir: String,
 
   /**
-   * Config file to use when building media.
-   */
-  frameplayerConfigFile: String,
-
-  /**
    * Filename to store persistent state.
    */
   stateFile: String,
@@ -58,7 +53,8 @@ type Config = Static<typeof Config>;
 const defaultConfig: Config = {
   fakeSystemCalls: true,
   eagerSlave: false,
-  mediaDir: path.join(__dirname, '..', '..', 'media-build'),
+  mediaBuildDir: path.join(__dirname, '..', '..', 'media-build'),
+  mediaSrcDir: path.join(__dirname, '..', '..', 'media-src'),
   stateFile: path.join(__dirname, '..', 'state.json'),
   masterHost: '192.168.9.1',
   masterPort: 44668,

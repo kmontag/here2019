@@ -103,7 +103,8 @@ deploy: featherstreamer/dist/index.js .make.featherstreamer-web
 
 .PHONY: deploy-media
 deploy-media:
-	rsync -avz media-build/ pi@$(PI):/var/featherstreamer/media/
+	rsync -avz media-build/ pi@$(PI):/var/featherstreamer/media-build/
+	rsync -avz media-src/ pi@$(PI):/var/featherstreamer/media-src/
 	ssh pi@$(PI) "sudo systemctl restart featherstreamer"
 
 # Prepare a featherstreamer for "external" deployment - remove all
