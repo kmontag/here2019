@@ -161,12 +161,6 @@ module circuit(withMovement=false, pinholes=true) {
         back(size[1] - 2.25) right(size[0] - 5)
         zcyl(d=3, l=12);
 
-      /* // Screw to push the board against the USB wall. */
-      /* color("gray") */
-      /*   back(size[1]) right(size[0]) */
-      /*   up(screwDiameter / 2 - pcbHeight / 2) */
-      /*   left(size[0] - powerBoostBackAngleHeight - wallWidth - nutVertexDistance / 2) */
-      /*   ycyl(d=screwDiameter, l=12, align=ALIGN_POS); */
     }
 
 
@@ -291,7 +285,7 @@ module lid() {
 
 module piBox() {
   up(wallWidth) right(wallWidth) back(wallWidth) {
-    // circuit();
+    circuit();
 
     difference() {
       union() {
@@ -346,14 +340,20 @@ module piBox() {
               pinInset = 2.5;
               right(platformInset - size[2] + pcbHeight + powerBoostWallInlayDepth + towerExtraDistance)
                 back(backAngleSupportLength) {
-
-
                 cuboid(size=[
                          towerWidth,
                          towerLength,
                          powerBoostFloatHeight + size[0] - pinInset
                        ], p1=[0, 0, 0]
                 );
+
+                for (i = [0, 1]) {
+                  forward(towerWidth * (1 - i))
+                    back((towerLength) * i)
+                    cuboid([size[2] - pcbHeight - towerExtraDistance,
+                            towerWidth,
+                            powerBoostFloatHeight + size[0] - pinInset], p1=[0, 0, 0]);
+                }
 
                 cuboid(size=[
                          size[2] - pcbHeight - towerExtraDistance,
@@ -362,14 +362,6 @@ module piBox() {
                        ], p1=[0, 0, 0]
                 );
               }
-
-              // Tower for pushing the board agains the USB wall
-              //right(platformInset - size[2] - screwDiameter / 2 - wallWidth / 2)
-              /* cuboid(size=[ */
-              /*          platformInset, */
-              /*          towerWidth, */
-              /*          powerBoostFloatHeight + 15 */
-              /*        ], p1=[0, backAngleSupportLength - nutDepth - 0.5 - towerWidth, 0]); */
             }
 
             // Front support
