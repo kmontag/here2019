@@ -2,6 +2,7 @@ import commander from 'commander';
 import server from './commands/server';
 import watch from './commands/watch';
 import compile from './commands/compile';
+import fcrelay from './commands/fcrelay';
 
 let validCmd: boolean = false;
 
@@ -26,6 +27,13 @@ commander
   .action(async (cmd) => {
     validCmd = true;
     await compile();
+  });
+
+commander
+  .command('fcrelay')
+  .action(async (cmd) => {
+    validCmd = true;
+    await fcrelay();
   });
 
 commander.parse(process.argv);

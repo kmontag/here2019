@@ -37,7 +37,7 @@ OPCHandler::OPCHandler(
     }
   }
 
-  this->deviceId = "fs:" + macString;
+  this->deviceId = "feather:" + macString;
 }
 
 OPCHandler::~OPCHandler() {

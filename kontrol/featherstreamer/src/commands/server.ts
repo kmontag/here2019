@@ -15,7 +15,7 @@ export default async function() {
   const server: typeof import('../server').default = require('../server').default;
   const masterVisibilityManager: typeof import('../masterVisibilityManager').default = require('../masterVisibilityManager').default;
 
-  const nodeStatusManager = require('../nodeStatusManager');
+  const nodeStatusManager: typeof import('../nodeStatusManager').default = require('../nodeStatusManager').default;
 
   await initMedia();
 

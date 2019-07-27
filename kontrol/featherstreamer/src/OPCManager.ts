@@ -200,8 +200,10 @@ export default class OPCManager {
         // drops or there's a problem with the endpoint.
         while (isStillActive) {
           try {
+            const cancelSource = axios.CancelToken.source();
             const response = await axios.get(url, {
               responseType: 'stream',
+              cancelToken: cancelSource.token,
             });
             // Make sure we haven't gone inactive in the meantime.
             if (isStillActive) {
@@ -256,6 +258,7 @@ export default class OPCManager {
               // loop. No-op if called more than once.
               endCurrentStream = () => {
                 readable.off('data', handleData);
+                cancelSource.cancel('master connection no longer needed');
                 resolve();
               };
 
