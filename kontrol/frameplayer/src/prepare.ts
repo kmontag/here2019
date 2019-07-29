@@ -8,7 +8,7 @@ import * as ndarray from 'ndarray';
 import magic from './magic';
 
 import { frameplayer as frameplayerProto } from './proto'
-import { Record, Number as RuntypesNumber, Tuple, Dictionary, Static, Array as RuntypesArray } from 'runtypes';
+import { Record, Number as RuntypesNumber, Tuple, Dictionary, Static, Array as RuntypesArray, Null } from 'runtypes';
 
 interface ProgressEvent {
   frames: number,
@@ -25,7 +25,7 @@ const ChannelConfig = Record({
   width: RuntypesNumber,
 
   // Sample these pixels after scaling the input.
-  pixels: RuntypesArray(Tuple(RuntypesNumber, RuntypesNumber)),
+  pixels: RuntypesArray(Tuple(RuntypesNumber, RuntypesNumber).Or(Null)),
 });
 
 const AnimationConfig = Record({

@@ -1,6 +1,5 @@
 import logger from '../logger';
-import frameplayerConfig from '../frameplayerConfig';
-import { getSrcDir, getCacheDir, getBuildDir } from '../media';
+import { getSrcDir, getCacheDir, getBuildDir, getFrameplayerConfigFile } from '../media';
 import hash from 'object-hash';
 import fs from 'fs';
 import path from 'path';
@@ -22,6 +21,8 @@ interface AnimationDescriptor {
 export default async function compile() {
   const srcDir = getSrcDir();
   logger.info(`Compiling sources from ${srcDir}`);
+
+  const frameplayerConfig = require(getFrameplayerConfigFile());
 
   const configChecksum = hash(frameplayerConfig);
   logger.info(`Config hash: ${configChecksum}`);

@@ -1,7 +1,7 @@
 import chokidar from 'chokidar';
 import { Lock } from 'semaphore-async-await';
 import compile from './compile';
-import { getSrcDir } from '../media';
+import { getSrcDir, getFrameplayerConfigFile } from '../media';
 
 /**
  * Watch the media src directory for changes, and compile any video
@@ -14,6 +14,7 @@ export default async function watch() {
     interval: 5000,
     persistent: true,
   });
+  watcher.add(getFrameplayerConfigFile());
 
 
   const lock = new Lock();

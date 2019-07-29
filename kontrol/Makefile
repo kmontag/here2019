@@ -55,6 +55,9 @@ featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsc
 	cd featherstreamer-web && npm run build
 	touch .make.featherstreamer-web
 
+media/frameplayer.json: featherstreamer/dist/index.js
+	cd featherstreamer && npm run --silent cli -- frameplayer > ../media/frameplayer.json
+
 .PHONY: setup
 setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.local featherstreamer/dist/index.js .make.featherstreamer-web
 	cd ansible && ansible-playbook -l ungrouped $(ANSIBLE_FLAGS) site.yml
@@ -63,7 +66,7 @@ setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.loc
 # and remove any files in the build directory which weren't built from
 # something in media-src/ for the current frameplayer config.
 .PHONY: media
-media: featherstreamer/dist/index.js
+media: featherstreamer/dist/index.js media/frameplayer.json
 	cd featherstreamer && npm run cli -- compile
 
 # Sync the JS modules to a pi, and restart the relevant services. This
@@ -87,10 +90,11 @@ deploy: featherstreamer/dist/index.js .make.featherstreamer-web
 	ssh pi@$(PI) "sudo ro"
 
 .PHONY: deploy-media
-deploy-media:
+deploy-media: media/frameplayer.json
 	rsync -avz --delete media/build/ pi@$(PI):/var/featherstreamer/media/build/
 	rsync -avz media/cache/ pi@$(PI):/var/featherstreamer/media/cache/
 	rsync -avz --delete media/src/ pi@$(PI):/var/featherstreamer/media/src/
+	scp media/frameplayer.json pi@$(PI):/var/featherstreamer/media/frameplayer.json
 
 # Prepare a featherstreamer for "external" deployment - remove all
 # local WiFi info, switch to production featherstreamer config, and

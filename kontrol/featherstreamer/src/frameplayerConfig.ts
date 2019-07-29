@@ -1,66 +1,25 @@
 import { AnimationConfig } from 'frameplayer';
+import kevin from './layouts/kevin';
 
-const frameplayerConfig: AnimationConfig =  {
-  "fps": 20,
-  "channels": {
-    "one": {
-      "height": 200,
-      "width": 50,
-      "pixels": [
-        [1, 40],
-        [2, 40],
-        [3, 40],
-        [4, 40],
-        [5, 40],
-        [6, 40],
-        [7, 40],
-        [8, 40],
-        [9, 40],
-        [10, 40],
-        [11, 40],
-        [12, 40],
-        [13, 40],
-        [14, 40],
-        [15, 40],
-        [16, 40],
-        [17, 40],
-        [18, 40],
-        [19, 40],
-        [20, 40],
-        [21, 40],
-        [22, 40],
-        [23, 40],
-        [24, 40],
-        [25, 40],
-        [26, 40],
-        [27, 40],
-        [28, 40],
-        [29, 40],
-        [30, 40],
-        [31, 40],
-        [32, 40],
-        [33, 40],
-        [34, 40],
-        [35, 40],
-        [36, 40],
-        [37, 40],
-        [38, 40],
-        [39, 40],
-        [40, 40],
-        [41, 40],
-        [42, 40],
-        [43, 40]
-      ]
-    },
-    "two" :{
-      "height": 400,
-      "width": 10,
-      "pixels": [
-        [5, 0],
-        [5, 1],
-        [5, 2]
-      ]
-    }}
+export type Channels = AnimationConfig['channels'];
+export type ChannelsSource = () => (Channels|Promise<Channels>);
+
+const FPS = 20;
+
+const sources: {[name: string]: ChannelsSource} = {
+  kevin,
 };
 
-export default frameplayerConfig;
+export default async function frameplayerConfig(): Promise<AnimationConfig> {
+  const channels: AnimationConfig['channels'] = {};
+  for (const sourceName in sources) {
+    const results = await(sources[sourceName]());
+    for (const channel in results) {
+      channels[`${sourceName}|${channel}`] = results[channel];
+    }
+  }
+  return {
+    fps: FPS,
+    channels,
+  }
+}
