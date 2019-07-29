@@ -1,7 +1,14 @@
 #!/bin/bash
 
+# Check whether the filesystem is currently read-only
+is_readonly=false
+(touch ~/.feathernet-tmp && rm ~/.feathernet-tmp) || is_readonly=true
+
 # Temporarily enter read-write mode
-/usr/local/bin/rw
+if [ "$is_readonly" = true ] ; then
+    echo "entering read-write mode..."
+    /usr/local/bin/rw
+fi
 
 mode=$1
 
@@ -77,5 +84,8 @@ if [[ "${restart_wlan}" == true ]]; then
     ifup {{ wlan_device_name }}
 fi
 
-# Go back to read-only mode
-/usr/local/bin/ro
+# Go back to read-only mode if appropriate
+if [ "$is_readonly" = true ] ; then
+    echo "returning to read-only mode..."
+    /usr/local/bin/ro
+fi
