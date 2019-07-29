@@ -6,7 +6,7 @@ master_ap_name: "_{{ base_name }}-master"
 ap_device_name: ap0
 wlan_device_name: wlan0
 
-ap_passphrase: gallowsbird
+ap_passphrase: "{{ ap_password }}"
 ap_channel: 1
 
 ap_self_address: 192.168.8.1

@@ -32,7 +32,7 @@ To change modes, press and hold then encoder for more than 1s, then release it a
 Once the device is booted up, you should be able to see a WiFi network
 called `featherstreamer-[something]`. That's your device's personal
 access point. By default, the password for this network (and all
-others) is `gallowsbird`. The device normally lives at
+others) is `feath3rstr`. The device normally lives at
 http://192.168.8.1, or http://192.168.9.1 when in master mode.
 
 ### Runtime configuration
@@ -247,7 +247,7 @@ $ PI=featherstreamer-foo.local make prepare
 It's generally easiest to interact with the Pi over SSH. Probably the
 cleanest way to do this is to connect to the pi's hosted access point,
 and then log in using `ssh pi@192.168.8.1` (or `ssh pi@192.168.9.1` if
-the device is in master mode). The default password is `buttmoop`.
+the device is in master mode). The default password is `feath4str`.
 
 If you place a `wpa_supplicant.conf` file in the boot partition (see
 the example file in this directory), you can also interact with the Pi
