@@ -18,10 +18,11 @@ The on/off switch is an on/off switch.
 
 The rotary encoder is the main controller for the device. Any
 contiguous turn in one direcion is processed as a single clockwise or
-counter-clockwise "click" - the notches in the encoder don't really
+counter-clockwise "step" - the notches in the encoder don't really
 matter. Turn it to cycle through videos. Press it (without turning it)
-to toggle any controlled LEDs on or off. Press it and turn it
-clockwise to switch between modes:
+to toggle connected LEDs on or off.
+
+To change modes, press and hold then encoder for more than 1s, then release it and quickly press it one or more times to select the mode:
 
 - 1 click for isolated mode
 - 2 clicks for slave mode
