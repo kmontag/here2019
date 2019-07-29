@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc",
+    "assets": "node_modules/.bin/frameplayer prepare -c assets/frameplayer.json assets/animation.mkv -o assets/animation.fpl",
     "cli": "node dist/index.js",
     "start": "node dist/index.js server",
     "start-dev": "ts-node-dev src/index.ts server",
