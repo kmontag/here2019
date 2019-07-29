@@ -29,6 +29,7 @@ let frameplayers: FrameplayerDescriptor[] = [];
 export async function initMedia() {
   const mediaDirectory = getBuildDir();
   let lastFrameplayerFiles: ImmutableSet<string> = ImmutableSet<string>();
+  let cleanupPrevious: () => any = () => {};
 
   const update = async () => {
     const filesInMediaDir = await fg('**/*', { cwd: mediaDirectory });
@@ -37,8 +38,9 @@ export async function initMedia() {
     logger.debug('Media build directory updated');
 
     if (frameplayerFiles.equals(lastFrameplayerFiles)) {
-      logger.debug('No new media files found');
+      logger.debug('No new media files or config found');
     } else {
+      cleanupPrevious();
       frameplayers = await Promise.all(frameplayerFiles.toArray().sort().map(async (f) => {
         logger.debug(`Loading ${f}`);
         const frameplayer = new Frameplayer(await fs.promises.readFile(path.join(mediaDirectory, f)));
@@ -48,6 +50,12 @@ export async function initMedia() {
           frameplayer,
         };
       }));
+      const currFrameplayers = frameplayers;
+      cleanupPrevious = () => {
+        for (const frameplayer of currFrameplayers) {
+          frameplayer.frameplayer.stop();
+        }
+      };
     }
 
     lastFrameplayerFiles = frameplayerFiles;
@@ -65,11 +73,29 @@ export async function initMedia() {
   didInit = true;
 }
 
+let defaultFrameplayer: FrameplayerDescriptor|undefined = undefined;
+function getDefaultFrameplayer(): FrameplayerDescriptor {
+  if (!defaultFrameplayer) {
+    const frameplayer = new Frameplayer(fs.readFileSync(path.join(__dirname, '..', 'assets', 'animation.fpl')));
+    defaultFrameplayer = {
+      name: 'built-in animation',
+      frameplayer,
+    };
+  }
+  return defaultFrameplayer;
+}
+
 export function getFrameplayers(): ReadonlyArray<FrameplayerDescriptor> {
   if (!didInit) {
     throw new Error('media not yet initialized');
   }
-  return frameplayers;
+
+  // Provide a default test animation if no videos are present.
+  if (frameplayers.length === 0) {
+    return [getDefaultFrameplayer()];
+  } else {
+    return frameplayers;
+  }
 }
 
 // For videos to compile and include in the "current" dir
@@ -85,4 +111,8 @@ export function getCacheDir(): string {
 // For live frameplayer files
 export function getBuildDir(): string {
   return path.join(getConfig().mediaDir, 'build');
+}
+
+export function getFrameplayerConfigFile(): string {
+  return path.join(getConfig().mediaDir, 'frameplayer.json');
 }
