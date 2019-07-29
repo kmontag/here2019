@@ -23,11 +23,12 @@ fillet = 2;
 
 pcbHeight = 1.4;
 
+piHeight = 1.6 + 3.25;
 piWidth = 30;
 piLength = 65;
 
 // From the left wall, clear the battery with some leeway for pins.
-piXInset = 9;
+piXInset = 7.5;
 
 // From the back wall, to make the SD card jut out a bit less.
 piYInset = 0.5;
@@ -42,7 +43,7 @@ powerBoostBackAngleHeight = 4.5;
 
 rotaryEncoderFloatHeight = (height - rotaryEncoderBoxSize()[2]) / 2;
 rotaryEncoderInset = 2;
-rotaryEncoderPlatformLength = 6;
+rotaryEncoderPlatformLength = 4;
 
 nutVertexDistance = 6.5 + PRINTER_SLOP;
 nutEdgeDistance = 5.65 + PRINTER_SLOP;
@@ -72,8 +73,9 @@ module circuit(withMovement=false, pinholes=true) {
   color("red") translate(batteryPosition) slop(size=batterySize) cuboid(size=batterySize, p1=[0, 0, 0]);
 
   // Pi
-  right(piXInset)
-    back(length - PRINTER_SLOP - piYInset) zrot(180)
+  right(piXInset + piHeight)
+    back(piYInset + PRINTER_SLOP)
+    //back(length - PRINTER_SLOP - piYInset)
     // - 2 ensures the USB port (which hangs 1mm over the pi) is accessible
     up(height - PRINTER_SLOP + wallWidth - 2)
     yrot(-90) {
@@ -111,8 +113,10 @@ module circuit(withMovement=false, pinholes=true) {
     }
   }
 
-  // PowerBoost and plug
-  union() {
+  // PowerBoost and plug. The weird initial transformation is because
+  // this was initially written with a different box layout.
+  up(powerBoostFloatHeight - (height - powerBoostFloatHeight - powerBoost1000CSize()[0]))
+    up(height) back(length) xrot(180) {
     size = powerBoost1000CSize();
     right(width - size[2] + 1)
       up(powerBoostFloatHeight)
@@ -132,8 +136,8 @@ module circuit(withMovement=false, pinholes=true) {
       // Pinholes for lights
       if (pinholes) {
         color("yellow", alpha=0.2) {
-          back(8) up(pcbHeight - 1 + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
-          back(size[1] - 9) up(pcbHeight - 1 + pinholeDiameter / 2) right(size[0]) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+          back(8) up(pcbHeight - 1 + pinholeDiameter / 2) right(size[0] - height) xcyl(l=(2 * height), d=pinholeDiameter, align=V_ALLPOS);
+          back(size[1] - 9) up(pcbHeight - 1 + pinholeDiameter / 2) right(size[0] - height) xcyl(l=(2 * height), d=pinholeDiameter, align=V_ALLPOS);
         }
       }
 
@@ -158,7 +162,7 @@ module circuit(withMovement=false, pinholes=true) {
       // really matter if this hole is a bit too big. It just needs to
       // hold the board in the x-direction.
       color("gray")
-        back(size[1] - 2.25) right(size[0] - 5)
+        back(size[1] - 2.25) right(5)
         zcyl(d=3, l=12);
 
     }
@@ -180,8 +184,10 @@ module circuit(withMovement=false, pinholes=true) {
   }
 
 
-  // Rotary encoder
-  union() {
+  // Rotary encoder. The weird initial transformation is because this
+  // was initially written with a different box layout.
+  up(2 * PRINTER_SLOP + rotaryEncoderFloatHeight - (height - rotaryEncoderBoxSize()[2] - rotaryEncoderFloatHeight))
+    up(height) back(length) xrot(180) {
     size = rotaryEncoderBoxSize();
     color("gray")
       right(width - size[0] - rotaryEncoderInset) {
@@ -206,14 +212,14 @@ module positionNutHolder(i) {
   if (i == 1) {
     up(height - lidInsetDepth)
       right(width - PRINTER_SLOP)
-      back(16)
+      back(length - 16)
       xflip()
       zflip()
       children();
   } else if (i == 2) {
     up(height - lidInsetDepth)
-      right(piXInset + pcbHeight + nutVertexDistance + nutHolderWallWidth * 2)
-      back(length - nutDepth - 2 * nutHolderWallWidth - PRINTER_SLOP)
+      right(piXInset + pcbHeight + 3.25 + nutVertexDistance + nutHolderWallWidth * 2)
+      back(PRINTER_SLOP)
       zflip()
       zrot(90)
       children();
@@ -264,14 +270,14 @@ module lid() {
         right(width - PRINTER_SLOP)
           up(height)
           zflip()
-          back(length - PRINTER_SLOP)
+          back(PRINTER_SLOP)
           yflip()
           xflip() {
-          cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, height - powerBoost1000CSize()[0] - powerBoostFloatHeight + wallWidth],
+          yflip() cuboid(size=[powerBoost1000CSize()[2] + wallWidth, 3, height - powerBoost1000CSize()[0] - powerBoostFloatHeight + wallWidth],
                  p1=[0, 0, 0]);
 
           cornerInset = 1.5;
-          back(powerBoost1000CSize()[1])
+          forward(powerBoost1000CSize()[1])
             right(powerBoost1000CSize()[2] - pcbHeight / 2)
             cuboid(size=[wallWidth * 2, wallWidth * 2, height - powerBoost1000CSize()[0] - powerBoostFloatHeight + cornerInset],
                    p1=[-wallWidth, -wallWidth, 0]);
@@ -285,7 +291,7 @@ module lid() {
 
 module piBox() {
   up(wallWidth) right(wallWidth) back(wallWidth) {
-    circuit();
+    //circuit();
 
     difference() {
       union() {
@@ -293,13 +299,13 @@ module piBox() {
         // Pi and battery platforms
         union() {
           piPlatformInset = 15;
-          piHeaderInset = 5;
+          piHeaderInset = 4;
           cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, 10], p1=[0, 0, 0]);
           back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, 14], p1=[0, 0, 0]);
         }
 
         // PowerBoost platform
-        union() {
+        back(length) yflip() {
           size = powerBoost1000CSize();
           backAngleStartHeight = powerBoostFloatHeight + 2;
           backAngleSupportLength = 5;
@@ -383,7 +389,7 @@ module piBox() {
         }
 
         // Rotary encoder platform
-        union() {
+        back(length) yflip() {
           size = rotaryEncoderBoxSize();
           holderWallWidth = [4, 2];
           holderWallHeight = 6;
@@ -410,7 +416,7 @@ module piBox() {
         size=[width, length, height],
         fillet=fillet
       );
-      circuit(withMovement=true);
+      circuit(withMovement=true, pinholes=false);
       for (i = [1, 2]) {
         positionNutHolder(i) nutHolderMask(
           nutVertexDistance=nutVertexDistance,
