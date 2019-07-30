@@ -258,10 +258,10 @@ module lid() {
       holderWallWidth = 2;
 
       // Hold pi in place vertically
-      right(piXInset + pcbHeight / 2)
+      right(piXInset + piHeight - pcbHeight / 2)
         up(height)
         zflip() {
-        back(length - 35)
+        back(25)
           cuboid(size=[pcbHeight + holderWallWidth * 2, 10, height - piWidth - 0.5], p1=[-holderWallWidth - pcbHeight / 2, 0, 0]);
       }
 
@@ -300,7 +300,7 @@ module piBox() {
         union() {
           piPlatformInset = 15;
           piHeaderInset = 4;
-          cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, 10], p1=[0, 0, 0]);
+          cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, 18], p1=[0, 0, 0]);
           back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, 14], p1=[0, 0, 0]);
         }
 
@@ -353,13 +353,13 @@ module piBox() {
                        ], p1=[0, 0, 0]
                 );
 
-                for (i = [0, 1]) {
-                  forward(towerWidth * (1 - i))
-                    back((towerLength) * i)
-                    cuboid([size[2] - pcbHeight - towerExtraDistance,
-                            towerWidth,
-                            powerBoostFloatHeight + size[0] - pinInset], p1=[0, 0, 0]);
-                }
+                /* for (i = [0, 1]) { */
+                /*   forward(towerWidth * (1 - i)) */
+                /*     back((towerLength) * i) */
+                /*     cuboid([size[2] - pcbHeight - towerExtraDistance, */
+                /*             towerWidth, */
+                /*             powerBoostFloatHeight + size[0] - pinInset], p1=[0, 0, 0]); */
+                /* } */
 
                 cuboid(size=[
                          size[2] - pcbHeight - towerExtraDistance,
