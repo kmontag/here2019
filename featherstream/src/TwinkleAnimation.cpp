@@ -9,9 +9,13 @@ FlashStorage(settings_storage, TwinkleAnimation::settings_t);
 TwinkleAnimation::TwinkleAnimation(Renderer &renderer) : renderer(renderer) {
   this->settings = settings_storage.read();
 
-  // Default to white.
+  // Default to white for all colors.
   if (this->settings.magic != EXPECTED_MAGIC) {
-    this->settings.r = this->settings.g = this->settings.b = 50;
+    for (uint8_t i = 0; i < NUM_COLORS; i++) {
+      for (uint8_t rgb = 0; rgb < 3; rgb++) {
+        this->settings.colors[i][rgb] = 50;
+      }
+    }
   }
 
   this->twinkleStatuses = new twinkleStatus[renderer.getLength()];
@@ -34,6 +38,11 @@ void TwinkleAnimation::loop() {
       this->twinkleStatuses[i].isActive = true;
       this->twinkleStatuses[i].isIncreasing = true;
       this->twinkleStatuses[i].brightness = MIN_BRIGHTNESS;
+
+      uint8_t colorIndex = (uint8_t)random(NUM_COLORS);
+      this->twinkleStatuses[i].r = this->settings.colors[colorIndex][0];
+      this->twinkleStatuses[i].g = this->settings.colors[colorIndex][1];
+      this->twinkleStatuses[i].b = this->settings.colors[colorIndex][2];
     }
 
     if (this->twinkleStatuses[i].isActive) {
@@ -54,9 +63,9 @@ void TwinkleAnimation::loop() {
     //uint8_t renderedBrightness = (uint8_t)(this->twinkleStatuses[i].brightness / BRIGHTNESS_MULTIPLIER);
     this->renderer.setPixel(
       i,
-      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->settings.r / 255),
-      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->settings.g / 255),
-      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->settings.b / 255)
+      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->twinkleStatuses[i].r / 255),
+      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->twinkleStatuses[i].g / 255),
+      (uint8_t)(this->twinkleStatuses[i].brightness * (uint16_t)this->twinkleStatuses[i].b / 255)
     );
   }
   this->renderer.commit();
@@ -68,11 +77,17 @@ void TwinkleAnimation::loop() {
   }
 }
 
-void TwinkleAnimation::setColor(uint8_t r, uint8_t g, uint8_t b) {
-  this->settings.r = r;
-  this->settings.g = g;
-  this->settings.b = b;
-  this->settings.magic = EXPECTED_MAGIC;
+void TwinkleAnimation::setColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+  if (index >= NUM_COLORS) {
+    Serial.print("Color index ");
+    Serial.print(index);
+    Serial.print(" is not supported, ignoring.");
+  } else {
+    this->settings.colors[index][0] = r;
+    this->settings.colors[index][1] = g;
+    this->settings.colors[index][2] = b;
+    this->settings.magic = EXPECTED_MAGIC;
+  }
 
   settings_storage.write(this->settings);
 }

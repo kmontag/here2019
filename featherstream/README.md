@@ -191,17 +191,17 @@ command 255) are also supported. The first two bytes of these commands
 should be an unsigned number with the high byte first, representing
 the system ID; currently only one system ID is supported:
 
-- SID 6: Set the primary color of the offline animation, and save this
-  value to flash storage. The message data should be 5 bytes - 2 for
-  the system ID, followed by 1 each for the R, G, and B values
-  respectively.
+- SID 6: Set one of the colors of the offline animation, and save this
+  value to flash storage. The message data should be 6 bytes - 2 for
+  the system ID, 1 for the index (between 0 and 2 inclusive), and 1
+  each for the R, G, and B values respectively.
 
 #### Offline mode
 
 This is the mode when the device is paired and its switch is open.
 
-In offline mode, a generic animation is shown, optionally using a
-color set by OPC sysex command as described above.
+In offline mode, a generic animation is shown, optionally using up to
+3 colors set by OPC sysex command as described above.
 
 ### Building and uploading
 

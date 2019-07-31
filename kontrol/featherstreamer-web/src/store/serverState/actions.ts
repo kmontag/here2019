@@ -58,11 +58,13 @@ export const setDeviceBrightness: ActionCreator<SetDeviceBrightnessAction> = (op
 export interface SetDeviceColorAction extends Action {
   type: '@@serverState/SET_DEVICE_COLOR',
   deviceId: string,
+  index: number,
   color: { r: number, g: number, b: number, }
 }
 
 export const setDeviceColor: ActionCreator<SetDeviceColorAction> = (opts: {
   deviceId: string,
+  index: number,
   color: SetDeviceColorAction['color'],
 }) => {
   return {

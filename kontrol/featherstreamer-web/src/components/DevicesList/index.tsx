@@ -2,7 +2,7 @@ import React from 'react';
 import { ApplicationState, ConnectedReduxProps } from '../../store';
 import { ServerStateState } from '../../store/serverState/reducer';
 import { connect } from 'react-redux';
-import { Button, Icon, Table, StrictDropdownItemProps, StrictDropdownProps, InputOnChangeData } from 'semantic-ui-react';
+import { Button, Icon, Grid, Table, StrictDropdownItemProps, StrictDropdownProps, InputOnChangeData } from 'semantic-ui-react';
 import { forgetDevice, setDeviceChannel, setDeviceBrightness, setDeviceColor } from '../../store/serverState/actions';
 import style from './style.module.scss';
 import { Select, Input } from 'semantic-ui-react';
@@ -29,17 +29,21 @@ interface DeviceProps {
 }
 
 interface DeviceState {
-  displayColorPicker: boolean;
-  color?: ColorResult;
+  displayColorPicker: boolean[]
+  colors: (ColorResult|undefined)[];
 }
+
+// More convenient than defining a constant for the count.
+const COLOR_INDICES = [0, 1, 2];
 
 class Device extends React.Component<DeviceProps, DeviceState> {
   constructor(props: DeviceProps) {
     super(props);
 
     this.state = {
-      displayColorPicker: false,
-    };
+      displayColorPicker: COLOR_INDICES.map((i) => false),
+      colors: COLOR_INDICES.map((i) => undefined),
+    }
   }
 
   onClickDelete() {
@@ -56,13 +60,17 @@ class Device extends React.Component<DeviceProps, DeviceState> {
     this.props.dispatch(setDeviceBrightness({ deviceId: this.props.id, brightness: parseFloat(value.value) }));
   }
 
-  handleColorPickerToggled() {
-    this.setState({ displayColorPicker: !this.state.displayColorPicker });
+  handleColorPickerToggled(index: number) {
+    const colorPickerCopy: boolean[] = this.state.displayColorPicker.slice(0);
+    colorPickerCopy[index] = !colorPickerCopy[index];
+    this.setState({ displayColorPicker: colorPickerCopy });
   }
 
-  handleColorChanged(color: ColorResult) {
-    this.props.dispatch(setDeviceColor({ deviceId: this.props.id, color: color.rgb }));
-    this.setState({ color });
+  handleColorChanged(index: number, color: ColorResult) {
+    const colorsCopy = this.state.colors.slice(0);
+    colorsCopy[index] = color;
+    this.props.dispatch(setDeviceColor({ deviceId: this.props.id, index: index, color: color.rgb }));
+    this.setState({ colors: colorsCopy });
     return true;
   }
 
@@ -98,27 +106,53 @@ class Device extends React.Component<DeviceProps, DeviceState> {
 
     const isColorPickerActive: boolean = this.props.connections > 0;
 
-    const renderedColorPicker = this.state.displayColorPicker ? (
-      <div className={style.popover}>
-        <div className={style.cover} onClick={() => this.handleColorPickerToggled()} />
-        <SketchPicker disableAlpha color={this.state.color ? this.state.color.rgb : undefined} onChangeComplete={((color) => this.handleColorChanged(color))} />
-      </div>
-    ) : '';
+    const renderedColorPickers = COLOR_INDICES.map((colorIndex) => {
+      const color = this.state.colors[colorIndex];
+      return this.state.displayColorPicker[colorIndex] ? (
+        <div className={style.popover}>
+          <div className={style.cover} onClick={() => this.handleColorPickerToggled(colorIndex)} />
+          <SketchPicker disableAlpha color={color ? color.rgb : undefined} onChangeComplete={((newColor) => this.handleColorChanged(colorIndex, newColor))} />
+        </div>
+      ) : '';
+    });
 
-    const renderedColorIcon = this.state.color ? (
-      <Icon
-        className={style.splotchIcon}
-        name="circle"
-        style={{color: this.state.color.hex}} />
-    ) : undefined;
+    const renderedColorIcons = COLOR_INDICES.map((colorIndex) => {
+      const color = this.state.colors[colorIndex];
+      return color ? (
+        <Icon
+          className={style.splotchIcon}
+          name="circle"
+          style={{color: color.hex}} />
+      ) : undefined;
+    });
+
+    const colorPickerButtons = COLOR_INDICES.map((colorIndex) => {
+      return (
+        <Grid.Column>
+          <div className={style.splotchControlWrapper}>
+            <Button
+              disabled={!isColorPickerActive}
+              icon={renderedColorIcons[colorIndex] ? true : false}
+              color="grey"
+              labelPosition={renderedColorIcons[colorIndex] ? 'right' : undefined}
+              onClick={() => isColorPickerActive ? this.handleColorPickerToggled(colorIndex) : undefined}
+            >
+              { renderedColorIcons[colorIndex] }
+              Pick
+            </Button>
+            { renderedColorPickers[colorIndex] }
+          </div>
+        </Grid.Column>
+      );
+    });
 
     return (
       <Table.Row>
-        <Table.Cell width={5}>
+        <Table.Cell width={4}>
           {this.props.id}
           {deleteElement}
         </Table.Cell>
-        <Table.Cell width={5}>
+        <Table.Cell width={4}>
           <Select
             fluid search
             options={channelSelectOpts}
@@ -136,23 +170,14 @@ class Device extends React.Component<DeviceProps, DeviceState> {
             onChange={(event, data) => this.handleBrightnessChanged(data)}
           />
         </Table.Cell>
-        <Table.Cell width={5}>
-          <div className={style.splotchControlWrapper}>
-            <Button
-              disabled={!isColorPickerActive}
-              icon={renderedColorIcon ? true : false}
-              color="grey"
-              labelPosition={renderedColorIcon ? 'right' : undefined}
-              onClick={() => isColorPickerActive ? this.handleColorPickerToggled() : undefined}
-            >
-              { renderedColorIcon }
-              Pick
-            </Button>
-            {/* { renderedColorSplotch } */}
-            { renderedColorPicker }
-          </div>
+        <Table.Cell width={10}>
+          <Grid fluid columns={3}>
+            <Grid.Row>
+              {colorPickerButtons}
+            </Grid.Row>
+          </Grid>
         </Table.Cell>
-        <Table.Cell width={3}>{this.props.connections}</Table.Cell>
+        <Table.Cell width={2}>{this.props.connections}</Table.Cell>
       </Table.Row>
     );
   }
@@ -175,7 +200,7 @@ class DevicesList extends React.Component<Props> {
             <Table.HeaderCell>Device</Table.HeaderCell>
             <Table.HeaderCell>Channel</Table.HeaderCell>
             <Table.HeaderCell>Brightness</Table.HeaderCell>
-            <Table.HeaderCell>Offline Color</Table.HeaderCell>
+            <Table.HeaderCell>Offline Colors</Table.HeaderCell>
             <Table.HeaderCell>Connections</Table.HeaderCell>
           </Table.Row>
         </Table.Header>

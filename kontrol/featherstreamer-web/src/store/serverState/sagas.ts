@@ -68,6 +68,7 @@ function * doSetDeviceColor(action: SetDeviceColorAction) {
     url: `${BACKEND_PREFIX}/devices/${action.deviceId}`,
     method: 'PUT',
     data: {
+      index: action.index,
       color: action.color,
     },
   });

@@ -20,6 +20,7 @@ const getSSID = () => {
 
 interface ColorEvent {
   deviceId: string,
+  index: number,
   r: number,
   g: number,
   b: number,
@@ -173,6 +174,7 @@ export default function server({
         // Stop streaming data momentarily to avoid interleaving.
         removeStream();
 
+        const index = Math.floor(event.index) % 256;
         const r = Math.floor(event.r) % 256;
         const g = Math.floor(event.g) % 256;
         const b = Math.floor(event.b) % 256;
@@ -181,16 +183,17 @@ export default function server({
         const stream = createOPCStream();
         stream.pipe(res);
 
-        const data = new Uint8Array(5);
+        const data = new Uint8Array(6);
 
         // Sysex command identifier 6.
         data[0] = 6;
         data[1] = 0;
 
         // Color data for the sysex command.
-        data[2] = r;
-        data[3] = g;
-        data[4] = b;
+        data[2] = index;
+        data[3] = r;
+        data[4] = g;
+        data[5] = b;
 
         // @ts-ignore
         logger.debug(`Sending bytes: ${Array.apply([], data).join(",")}`);
@@ -238,6 +241,7 @@ export default function server({
     });
     const Params = RuntypesRecord({
       channelId: RuntypesString.Or(Undefined),
+      index: RuntypesNumber,
       color: RuntypesRecord({
         r: ColorDimension,
         g: ColorDimension,
@@ -255,7 +259,7 @@ export default function server({
         });
       }
       if (body.color) {
-        eventEmitter.emit('color', { deviceId, ...body.color });
+        eventEmitter.emit('color', { deviceId, index: body.index, ...body.color });
       }
       if (body.brightness) {
         setDeviceBrightness({
