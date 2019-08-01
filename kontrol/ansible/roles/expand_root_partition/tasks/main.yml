@@ -59,23 +59,26 @@
 - name: create data filesystem
   filesystem:
     dev: "{{ device }}p{{ root_partition_number + 1 }}"
-    fstype: vfat
+    fstype: ext4
   register: create_data_filesystem
-  become: yes
-  become_user: root
-
-- name: label data filesystem
-  shell: "dosfslabel {{ device }}p{{ root_partition_number + 1 }} {{ data_filesystem_label }}"
-  when: create_data_filesystem.changed
   become: yes
   become_user: root
 
 - name: mount data filesystem
   mount:
-    fstype: vfat
+    fstype: ext4
     state: mounted
-    opts: "defaults,uid={{ data_filesystem_uid }},gid={{ data_filesystem_gid }},rw"
+    opts: defaults,noatime,rw
     path: "{{ data_partition_mount_point }}"
     src: "{{ device }}p{{ root_partition_number + 1 }}"
+  become: yes
+  become_user: root
+
+- name: create media directory
+  file:
+    path: "{{ data_partition_mount_point }}/media"
+    state: directory
+    owner: "{{ data_filesystem_uid }}"
+    group: "{{ data_filesystem_gid }}"
   become: yes
   become_user: root
