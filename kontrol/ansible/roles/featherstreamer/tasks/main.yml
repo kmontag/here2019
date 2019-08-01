@@ -7,6 +7,7 @@
       - libav-tools
       - stow
       - git
+      - pigpio
   become: yes
   become_user: root
 
@@ -36,6 +37,22 @@
   args:
     chdir: /usr/local/stow
   changed_when: not stat_node.stat.exists
+  become: yes
+  become_user: root
+
+- name: check for existing pigpio install
+  stat:
+    follow: yes
+    path: /usr/local/lib/node_modules/pigpio
+  register: stat_pigpio
+
+# The optional dependencies don't seem to play nicely with a typical
+# install, make sure this is available globally. --unsafe-perm appears
+# to be needed for node-gyp, see
+# https://github.com/nodejs/node-gyp/issues/454.
+- name: install pigpio globally
+  shell: npm install --unsafe-perm -g pigpio@^1.2.3
+  when: not stat_pigpio.stat.exists
   become: yes
   become_user: root
 
@@ -97,7 +114,7 @@
     dest: "{{ remote_modules_location }}/"
     src: "{{ local_modules_location }}/{{ item }}"
     rsync_opts:
-      - "--exclude='node_modules'"
+      - "--exclude=node_modules"
   register: update_sources
   with_items:
     - featherstreamer
@@ -109,8 +126,15 @@
   shell: npm install --production
   args:
     chdir: "{{ remote_modules_location }}/{{ item.item }}"
+  register: install_node_modules
   when: item.changed
   with_items: "{{ copy_package_lock.results }}"
+
+- name: force pigpio install
+  shell: npm link pigpio
+  args:
+    chdir: "{{ remote_modules_location }}/featherstreamer"
+  when: install_node_modules.changed
 
 - name: create media dir
   file:
@@ -166,6 +190,27 @@
   become: yes
   become_user: root
 
+- name: create featherstreamer-fcrelay service
+  copy:
+    dest: /etc/systemd/system/featherstreamer-fcrelay.service
+    content: |
+      [Unit]
+      Description=featherstreamer-fcrelay
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/npm run cli -- fcrelay
+      WorkingDirectory={{ remote_modules_location }}/featherstreamer
+      Environment="CONFIG={{ config_file }}"
+      User=root
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  register: featherstreamer_fcrelay_service
+  become: yes
+  become_user: root
+
 - name: create featherstreamer-watcher service
   copy:
     dest: /etc/systemd/system/featherstreamer-watcher.service
@@ -178,7 +223,7 @@
       ExecStart=/usr/local/bin/npm run cli -- watch
       WorkingDirectory={{ remote_modules_location }}/featherstreamer
       Environment="CONFIG={{ config_file }}"
-      User=root
+      User=pi
       Restart=always
 
       [Install]
@@ -211,11 +256,12 @@
 - name: start featherstreamer services at boot
   service:
     name: "{{ item }}"
-    daemon_reload: "{{ featherstreamer_web_service.changed or featherstreamer_watcher_service.changed or featherstreamer_service.changed }}"
+    daemon_reload: "{{ featherstreamer_fcrelay_service.changed or featherstreamer_web_service.changed or featherstreamer_watcher_service.changed or featherstreamer_service.changed }}"
     enabled: yes
-    state: "{{ 'restarted' if featherstreamer_web_service.changed or featherstreamer_watcher_service.changed or featherstreamer_service.changed or update_sources.changed or copy_package_lock.changed else 'started' }}"
+    state: "{{ 'restarted' if featherstreamer_fcrelay_service.changed or featherstreamer_web_service.changed or featherstreamer_watcher_service.changed or featherstreamer_service.changed or update_sources.changed or copy_package_lock.changed else 'started' }}"
   with_items:
     - featherstreamer
+    - featherstreamer-fcrelay
     - featherstreamer-watcher
     - featherstreamer-web
   become: yes
