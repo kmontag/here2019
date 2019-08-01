@@ -183,8 +183,15 @@ export default class OPCManager {
       };
       frameplayer.on('frame', handleFrame);
 
+      // Refresh state if the frameplayer is stopped while playing.
+      const handleStop = () => {
+        setup();
+      };
+      frameplayer.on('stop', handleStop);
+
       teardownCurrentState = () => {
         frameplayer.off('frame', handleFrame);
+        frameplayer.off('stop', handleStop);
       };
     };
 
