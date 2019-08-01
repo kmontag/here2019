@@ -1,4 +1,4 @@
-import { Channels, ChannelsSource} from '../frameplayerConfig';
+import { Channels, ChannelsSource} from '../generateConfig';
 
 const kevin: ChannelsSource = () => {
 

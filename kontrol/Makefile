@@ -45,18 +45,19 @@ ansible/local/id_rsa.pub ansible/local/id_rsa:
 	ssh-keygen -t rsa -N "" -f ansible/local/id_rsa
 
 # JS module builds.
-frameplayer/dist/index.js: frameplayer/tsconfig.json frameplayer/tslint.json $(shell find frameplayer/src/ -type f)
+frameplayer/dist/index.js: frameplayer/package*.json frameplayer/tsconfig.json frameplayer/tslint.json $(shell find frameplayer/src/ -type f)
 	cd frameplayer && npm run build
-featherstreamer-shared/dist/index.js: featherstreamer-shared/tsconfig.json featherstreamer-shared/tslint.json $(shell find featherstreamer-shared/src/ -type f)
+featherstreamer-shared/dist/index.js: featherstreamer-shared/package*.json featherstreamer-shared/tsconfig.json featherstreamer-shared/tslint.json $(shell find featherstreamer-shared/src/ -type f)
 	cd featherstreamer-shared && npm run build
 featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsconfig.json featherstreamer/tslint.json $(shell find featherstreamer/src -type f) featherstreamer-shared/dist/index.js frameplayer/dist/index.js
 	cd featherstreamer && npm run build
 .make.featherstreamer-web: $(shell find	featherstreamer-web/src -type f) featherstreamer-shared/dist/index.js
 	cd featherstreamer-web && npm run build
 	touch .make.featherstreamer-web
+frameplayer-conf/dist/index.js: frameplayer-conf/package*.json frameplayer-conf/ts*.json $(shell find frameplayer/src/ -type f)
 
-media/frameplayer.json: featherstreamer/dist/index.js
-	cd featherstreamer && npm run --silent cli -- frameplayer > ../media/frameplayer.json
+media/frameplayer.json: frameplayer-conf/dist/index.js
+	cd frameplayer-conf && node dist/index.js > ../media/frameplayer.json
 
 .PHONY: setup
 setup: ansible/local/id_rsa.pub ansible/local/id_rsa ansible/inventory/hosts.local featherstreamer/dist/index.js .make.featherstreamer-web
@@ -89,12 +90,28 @@ deploy: featherstreamer/dist/index.js .make.featherstreamer-web
 # Go back to read-only mode.
 	ssh pi@$(PI) "sudo ro"
 
+.PHONY: deploy-media-config
+deploy-media-config: media/frameplayer.json
+	scp media/frameplayer.json pi@$(PI):/var/featherstreamer/media/frameplayer.json
+
+
 .PHONY: deploy-media
-deploy-media: media/frameplayer.json
+deploy-media:
 	rsync -avz --delete media/build/ pi@$(PI):/var/featherstreamer/media/build/
 	rsync -avz media/cache/ pi@$(PI):/var/featherstreamer/media/cache/
+
+# Do these last to avoid triggering recompiles before the build cache
+# is synced.
+	$(MAKE) deploy-media-config
 	rsync -avz --delete media/src/ pi@$(PI):/var/featherstreamer/media/src/
-	scp media/frameplayer.json pi@$(PI):/var/featherstreamer/media/frameplayer.json
+
+.PHONY: pull-state
+pull-state:
+	scp pi@$(PI):/var/featherstreamer/state.json device-state.json
+
+.PHONY: push-state
+push-state:
+	scp device-state.json pi@$(PI):/var/featherstreamer/state.json
 
 # Prepare a featherstreamer for "external" deployment - remove all
 # local WiFi info, switch to production featherstreamer config, and

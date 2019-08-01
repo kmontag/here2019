@@ -10,12 +10,12 @@ const sources: {[name: string]: ChannelsSource} = {
   kevin,
 };
 
-export default async function frameplayerConfig(): Promise<AnimationConfig> {
+export default async function generateConfig(): Promise<AnimationConfig> {
   const channels: AnimationConfig['channels'] = {};
   for (const sourceName in sources) {
     const results = await(sources[sourceName]());
     for (const channel in results) {
-      channels[`${sourceName}|${channel}`] = results[channel];
+      channels[`${sourceName}-${channel}`] = results[channel];
     }
   }
   return {
