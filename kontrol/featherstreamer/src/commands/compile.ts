@@ -16,7 +16,28 @@ interface AnimationDescriptor {
 }
 
 /**
+ * Compile files from the media source directory to playable (by
+ * frameplayer) .fpl files. Uses the frameplayer config specified by
+ * our own config file. The layout of the directory should be:
  *
+ *   - [your media dir]/src/
+ *     - scene1/
+ *       - default.{mkv,mp4,etc}
+ *     - scene2/
+ *       - default.{mkv,mp4,etc}
+ *       - channel-name.{mkv,mp4,etc}
+ *     - ...
+ *
+ * The scene directories can have any name, but they'll be cycled
+ * through in alphabetical order during playback.
+ *
+ * The `default` file in a scene directory will be processed to pixels
+ * and played on all channels. Override files named after channels in
+ * the frameplayer config can also be provided to play different
+ * videos on specific channels.
+ *
+ * See the `frameplayer-conf` module for details on the frameplayer
+ * config, and to see which channel names are available to override.
  */
 export default async function compile() {
   const srcDir = getSrcDir();
@@ -118,11 +139,18 @@ export default async function compile() {
     }
 
     if (!cacheFileExists) {
+      // Ensure cache dir exists.
+      await fs.promises.mkdir(getCacheDir(), { recursive: true });
+
       logger.info(`Compilling animation ${animationDescriptor.name}...`);
       const opts: PrepareOptions = {
         inputOverrides: animationDescriptor.overrides,
+        cacheDir: getCacheDir(),
         onProgress: (progress) => {
           logger.info(`${progress.percent}%`);
+        },
+        onStderr: (stderr) => {
+          logger.debug(stderr);
         },
       };
       const frameplayerBuffer = await prepare(animationDescriptor.defaultSrc, frameplayerConfig, opts);

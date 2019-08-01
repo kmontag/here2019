@@ -7,6 +7,7 @@ import { getConfig } from './config';
 import { Set as ImmutableSet } from 'immutable';
 import { debounce } from 'debounce';
 import chokidar from 'chokidar';
+import md5File from 'md5-file';
 
 export interface FrameplayerDescriptor {
   readonly name: string;
@@ -28,16 +29,29 @@ let frameplayers: FrameplayerDescriptor[] = [];
  */
 export async function initMedia() {
   const mediaDirectory = getBuildDir();
-  let lastFrameplayerFiles: ImmutableSet<string> = ImmutableSet<string>();
+  let lastChecksum: string|undefined = undefined;
   let cleanupPrevious: () => any = () => {};
 
   const update = async () => {
     const filesInMediaDir = await fg('**/*', { cwd: mediaDirectory });
     const frameplayerFiles = ImmutableSet(filesInMediaDir.filter((f) => /\.fpl$/.test(f)));
+    const checksums: Promise<string>[] = Array.from(frameplayerFiles).sort().map((f) => {
+      return new Promise((resolve, reject) => {
+        md5File(path.join(mediaDirectory, f), (err, checksum) => {
+          if (err) {
+            reject(err);
+          } else {
+            // Also depend on the file name.
+            resolve(`${f}|${checksum}`);
+          }
+        });
+      });
+    });
+    const fullChecksum = (await Promise.all(checksums)).join('/');
 
     logger.debug('Media build directory updated');
 
-    if (frameplayerFiles.equals(lastFrameplayerFiles)) {
+    if (fullChecksum === lastChecksum) {
       logger.debug('No new media files or config found');
     } else {
       cleanupPrevious();
@@ -58,7 +72,7 @@ export async function initMedia() {
       };
     }
 
-    lastFrameplayerFiles = frameplayerFiles;
+    lastChecksum = fullChecksum;
   }
 
   await update();
