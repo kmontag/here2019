@@ -55,6 +55,11 @@ if ! diff "${ap0_src}" "${ap0_dest}" > /dev/null ; then
     restart_ap=true
 fi
 
+# Go back to read-only mode if appropriate
+if [ "$is_readonly" = true ] ; then
+    echo "returning to read-only mode..."
+    /usr/local/bin/ro
+fi
 
 if [[ "${restart_dnsmasq}" == true ]]; then
     echo "restarting dnsmasq..."
@@ -82,10 +87,4 @@ fi
 if [[ "${restart_wlan}" == true ]]; then
     echo "starting {{ wlan_device_name }}..."
     ifup {{ wlan_device_name }}
-fi
-
-# Go back to read-only mode if appropriate
-if [ "$is_readonly" = true ] ; then
-    echo "returning to read-only mode..."
-    /usr/local/bin/ro
 fi

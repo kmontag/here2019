@@ -12,7 +12,7 @@ raspberrypi.local
 
 [bootstrap:vars]
 # Standard SSH connection doesn't support a password, we need to use
-# paramiko instead.
+# paramiko instead for the initial connection.
 ansible_connection=paramiko
 ansible_user=pi
 ansible_ssh_pass=raspberry
@@ -35,7 +35,7 @@ custom_hostapd_directory=/usr/local/etc/hostapd
 
 # Override in the local hosts file to change passwords for access points/login.
 ap_password=feath3rstr
-# Generated with:
+# Hash for "feath4str", generated with:
 #   ansible all -i localhost, -m debug -a "msg={{ 'feath4str' | password_hash('sha512') }}"
 #
 # (note this command uses random salt, and its output will change on repeated runs)
