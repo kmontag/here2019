@@ -2,6 +2,8 @@ import logger from './logger';
 
 import { handleTurnCW, handleTurnCCW, handlePress, handleRelease } from './rotaryEncoder';
 import { NodeStatusManager } from './nodeStatusManager';
+import OPCManager from './OPCManager';
+import { MasterVisibilityManager } from './masterVisibilityManager';
 //import debounce from 'debounce';
 
 let Gpio: typeof import('pigpio').Gpio;
@@ -20,6 +22,8 @@ const BUTTON_GPIO = 21;
 export default class RaspiManager {
   constructor(
     private readonly nodeStatusManager: NodeStatusManager,
+    private readonly opcManager: OPCManager,
+    private readonly masterVisibilityManager: MasterVisibilityManager,
   ) {}
   start() {
     if (Gpio) { // && RotaryEncoder) {
@@ -51,10 +55,10 @@ export default class RaspiManager {
         const delta = Math.abs(prevProcessedCount - currCount);
         if (delta >= 1) {
           if (prevProcessedCount < currCount) {
-            logger.debug(`CW to ${currCount}`);
+            //logger.debug(`CW to ${currCount}`);
             handleTurnCW();
           } else {
-            logger.debug(`CCW to ${currCount}`);
+            //logger.debug(`CCW to ${currCount}`);
             handleTurnCCW();
           }
           prevProcessedCount = currCount;
@@ -120,7 +124,7 @@ export default class RaspiManager {
                 isCcw = false;
               }
             }
-            logger.debug(debugStr);
+            // logger.debug(debugStr);
 
             if (isCw) {
               currCount++;
@@ -130,7 +134,7 @@ export default class RaspiManager {
             }
 
             if (isCw || isCcw) {
-              logger.debug(`Count: ${currCount}`);
+              //logger.debug(`Count: ${currCount}`);
             }
 
             if (currTimeout) {
@@ -162,9 +166,26 @@ export default class RaspiManager {
         mode: Gpio.OUTPUT,
         pullUpDown: Gpio.PUD_DOWN,
       });
+
+      const shortBlinkLength = 150;
+      const longBlinkLength = 300;
+
+      const modeBlinkWindow = shortBlinkLength * 10;
+      const stateBlinkWindow = (longBlinkLength + shortBlinkLength) * 5;
+
       setInterval(async () => {
         const delay =
           (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+        const blink = async (ms: number): Promise<void> => {
+          led.digitalWrite(1);
+          await delay(ms);
+          led.digitalWrite(0);
+        };
+
+        const whenStateWindowStarted = delay(modeBlinkWindow);
+
+        // Series of short blinks to indicate mode.
         const mode = this.nodeStatusManager.getMode();
         const blinksMap = {
           'isolated': 1,
@@ -178,14 +199,31 @@ export default class RaspiManager {
         }
 
         for (let i = 0; i < numBlinks; i++) {
-          led.digitalWrite(1);
-          await delay(300);
-          led.digitalWrite(0);
-          await delay(300);
+          await blink(shortBlinkLength);
+          await delay(shortBlinkLength);
         }
 
+        await whenStateWindowStarted;
 
-      }, 3000);
+        const stateBlinks: boolean[] = [
+          // One long blink to indicate we're now showing state booleans.
+          true,
+
+          // On/off state
+          this.opcManager.isLive(),
+
+          // Master presence
+          this.masterVisibilityManager.isMasterVisible() || false,
+
+          // Network configuration in-progress state
+          this.nodeStatusManager.isNetworkInterfaceUpdating(),
+        ];
+        for (const isLongBlink of stateBlinks) {
+          const individualBlinkWindow = delay(shortBlinkLength + longBlinkLength);
+          await blink(isLongBlink ? longBlinkLength : shortBlinkLength);
+          await individualBlinkWindow;
+        }
+      }, modeBlinkWindow + stateBlinkWindow);
 
     } else {
       logger.warn('pigpio library not found, skipping setup');
