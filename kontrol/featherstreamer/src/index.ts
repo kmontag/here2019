@@ -3,7 +3,6 @@ import server from './commands/server';
 import watch from './commands/watch';
 import compile from './commands/compile';
 import fcrelay from './commands/fcrelay';
-import frameplayer from './commands/frameplayer';
 
 let validCmd: boolean = false;
 
@@ -35,13 +34,6 @@ commander
   .action(async (cmd) => {
     validCmd = true;
     await fcrelay();
-  });
-
-commander
-  .command('frameplayer')
-  .action(async (cmd) => {
-    validCmd = true;
-    await frameplayer();
   });
 
 commander.parse(process.argv);

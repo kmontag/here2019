@@ -109,7 +109,7 @@ class Device extends React.Component<DeviceProps, DeviceState> {
     const renderedColorPickers = COLOR_INDICES.map((colorIndex) => {
       const color = this.state.colors[colorIndex];
       return this.state.displayColorPicker[colorIndex] ? (
-        <div className={style.popover}>
+        <div key={colorIndex} className={style.popover}>
           <div className={style.cover} onClick={() => this.handleColorPickerToggled(colorIndex)} />
           <SketchPicker disableAlpha color={color ? color.rgb : undefined} onChangeComplete={((newColor) => this.handleColorChanged(colorIndex, newColor))} />
         </div>
@@ -120,6 +120,7 @@ class Device extends React.Component<DeviceProps, DeviceState> {
       const color = this.state.colors[colorIndex];
       return color ? (
         <Icon
+          key={colorIndex}
           className={style.splotchIcon}
           name="circle"
           style={{color: color.hex}} />
@@ -128,7 +129,7 @@ class Device extends React.Component<DeviceProps, DeviceState> {
 
     const colorPickerButtons = COLOR_INDICES.map((colorIndex) => {
       return (
-        <Grid.Column>
+        <Grid.Column key={colorIndex}>
           <div className={style.splotchControlWrapper}>
             <Button
               disabled={!isColorPickerActive}
@@ -171,7 +172,7 @@ class Device extends React.Component<DeviceProps, DeviceState> {
           />
         </Table.Cell>
         <Table.Cell width={10}>
-          <Grid fluid columns={3}>
+          <Grid columns={3}>
             <Grid.Row>
               {colorPickerButtons}
             </Grid.Row>

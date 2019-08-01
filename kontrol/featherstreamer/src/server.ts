@@ -58,12 +58,13 @@ export default function server({
 
   app.get('/state', (req, res) => {
     const deviceState = deviceStore.getState();
+    const mediaNames = opcManager.getMediaDescriptors().map((d) => d.name);
     const publicState: ServerState = {
       channels: {},
       devices: {},
       media: {
-        names: [],
-        currentSelection: '',
+        names: mediaNames,
+        selectedIndex: opcManager.getMediaIndex() % mediaNames.length,
       },
       nodeStatus: {
         mode: nodeStatusManager.getMode(),
