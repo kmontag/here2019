@@ -21,7 +21,7 @@ let processModeChangeInputInterval: NodeJS.Timeout|undefined = undefined;
 
 // If a click is held for this long, start recording additional clicks
 // once it's released.
-const MODE_CHANGE_HOLD_DURATION = 1000;
+const MODE_CHANGE_HOLD_DURATION = 2000;
 
 // During this window after a long press, record the total number of clicks
 const MODE_CHANGE_INPUT_DURATION = 2000;
@@ -65,6 +65,8 @@ export function handleRelease() {
       clicksCount = 0;
 
       processModeChangeInputInterval = setTimeout(() => {
+        processModeChangeInputInterval = undefined;
+
         // Switch the mode
         switch(clicksCount) {
           case 1:
