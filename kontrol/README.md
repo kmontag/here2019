@@ -59,11 +59,12 @@ interactions with the rotary encoder.
   pin on the side with two pins) and the middle (common) pin on the
   other side. This allows us to share the ground connection for the
   rotary encoder and the push button.
-- Solder a chunk of headers to the last 4 pins (i.e. on the side
-  furthest from the SD card) of the outer row of the Pi. These pins, in order moving
-  away from the SD card, are Ground, GPIO 16, GPIO 20, and
-  GPIO 21. Solder ~5cm wires to all of the pins, and slide shrink wrap
-  down to secure the connections.
+- Solder a chunk of headers "upside down" (i.e. with the plastic nub
+  on the bottom of the chip) to the last 4 pins (i.e. on the side
+  furthest from the SD card) of the outer row of the Pi. These pins,
+  in order moving away from the SD card, are Ground, GPIO 16, GPIO 20,
+  and GPIO 21. Solder ~5cm wires to all of the pins, and slide shrink
+  wrap down to secure the connections.
 - Solder the wires from the headers to these pins on the rotary encoder:
   - Ground (innermost pin with headers) to Common (middle pin on the encoder side)
   - GPIO16 to rotary pin B (right pin on the encoder side)
@@ -74,10 +75,10 @@ interactions with the rotary encoder.
   the Vs, EN, and GND pins of a PowerBoost 1000 charger
   (https://www.adafruit.com/product/2465).
 - Solder a 2-pin chunk of headers to the G and 5V pins on the
-  PowerBoost. Orient the headers "upside-down," so that the long side
-  (with plastic nub) comes out of the bottom of the chip.
-- Solder another 2-pin chunk of headers to the 2nd and 3rd pins on the
-  outer row of the Pi. These are 5V and G, respectively.
+  PowerBoost. Orient the headers upside-down as with the Pi.
+- Solder another 2-pin chunk of headers (again upside-down) to the 2nd
+  and 3rd pins on the outer row of the Pi. These are 5V and G,
+  respectively.
 - Solder ~3cm wires to connect the +5V and G pins of the PowerBoost to
   the Pi.
 - Solder a ~1kOhm resistor in series with one leg of an LED, as
