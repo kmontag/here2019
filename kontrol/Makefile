@@ -55,6 +55,7 @@ featherstreamer/dist/index.js: featherstreamer/package*.json featherstreamer/tsc
 	cd featherstreamer-web && npm run build
 	touch .make.featherstreamer-web
 frameplayer-conf/dist/index.js: frameplayer-conf/package*.json frameplayer-conf/ts*.json $(shell find frameplayer/src/ -type f)
+	cd frameplayer-conf && npm run build
 
 media/frameplayer.json: frameplayer-conf/dist/index.js
 	cd frameplayer-conf && node dist/index.js > ../media/frameplayer.json
