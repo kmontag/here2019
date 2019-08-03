@@ -10,6 +10,10 @@ if [ "$is_readonly" = true ] ; then
     /usr/local/bin/rw
 fi
 
+# Make sure there's a wpa_supplicant available for the default
+# network.
+cp -n {{ slave_wpa_supplicant_conf }} {{ default_wpa_supplicant_conf }} || true
+
 mode=$1
 
 [[ ! -z "$mode" ]] || { echo "One argument (the mode name) is required" ; exit 1; }
@@ -39,6 +43,11 @@ if ! diff "${hostapd_src}" "${hostapd_dest}" > /dev/null ; then
     restart_ap=true
 fi
 
+# Also force a wlan restart if the connection isn't currently active.
+if ip a | grep "{{ wlan_device_name }}:" | grep -q "DOWN" ; then
+    restart_wlan=true
+fi
+
 wlan0_src="{{ custom_interfaces_directory }}/{{ wlan_device_name }}.$mode"
 wlan0_dest="/etc/network/interfaces.d/{{ wlan_device_name }}"
 
@@ -60,6 +69,9 @@ if [ "$is_readonly" = true ] ; then
     echo "returning to read-only mode..."
     /usr/local/bin/ro
 fi
+
+# Ensure this file is available before continuing, it's linked to /etc/resolv.conf.
+touch /tmp/dhcpcd.resolv.conf
 
 if [[ "${restart_dnsmasq}" == true ]]; then
     echo "restarting dnsmasq..."

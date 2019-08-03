@@ -163,22 +163,22 @@
   become: yes
   become_user: root
 
-# - name: add slave wpa_supplicant.conf
-#   copy:
-#     dest: "{{ slave_wpa_supplicant_conf }}"
-#     content: |
-#       country={{ slave_wpa_supplicant_country }}
+- name: add slave wpa_supplicant.conf
+  copy:
+    dest: "{{ slave_wpa_supplicant_conf }}"
+    content: |
+      country={{ slave_wpa_supplicant_country }}
 
-#       ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-#       update_config=1
+      ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+      update_config=1
 
-#       network={
-#         ssid="{{ master_ap_name }}"
-#         psk="{{ ap_passphrase }}"
-#         key_mgmt=WPA-PSK
-#       }
-#   become: yes
-#   become_user: root
+      network={
+        ssid="{{ master_ap_name }}"
+        psk="{{ ap_passphrase }}"
+        key_mgmt=WPA-PSK
+      }
+  become: yes
+  become_user: root
 
 - name: add slave WiFi client config
   copy:
@@ -225,49 +225,6 @@
     mode: '0755'
   become: yes
   become_user: root
-
-# # https://www.raspberrypi.org/forums/viewtopic.php?t=16054
-# - name: add script to keep wlan0 connection active
-#   copy:
-#     dest: /usr/local/bin/maintainwlan
-#     content: |
-#       #!/bin/bash
-#       while true ; do
-#         echo "Checking {{ wlan_device_name }} status"
-#         (ip a | grep -q "{{ wlan_device_name }}:" | grep -q "UP") || (echo "Trying to connect on {{ wlan_device_name }}" ; ifup --force {{ wlan_device_name }})
-#         sleep 60
-#       done
-#     mode: '0755'
-#   become: yes
-#   become_user: root
-
-# - name: create service to keep wlan0 active
-#   copy:
-#     dest: /etc/systemd/system/maintainwlan.service
-#     content: |
-#       [Unit]
-#       Description=maintainwlan
-#       After=network.target
-
-#       [Service]
-#       ExecStart=/usr/local/bin/maintainwlan
-#       User=root
-#       Restart=always
-
-#       [Install]
-#       WantedBy=multi-user.target
-#   register: maintainwlan_service
-#   become: yes
-#   become_user: root
-
-# - name: start wlan maintain service at boot
-#   service:
-#     name: maintainwlan
-#     daemon_reload: "{{ maintainwlan_service.changed }}"
-#     enabled: yes
-#     state: "{{ 'restarted' if maintainwlan_service.changed else 'started' }}"
-#   become: yes
-#   become_user: root
 
 - name: prevent dhcpcd from configuring interfaces
   lineinfile:
