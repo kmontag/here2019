@@ -81,6 +81,9 @@ export function handleRelease() {
           case 4:
             nodeStatusManager.setMode('pairing');
             break;
+          case 7:
+            process.exit(0);
+            break;
           default:
             break;
         }
