@@ -91,6 +91,7 @@ let defaultFrameplayer: FrameplayerDescriptor|undefined = undefined;
 function getDefaultFrameplayer(): FrameplayerDescriptor {
   if (!defaultFrameplayer) {
     const frameplayer = new Frameplayer(fs.readFileSync(path.join(__dirname, '..', 'assets', 'animation.fpl')));
+    frameplayer.play();
     defaultFrameplayer = {
       name: 'built-in animation',
       frameplayer,

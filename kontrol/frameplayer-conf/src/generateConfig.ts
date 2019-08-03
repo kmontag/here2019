@@ -4,7 +4,7 @@ import kevin from './layouts/kevin';
 export type Channels = AnimationConfig['channels'];
 export type ChannelsSource = () => (Channels|Promise<Channels>);
 
-const FPS = 20;
+const FPS = 10;
 
 const sources: {[name: string]: ChannelsSource} = {
   kevin,

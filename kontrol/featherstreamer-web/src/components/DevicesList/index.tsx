@@ -57,7 +57,7 @@ class Device extends React.Component<DeviceProps, DeviceState> {
   }
 
   handleBrightnessChanged(value: InputOnChangeData) {
-    this.props.dispatch(setDeviceBrightness({ deviceId: this.props.id, brightness: parseFloat(value.value) }));
+    this.props.dispatch(setDeviceBrightness({ deviceId: this.props.id, brightness: parseFloat(value.value) || 0 }));
   }
 
   handleColorPickerToggled(index: number) {

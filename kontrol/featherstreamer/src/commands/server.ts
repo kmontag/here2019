@@ -21,7 +21,7 @@ export default async function() {
 
   masterVisibilityManager.start();
   const opcManager = OPCManager.getInstance();
-  const raspiManager = new RaspiManager(nodeStatusManager);
+  const raspiManager = new RaspiManager(nodeStatusManager, OPCManager.getInstance(), masterVisibilityManager);
   raspiManager.start();
 
   const app = server({
