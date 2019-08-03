@@ -163,6 +163,9 @@
   become: yes
   become_user: root
 
+# Just add this so it can get copied in as a placeholder for the
+# default wpa_supplicant if necessary. The slave config doesn't use
+# it.
 - name: add slave wpa_supplicant.conf
   copy:
     dest: "{{ slave_wpa_supplicant_conf }}"
