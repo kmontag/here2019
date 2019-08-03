@@ -34,7 +34,7 @@ export class MasterVisibilityManager {
   constructor({
     host,
     port,
-    checkEveryMs = 1000,
+    checkEveryMs = 10000,
     nodeStatusManager,
   }: {
     host: string,
@@ -42,6 +42,8 @@ export class MasterVisibilityManager {
     checkEveryMs?: number,
     nodeStatusManager: NodeStatusManager,
   }) {
+    this.eventEmitter.setMaxListeners(100);
+
     this.host = host;
     this.port = port;
     this.checkEveryMs = checkEveryMs;

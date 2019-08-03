@@ -9,7 +9,9 @@ import { getConfig } from './config';
 import { EventEmitter } from 'events';
 import StrictEventEmitter from 'strict-event-emitter-types';
 import logger from './logger';
-import { spawn } from 'child_process';
+import { exec } from 'child_process';
+import tmp from 'tmp';
+import fs from 'fs';
 
 const PromiseController: any = require('promise-controller');
 
@@ -45,6 +47,8 @@ export class NodeStatusManager {
   constructor(
     private readonly persistentState: PersistentState
   ) {
+    this.eventEmitter.setMaxListeners(100);
+
     // Run initial setup.
     this.setMode(this.getMode());
   }
@@ -101,7 +105,7 @@ export class NodeStatusManager {
         // Skip setting the mode if we've had any calls since we started
         // waiting.
         if (this.setModeIndex === currentSetModeIndex) {
-          logger.info(`Switching system to mode: ${mode}`);
+          logger.info(`Switching to mode: ${mode}`);
           if (getConfig().fakeSystemCalls) {
             logger.info(`(System call suppressed due to config...)`);
             await new Promise((resolve) => {
@@ -122,23 +126,66 @@ export class NodeStatusManager {
              * Run the actual command to switch network config. See the
              * ansible `access_point` role for more info.
              */
-            const process = spawn('feathernet', [systemMode]);
+            logger.debug(`System mode is: ${systemMode}`);
+
+            // Dumb hack, child_process stuff often seems to not fire the
+            // exit event. Unclear why.
+            const tmpFile = await new Promise<string>((resolve, reject) => {
+              tmp.file({ prefix: 'featherstreamer-mode-change-' }, (err, path, fd, cleanupCallback) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(path);
+                }
+              });
+            });
+
+            const process = exec(`feathernet ${systemMode} && rm ${tmpFile}`);
+            // const process = spawn('feathernet', [systemMode], { timeout: 10000 });
+            // process.stdin.end();
+            // Can be enabled for debugging (after removing the stdio
+            // config option), but may cause the process never to
+            // exit.
+            // process.stdout.on('data', (data) => logger.debug(`--> ${data.toString()}`));
+            // process.stderr.on('data', (data) => logger.debug(`--> ${data.toString()}`));
             const whenExited = new Promise<void>((resolve, reject) => {
+
+              // The events below don't seem to fire sometimes, check
+              // for the presence of the tmp file.
+              const interval = setInterval(() => {
+                try {
+                  fs.accessSync(tmpFile);
+                } catch (e) {
+                  logger.debug(`feathernet exit detected after removal of ${tmpFile}`);
+                  clearInterval(interval);
+                  resolve();
+                }
+              }, 1000);
               process.on('exit', (code, signal) => {
+                logger.debug(`feathernet exited with code ${code}`);
                 if (code === 0 || code === null) {
                   resolve();
                 } else {
                   reject(new Error(`non-zero exit code: ${code}`));
                 }
               });
-              process.on('error', reject);
+              process.on('error', (e) => {
+                logger.error(`Error running feathernet: ${e instanceof Error ? e.stack : e}`);
+                clearInterval(interval);
+                reject(e);
+              });
             });
-            process.stdout.on('data', (data) => logger.debug(`--> ${data.toString()}`));
-            process.stderr.on('data', (data) => logger.debug(`--> ${data.toString()}`));
 
-            await whenExited;
+            try {
+              await whenExited;
+            } catch (e) {
+              logger.error(`Error switching network config: ${e instanceof Error ? e.stack : e}`);
+              throw e;
+            }
           }
           didRun = true;
+        } else {
+          logger.debug(`Skipped setting mode to ${mode}, new calls exist in the meantime`);
         }
       } catch (e) {
         whenSystemUpdated.reject(e);
