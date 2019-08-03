@@ -168,7 +168,7 @@ export default class RaspiManager {
       });
 
       const shortBlinkLength = 150;
-      const longBlinkLength = 300;
+      const longBlinkLength = 500;
 
       const modeBlinkWindow = shortBlinkLength * 10;
       const stateBlinkWindow = (longBlinkLength + shortBlinkLength) * 5;
