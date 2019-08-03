@@ -20,6 +20,7 @@ const getSSID = () => {
 
 interface ColorEvent {
   deviceId: string,
+  index: number,
   r: number,
   g: number,
   b: number,
@@ -39,6 +40,7 @@ export default function server({
 }) {
   const eventEmitter: StrictEventEmitter<EventEmitter, Events> =
     new EventEmitter();
+  eventEmitter.setMaxListeners(100);
 
   const app = express();
 
@@ -57,12 +59,13 @@ export default function server({
 
   app.get('/state', (req, res) => {
     const deviceState = deviceStore.getState();
+    const mediaNames = opcManager.getMediaDescriptors().map((d) => d.name);
     const publicState: ServerState = {
       channels: {},
       devices: {},
       media: {
-        names: [],
-        currentSelection: '',
+        names: mediaNames,
+        selectedIndex: opcManager.getMediaIndex() % mediaNames.length,
       },
       nodeStatus: {
         mode: nodeStatusManager.getMode(),
@@ -173,6 +176,7 @@ export default function server({
         // Stop streaming data momentarily to avoid interleaving.
         removeStream();
 
+        const index = Math.floor(event.index) % 256;
         const r = Math.floor(event.r) % 256;
         const g = Math.floor(event.g) % 256;
         const b = Math.floor(event.b) % 256;
@@ -181,16 +185,17 @@ export default function server({
         const stream = createOPCStream();
         stream.pipe(res);
 
-        const data = new Uint8Array(5);
+        const data = new Uint8Array(6);
 
         // Sysex command identifier 6.
         data[0] = 6;
         data[1] = 0;
 
         // Color data for the sysex command.
-        data[2] = r;
-        data[3] = g;
-        data[4] = b;
+        data[2] = index;
+        data[3] = r;
+        data[4] = g;
+        data[5] = b;
 
         // @ts-ignore
         logger.debug(`Sending bytes: ${Array.apply([], data).join(",")}`);
@@ -239,6 +244,7 @@ export default function server({
     const Params = RuntypesRecord({
       channelId: RuntypesString.Or(Undefined),
       color: RuntypesRecord({
+        index: RuntypesNumber,
         r: ColorDimension,
         g: ColorDimension,
         b: ColorDimension,
@@ -255,7 +261,7 @@ export default function server({
         });
       }
       if (body.color) {
-        eventEmitter.emit('color', { deviceId, ...body.color });
+        eventEmitter.emit('color', { deviceId, index: body.color.index, ...body.color });
       }
       if (body.brightness) {
         setDeviceBrightness({

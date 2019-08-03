@@ -1,25 +1,43 @@
-import * as env from 'env-var';
-import { initMedia } from './media';
-import OPCManager from './OPCManager';
-import RaspiManager from './RaspiManager';
-import server from './server';
-import masterVisibilityManager from './masterVisibilityManager';
-import nodeStatusManager from './nodeStatusManager';
+import commander from 'commander';
+import server from './commands/server';
+import watch from './commands/watch';
+import compile from './commands/compile';
+import fcrelay from './commands/fcrelay';
 
-(async () => {
-  await initMedia();
+let validCmd: boolean = false;
 
-  masterVisibilityManager.start();
-  const opcManager: OPCManager = OPCManager.getInstance();
-  const raspiManager: RaspiManager = new RaspiManager(nodeStatusManager);
-  raspiManager.start();
+commander.version('0.0.0-dev');
 
-  const app = server({
-    opcManager,
+commander
+  .command('server')
+  .action(async (cmd) => {
+    validCmd = true;
+    await server();
   });
 
-  const port = env.get('PORT', '44668').asPortNumber();
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Server listening on port ${port}.`);
+commander
+  .command('watch')
+  .action(async (cmd) => {
+    validCmd = true;
+    await watch();
   });
-})();
+
+commander
+  .command('compile')
+  .action(async (cmd) => {
+    validCmd = true;
+    await compile();
+  });
+
+commander
+  .command('fcrelay')
+  .action(async (cmd) => {
+    validCmd = true;
+    await fcrelay();
+  });
+
+commander.parse(process.argv);
+
+if (!validCmd) {
+  commander.outputHelp();
+}

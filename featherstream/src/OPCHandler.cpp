@@ -37,7 +37,7 @@ OPCHandler::OPCHandler(
     }
   }
 
-  this->deviceId = "fs:" + macString;
+  this->deviceId = "feather:" + macString;
 }
 
 OPCHandler::~OPCHandler() {
@@ -154,18 +154,20 @@ bool OPCHandler::loop() {
                   Serial.println(sysexCmd);
 
                   if (sysexCmd == 6) { // Change offline animation color.
-                    if (this->dataSize == 5) {
-                      uint8_t r = rgbBuf[2], g = rgbBuf[3], b = rgbBuf[4];
-                      Serial.print("Setting offline animation color to R");
+                    if (this->dataSize == 6) {
+                      uint8_t colorIndex = rgbBuf[2], r = rgbBuf[3], g = rgbBuf[4], b = rgbBuf[5];
+                      Serial.print("Setting offline animation color ");
+                      Serial.print(colorIndex);
+                      Serial.print(" to R");
                       Serial.print(r);
                       Serial.print(" G");
                       Serial.print(g);
                       Serial.print(" B");
                       Serial.println(b);
 
-                      this->twinkleAnimation.setColor(r, g, b);
+                      this->twinkleAnimation.setColor(colorIndex, r, g, b);
                     } else {
-                      Serial.println("Sysex command 6 requires exactly 5 bytes in payload, ignoring...");
+                      Serial.println("Sysex command 6 requires exactly 6 bytes in payload, ignoring...");
                     }
                   }
                 }

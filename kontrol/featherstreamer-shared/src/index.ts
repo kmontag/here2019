@@ -43,7 +43,7 @@ const ServerState = Record({
   ssid: String,
   media: Record({
     names: Array(String),
-    currentSelection: String,
+    selectedIndex: Number,
   }),
 });
 type ServerState = Static<typeof ServerState>;

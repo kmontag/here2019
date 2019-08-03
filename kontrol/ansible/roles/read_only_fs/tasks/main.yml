@@ -34,6 +34,21 @@
   become: yes
   become_user: root
 
+- name: make dhcp directory writable
+  lineinfile:
+    path: /etc/fstab
+    line: tmpfs /var/lib/dhcp tmpfs nodev,nosuid 0 0
+  become: yes
+  become_user: root
+
+# Needed for DHCP
+- name: make samba directory writable
+  lineinfile:
+    path: /etc/fstab
+    line: tmpfs /etc/samba tmpfs nodev,nosuid 0 0
+  become: yes
+  become_user: root
+
 - name: check if read-only-fs script already exists
   stat:
     path: /usr/local/bin/read-only-fs

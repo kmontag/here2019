@@ -123,7 +123,7 @@
       # Make both the boot and normal file systems writable until reboot
       /usr/local/bin/rw
 
-      rm /etc/wpa_supplicant/wpa_supplicant.conf
+      shred -zu /etc/wpa_supplicant/wpa_supplicant.conf
       cp /usr/local/etc/featherstreamer.production.conf.json /etc/featherstreamer.conf.json
       touch /boot/reset
       echo 'The device hostname, AP name, featherstreamer config, and'

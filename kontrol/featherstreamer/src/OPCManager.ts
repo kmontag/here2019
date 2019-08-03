@@ -1,5 +1,5 @@
 import { Writable, Readable } from 'stream';
-import { getFrameplayers, FrameplayerDescriptor } from './media';
+import { getFrameplayers } from './media';
 import logger from './logger';
 import StrictEventEmitter from 'strict-event-emitter-types';
 import { EventEmitter } from 'events';
@@ -38,24 +38,19 @@ export default class OPCManager {
 
   private channels: string[]|undefined = undefined;
 
-  private readonly frameplayers: ReadonlyArray<FrameplayerDescriptor>;
   private readonly masterVisibilityManager: MasterVisibilityManager;
   private readonly nodeStatusManager: NodeStatusManager;
-
 
   private readonly eventEmitter: StrictEventEmitter<EventEmitter, Events> =
     new EventEmitter();
 
   constructor({
-    frameplayers,
     masterVisibilityManager,
     nodeStatusManager,
   }: {
-    frameplayers: Iterable<FrameplayerDescriptor>,
     masterVisibilityManager: MasterVisibilityManager,
     nodeStatusManager: NodeStatusManager,
   }) {
-    this.frameplayers = Array.from(frameplayers);
     this.masterVisibilityManager = masterVisibilityManager;
     this.nodeStatusManager = nodeStatusManager;
   }
@@ -64,7 +59,6 @@ export default class OPCManager {
   static getInstance() {
     if (!OPCManager.instance) {
       OPCManager.instance = new OPCManager({
-        frameplayers: getFrameplayers(),
         masterVisibilityManager,
         nodeStatusManager,
       });
@@ -91,7 +85,7 @@ export default class OPCManager {
   }
 
   getMediaDescriptors(): ReadonlyArray<MediaDescriptor> {
-    return this.frameplayers.map((f) => {
+    return getFrameplayers().map((f) => {
       return { name: f.name, type: 'frameplayer' };
     });
   }
@@ -156,10 +150,12 @@ export default class OPCManager {
     const localSetup = () => {
       teardownCurrentState();
 
+      const frameplayers = getFrameplayers();
+
       // Handle negative values, see
       // https://web.archive.org/web/20090717035140if_/javascript.about.com/od/problemsolving/a/modulobug.htm.
-      const realMediaIndex = (this.mediaIndex % this.frameplayers.length + this.frameplayers.length) % this.frameplayers.length;
-      const { frameplayer } = this.frameplayers[realMediaIndex];
+      const realMediaIndex = (this.mediaIndex % frameplayers.length + frameplayers.length) % frameplayers.length;
+      const { frameplayer } = frameplayers[realMediaIndex];
 
       if (!(channel in frameplayer.channels)) {
         logger.warn(`Channel ${channel} not found, falling back to a default value`);
@@ -187,8 +183,15 @@ export default class OPCManager {
       };
       frameplayer.on('frame', handleFrame);
 
+      // Refresh state if the frameplayer is stopped while playing.
+      const handleStop = () => {
+        setup();
+      };
+      frameplayer.on('stop', handleStop);
+
       teardownCurrentState = () => {
         frameplayer.off('frame', handleFrame);
+        frameplayer.off('stop', handleStop);
       };
     };
 
@@ -204,8 +207,10 @@ export default class OPCManager {
         // drops or there's a problem with the endpoint.
         while (isStillActive) {
           try {
+            const cancelSource = axios.CancelToken.source();
             const response = await axios.get(url, {
               responseType: 'stream',
+              cancelToken: cancelSource.token,
             });
             // Make sure we haven't gone inactive in the meantime.
             if (isStillActive) {
@@ -260,6 +265,7 @@ export default class OPCManager {
               // loop. No-op if called more than once.
               endCurrentStream = () => {
                 readable.off('data', handleData);
+                cancelSource.cancel('master connection no longer needed');
                 resolve();
               };
 

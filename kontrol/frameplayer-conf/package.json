@@ -1,0 +1,17 @@
+{
+  "name": "frameplayer-conf",
+  "version": "0.0.0-dev",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf dist/ && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kevin Montag <kmontag@cs.stanford.edu>",
+  "license": "ISC",
+  "devDependencies": {},
+  "dependencies": {
+    "frameplayer": "file:../frameplayer",
+    "typescript": "^3.4.5"
+  }
+}

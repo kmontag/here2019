@@ -4,5 +4,7 @@
 /node_modules/
 /.make.*
 
-/media-src/
-/media-build/
+/media/
+
+# Artifact from `make pull-state`
+/device-state.json

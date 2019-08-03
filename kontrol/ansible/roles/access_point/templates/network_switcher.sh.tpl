@@ -1,7 +1,18 @@
 #!/bin/bash
 
+# Check whether the filesystem is currently read-only
+is_readonly=false
+(touch ~/.feathernet-tmp && rm ~/.feathernet-tmp) || is_readonly=true
+
 # Temporarily enter read-write mode
-/usr/local/bin/rw
+if [ "$is_readonly" = true ] ; then
+    echo "entering read-write mode..."
+    /usr/local/bin/rw
+fi
+
+# Make sure there's a wpa_supplicant available for the default
+# network.
+cp -n {{ slave_wpa_supplicant_conf }} {{ default_wpa_supplicant_conf }} || true
 
 mode=$1
 
@@ -32,6 +43,11 @@ if ! diff "${hostapd_src}" "${hostapd_dest}" > /dev/null ; then
     restart_ap=true
 fi
 
+# Also force a wlan restart if the connection isn't currently active.
+if ip a | grep "{{ wlan_device_name }}:" | grep -q "DOWN" ; then
+    restart_wlan=true
+fi
+
 wlan0_src="{{ custom_interfaces_directory }}/{{ wlan_device_name }}.$mode"
 wlan0_dest="/etc/network/interfaces.d/{{ wlan_device_name }}"
 
@@ -48,6 +64,14 @@ if ! diff "${ap0_src}" "${ap0_dest}" > /dev/null ; then
     restart_ap=true
 fi
 
+# Go back to read-only mode if appropriate
+if [ "$is_readonly" = true ] ; then
+    echo "returning to read-only mode..."
+    /usr/local/bin/ro
+fi
+
+# Ensure this file is available before continuing, it's linked to /etc/resolv.conf.
+touch /tmp/dhcpcd.resolv.conf
 
 if [[ "${restart_dnsmasq}" == true ]]; then
     echo "restarting dnsmasq..."
@@ -76,6 +100,3 @@ if [[ "${restart_wlan}" == true ]]; then
     echo "starting {{ wlan_device_name }}..."
     ifup {{ wlan_device_name }}
 fi
-
-# Go back to read-only mode
-/usr/local/bin/ro

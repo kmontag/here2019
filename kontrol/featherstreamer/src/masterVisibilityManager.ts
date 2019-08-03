@@ -34,7 +34,7 @@ export class MasterVisibilityManager {
   constructor({
     host,
     port,
-    checkEveryMs = 1000,
+    checkEveryMs = 10000,
     nodeStatusManager,
   }: {
     host: string,
@@ -42,6 +42,8 @@ export class MasterVisibilityManager {
     checkEveryMs?: number,
     nodeStatusManager: NodeStatusManager,
   }) {
+    this.eventEmitter.setMaxListeners(100);
+
     this.host = host;
     this.port = port;
     this.checkEveryMs = checkEveryMs;
@@ -72,19 +74,24 @@ export class MasterVisibilityManager {
 
         if (this.nodeStatusManager.getMode() === 'slave') {
           const url = `http://${this.host}:${this.port}/ssid`;
+          //logger.debug(`Checking for master controller at ${url}...`);
           try {
             const response = await axios.get(url, {
               timeout: this.checkEveryMs,
             });
+            //logger.debug(`successfully connected to master, checking response status...`);
             this.masterVisible = (response.status >= 200 && response.status < 300);
           } catch (e) {
+            logger.debug(`could not connect to master, error was ${e}`);
             this.masterVisible = false;
           }
+          //logger.debug(`master is ${this.masterVisible ? '' : 'not '}visible`);
         } else {
           this.masterVisible = undefined;
         }
 
         if (prevMasterVisible !== this.masterVisible) {
+          logger.info(this.masterVisible ? 'master is now visible' : 'master is no longer visible');
           this.eventEmitter.emit('masterVisibleChanged', {
             masterVisible: this.masterVisible,
           });

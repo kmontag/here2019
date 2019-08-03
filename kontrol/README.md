@@ -18,10 +18,11 @@ The on/off switch is an on/off switch.
 
 The rotary encoder is the main controller for the device. Any
 contiguous turn in one direcion is processed as a single clockwise or
-counter-clockwise "click" - the notches in the encoder don't really
+counter-clockwise "step" - the notches in the encoder don't really
 matter. Turn it to cycle through videos. Press it (without turning it)
-to toggle any controlled LEDs on or off. Press it and turn it
-clockwise to switch between modes:
+to toggle connected LEDs on or off.
+
+To change modes, press and hold then encoder for more than 1s, then release it and quickly press it one or more times to select the mode:
 
 - 1 click for isolated mode
 - 2 clicks for slave mode
@@ -31,7 +32,7 @@ clockwise to switch between modes:
 Once the device is booted up, you should be able to see a WiFi network
 called `featherstreamer-[something]`. That's your device's personal
 access point. By default, the password for this network (and all
-others) is `gallowsbird`. The device normally lives at
+others) is `feath3rstr`. The device normally lives at
 http://192.168.8.1, or http://192.168.9.1 when in master mode.
 
 ### Runtime configuration
@@ -58,11 +59,12 @@ interactions with the rotary encoder.
   pin on the side with two pins) and the middle (common) pin on the
   other side. This allows us to share the ground connection for the
   rotary encoder and the push button.
-- Solder a chunk of headers to the last 4 pins (i.e. on the side
-  furthest from the SD card) of the outer row of the Pi. These pins, in order moving
-  away from the SD card, are Ground, GPIO 16, GPIO 20, and
-  GPIO 21. Solder ~5cm wires to all of the pins, and slide shrink wrap
-  down to secure the connections.
+- Solder a chunk of headers "upside down" (i.e. with the plastic nub
+  on the bottom of the chip) to the last 4 pins (i.e. on the side
+  furthest from the SD card) of the outer row of the Pi. These pins,
+  in order moving away from the SD card, are Ground, GPIO 16, GPIO 20,
+  and GPIO 21. Solder ~5cm wires to all of the pins, and slide shrink
+  wrap down to secure the connections.
 - Solder the wires from the headers to these pins on the rotary encoder:
   - Ground (innermost pin with headers) to Common (middle pin on the encoder side)
   - GPIO16 to rotary pin B (right pin on the encoder side)
@@ -73,10 +75,10 @@ interactions with the rotary encoder.
   the Vs, EN, and GND pins of a PowerBoost 1000 charger
   (https://www.adafruit.com/product/2465).
 - Solder a 2-pin chunk of headers to the G and 5V pins on the
-  PowerBoost. Orient the headers "upside-down," so that the long side
-  (with plastic nub) comes out of the bottom of the chip.
-- Solder another 2-pin chunk of headers to the 2nd and 3rd pins on the
-  outer row of the Pi. These are 5V and G, respectively.
+  PowerBoost. Orient the headers upside-down as with the Pi.
+- Solder another 2-pin chunk of headers (again upside-down) to the 2nd
+  and 3rd pins on the outer row of the Pi. These are 5V and G,
+  respectively.
 - Solder ~3cm wires to connect the +5V and G pins of the PowerBoost to
   the Pi.
 - Solder a ~1kOhm resistor in series with one leg of an LED, as
@@ -237,16 +239,27 @@ $ PI=featherstreamer-foo.local make prepare
   Pi, and place a blank file at `/boot/reset` to trigger a new
   hostname/AP name being set on the next boot.
   
+  Before proceeding, SSH into the pi and run `sudo fdisk -u -l`,
+  taking note of the end sector of the final `mmcblk0p3` partition.
+  
   You can now shut down the Pi and remove its SD card, and use it to
   make an image which will generate a unique AP name every time it's
-  installed.
+  installed. To generate the image, use:
+  
+  ```bash
+  dd if=/dev/{ SD card device name } of=/path/to/img/file.img count={ end sector from above + 1 }
+  ```
+  
+  See
+  https://serverfault.com/questions/446529/create-image-of-a-usb-drive-without-unallocated-partition
+  for more info.
 
 ### SSH
 
 It's generally easiest to interact with the Pi over SSH. Probably the
 cleanest way to do this is to connect to the pi's hosted access point,
 and then log in using `ssh pi@192.168.8.1` (or `ssh pi@192.168.9.1` if
-the device is in master mode). The default password is `buttmoop`.
+the device is in master mode). The default password is `feath4str`.
 
 If you place a `wpa_supplicant.conf` file in the boot partition (see
 the example file in this directory), you can also interact with the Pi
