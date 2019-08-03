@@ -239,9 +239,20 @@ $ PI=featherstreamer-foo.local make prepare
   Pi, and place a blank file at `/boot/reset` to trigger a new
   hostname/AP name being set on the next boot.
   
+  Before proceeding, SSH into the pi and run `sudo fdisk -u -l`,
+  taking note of the end sector of the final `mmcblk0p3` partition.
+  
   You can now shut down the Pi and remove its SD card, and use it to
   make an image which will generate a unique AP name every time it's
-  installed.
+  installed. To generate the image, use:
+  
+  ```bash
+  dd if=/dev/{ SD card device name } of=/path/to/img/file.img count={ end sector from above + 1 }
+  ```
+  
+  See
+  https://serverfault.com/questions/446529/create-image-of-a-usb-drive-without-unallocated-partition
+  for more info.
 
 ### SSH
 
