@@ -40,6 +40,7 @@ export default function server({
 }) {
   const eventEmitter: StrictEventEmitter<EventEmitter, Events> =
     new EventEmitter();
+  eventEmitter.setMaxListeners(100);
 
   const app = express();
 
@@ -242,8 +243,8 @@ export default function server({
     });
     const Params = RuntypesRecord({
       channelId: RuntypesString.Or(Undefined),
-      index: RuntypesNumber,
       color: RuntypesRecord({
+        index: RuntypesNumber,
         r: ColorDimension,
         g: ColorDimension,
         b: ColorDimension,
@@ -260,7 +261,7 @@ export default function server({
         });
       }
       if (body.color) {
-        eventEmitter.emit('color', { deviceId, index: body.index, ...body.color });
+        eventEmitter.emit('color', { deviceId, index: body.color.index, ...body.color });
       }
       if (body.brightness) {
         setDeviceBrightness({
