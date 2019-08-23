@@ -88,8 +88,8 @@ interactions with the rotary encoder.
   SD card) and G (easiest option is the 13th pin on the inner row as
   you move away from the SD card). Bend the LED legs so it lays across
   the Pi and reaches near the USB ports.
-- Connect a 1200mAh LiPo battery
-  (https://www.adafruit.com/product/258) to the PowerBoost.  Do this
+- Connect a 2000mAh LiPo battery
+  (https://www.adafruit.com/product/2011) to the PowerBoost.  Do this
   **before** plugging into the PowerBoost's USB port, otherwise you
   may damage the board.
 - Plug USB power into the PowerBoost (make sure you're not also

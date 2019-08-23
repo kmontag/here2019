@@ -16,8 +16,8 @@ epsilon = 0.1;
 
 wallWidth = 2;
 length = 68;
-width = 31;
-height = 35;
+width = 33;
+height = 37;
 
 fillet = 2;
 
@@ -33,7 +33,7 @@ piXInset = 7.5;
 // From the back wall, to make the SD card jut out a bit less.
 piYInset = 0.5;
 
-batterySize = [5, 62, 34];
+batterySize = [7, 60, 36];
 
 powerBoostFloatHeight = 7;
 powerBoostGhostSize=[powerBoost1000CSize()[0], powerBoost1000CSize()[1], 3 + pcbHeight];
@@ -87,8 +87,11 @@ module circuit(withMovement=false, pinholes=true) {
     }
 
     if (pinholes) {
-      color("yellow", alpha=0.2)
+      color("yellow", alpha=0.2) {
         back(piLength - wallWidth * 1.5) up(pcbHeight + pinholeDiameter / 2) left(wallWidth) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+        back(piLength - 25) down(pcbHeight + pinholeDiameter / 2 + wallWidth) left(wallWidth) xcyl(l=height, d=pinholeDiameter, align=V_ALLPOS);
+      }
+
     }
 
     sdCardLeeway = 0.7;
@@ -102,7 +105,7 @@ module circuit(withMovement=false, pinholes=true) {
         xflip() cuboid(size=sdCardSize, p1=[0, 0, 0]);
 
       // Additional mask creates a 1mm inlay on the outer box.
-      inlayExtraWidth = [2, 4];
+      inlayExtraWidth = [2, 3];
       inlayDepth = 1;
       sdCardAdditionalMaskSize = [sdCardSize[0] + 2 * inlayExtraWidth[0], wallWidth, sdCardSize[2] + 2 * inlayExtraWidth[1]];
       color("purple", alpha=0.3)
@@ -299,7 +302,7 @@ module piBox() {
         // Pi and battery platforms
         union() {
           piPlatformInset = 15;
-          piHeaderInset = 4;
+          piHeaderInset = 4.5;
           cuboid(size=[piPlatformInset, length - piLength + piHeaderInset, 18], p1=[0, 0, 0]);
           back(length - piHeaderInset) cuboid(size=[piPlatformInset, piHeaderInset, 14], p1=[0, 0, 0]);
         }

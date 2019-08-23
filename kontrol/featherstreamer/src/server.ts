@@ -65,7 +65,8 @@ export default function server({
       devices: {},
       media: {
         names: mediaNames,
-        selectedIndex: opcManager.getMediaIndex() % mediaNames.length,
+        // Make sure to correct for weird mod behavior with negative indices.
+        selectedIndex: (opcManager.getMediaIndex() % mediaNames.length + mediaNames.length) % mediaNames.length,
       },
       nodeStatus: {
         mode: nodeStatusManager.getMode(),

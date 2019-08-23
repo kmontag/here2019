@@ -15,10 +15,13 @@ boot: wpa_supplicant.conf
 	cp wpa_supplicant.conf $(BOOT_VOLUME_PATH)/wpa_supplicant.conf
 	touch $(BOOT_VOLUME_PATH)/ssh
 
-# Set up SSH over USB, see
-# https://www.thepolyglotdeveloper.com/2016/06/connect-raspberry-pi-zero-usb-cable-ssh/. We
+# Set up SSH over USB and disable HDMI, see
+# https://www.thepolyglotdeveloper.com/2016/06/connect-raspberry-pi-zero-usb-cable-ssh/
+# and
+# https://raspberrypi.stackexchange.com/questions/79728/keep-hdmi-off-on-boot. We
 # `sed` twice for idempotency.
 	(cat $(BOOT_VOLUME_PATH)/config.txt | grep -q "dtoverlay=dwc2") || (echo "dtoverlay=dwc2" >> $(BOOT_VOLUME_PATH)/config.txt)
+	(cat $(BOOT_VOLUME_PATH)/config.txt | grep -q "hdmi_blanking=2") || (echo "hdmi_blanking=2" >> $(BOOT_VOLUME_PATH)/config.txt)
 	sed -i".tmp" 's/modules-load=dwc2,g_ether //' $(BOOT_VOLUME_PATH)/cmdline.txt
 	sed -i".tmp" 's/rootfstype/modules-load=dwc2,g_ether rootfstype/' $(BOOT_VOLUME_PATH)/cmdline.txt
 

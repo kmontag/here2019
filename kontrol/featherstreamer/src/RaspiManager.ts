@@ -173,7 +173,7 @@ export default class RaspiManager {
       const modeBlinkWindow = shortBlinkLength * 10;
       const stateBlinkWindow = (longBlinkLength + shortBlinkLength) * 5;
 
-      setInterval(async () => {
+      (async () => {
         const delay =
           (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -183,47 +183,53 @@ export default class RaspiManager {
           led.digitalWrite(0);
         };
 
-        const whenStateWindowStarted = delay(modeBlinkWindow);
+        while (true) {
+          const whenNextSeries = delay(modeBlinkWindow + stateBlinkWindow);
+          const whenStateWindowStarted = delay(modeBlinkWindow);
 
-        // Series of short blinks to indicate mode.
-        const mode = this.nodeStatusManager.getMode();
-        const blinksMap = {
-          'isolated': 1,
-          'slave': 2,
-          'master': 3,
-          'pairing': 4,
-        };
-        const numBlinks = blinksMap[mode];
-        if (!numBlinks) {
-          throw new Error('unexpected');
+          // Series of short blinks to indicate mode.
+          const mode = this.nodeStatusManager.getMode();
+          const blinksMap = {
+            'isolated': 1,
+            'slave': 2,
+            'master': 3,
+            'pairing': 4,
+          };
+          const numBlinks = blinksMap[mode];
+          if (!numBlinks) {
+            throw new Error('unexpected');
+          }
+
+          for (let i = 0; i < numBlinks; i++) {
+            await blink(shortBlinkLength);
+            await delay(shortBlinkLength);
+          }
+
+          await whenStateWindowStarted;
+
+          const stateBlinks: boolean[] = [
+            // One long blink to indicate we're now showing state booleans.
+            true,
+
+            // On/off state
+            this.opcManager.isLive(),
+
+            // Master presence
+            this.masterVisibilityManager.isMasterVisible() || false,
+
+            // Network configuration in-progress state
+            this.nodeStatusManager.isNetworkInterfaceUpdating(),
+          ];
+          for (const isLongBlink of stateBlinks) {
+            const individualBlinkWindow = delay(shortBlinkLength + longBlinkLength);
+            await blink(isLongBlink ? longBlinkLength : shortBlinkLength);
+            await individualBlinkWindow;
+          }
+
+          await whenNextSeries;
         }
 
-        for (let i = 0; i < numBlinks; i++) {
-          await blink(shortBlinkLength);
-          await delay(shortBlinkLength);
-        }
-
-        await whenStateWindowStarted;
-
-        const stateBlinks: boolean[] = [
-          // One long blink to indicate we're now showing state booleans.
-          true,
-
-          // On/off state
-          this.opcManager.isLive(),
-
-          // Master presence
-          this.masterVisibilityManager.isMasterVisible() || false,
-
-          // Network configuration in-progress state
-          this.nodeStatusManager.isNetworkInterfaceUpdating(),
-        ];
-        for (const isLongBlink of stateBlinks) {
-          const individualBlinkWindow = delay(shortBlinkLength + longBlinkLength);
-          await blink(isLongBlink ? longBlinkLength : shortBlinkLength);
-          await individualBlinkWindow;
-        }
-      }, modeBlinkWindow + stateBlinkWindow);
+      })();;
 
     } else {
       logger.warn('pigpio library not found, skipping setup');
