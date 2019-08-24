@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+# Helper to mirror an ffmpeg video vertically, and output it above the
+# normal-oriented video.
+
+if [ "$#" -ne 2 ]; then
+    echo "Usage: mirror [input] [output]"
+    exit 1
+fi
+
+set -x
+tmp=$(mktemp)
+rm $tmp
+ffmpeg -i $1 -f matroska -vf vflip -c:a copy $tmp
+ffmpeg -i $tmp -i $1 -filter_complex vstack $2
