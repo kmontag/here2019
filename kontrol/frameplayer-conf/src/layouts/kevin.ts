@@ -16,6 +16,9 @@ const kevin: ChannelsSource = () => {
   const HAT_GAP_PIXELS = 2;
   const HAT_INITIAL_RADIUS_PIXELS = (HAT_RING_LIGHTS * HAT_GAP_PIXELS / 2 / Math.PI) - HAT_GAP_PIXELS;
 
+  const RECTANGLE_HEIGHT = 14;
+  const RECTANGLE_INNER_WIDTH = 6;
+
   const result: Channels = {};
 
   for (let i = 1; i <= 3; i++) {
@@ -91,17 +94,17 @@ const kevin: ChannelsSource = () => {
     result.hat.pixels.push([x, y]);
   }
 
-  const BIKE_RIGHT_WIDTH = 12;
-  const BIKE_LEFT_WIDTH = 13;
+  const BIKE_RIGHT_WIDTH = 6;
+  const BIKE_LEFT_WIDTH = 6;
   const BIKE_EXTRA_MIDDLE = 6;
-  const BIKE_FRAME = 48;
+  const BIKE_FRAME = 44;
   const BIKE_HEIGHT = 2 + BIKE_EXTRA_MIDDLE + BIKE_FRAME / 2;
 
   result['bike'] = {
     height: BIKE_HEIGHT,
     width: BIKE_RIGHT_WIDTH + BIKE_LEFT_WIDTH,
     pixels: []
-  }
+  };
 
   for (let i = BIKE_LEFT_WIDTH; i < BIKE_LEFT_WIDTH + BIKE_RIGHT_WIDTH; i++ ) {
     result['bike'].pixels.push([i, BIKE_HEIGHT - 2]);
@@ -121,6 +124,43 @@ const kevin: ChannelsSource = () => {
   }
   for (let i = BIKE_FRAME / 2 - 1; i >= 0; i--) {
     result['bike'].pixels.push([BIKE_LEFT_WIDTH, BIKE_HEIGHT - 1 - (2 + BIKE_EXTRA_MIDDLE + i)]);
+  }
+
+  const rectangleWidth = RECTANGLE_INNER_WIDTH + 4;
+  result['rectangle'] = {
+    height: RECTANGLE_HEIGHT,
+    width: rectangleWidth,
+    pixels: []
+  };
+
+  for (let i = RECTANGLE_HEIGHT - 1; i >= 0; i--) {
+    // Starts at the bottom, one pixel in from the left side...
+    result['rectangle'].pixels.push([1, i]);
+  }
+
+  for (let i = 0; i < RECTANGLE_INNER_WIDTH; i++) {
+    // ...goes right...
+    result['rectangle'].pixels.push([2 + i, 0]);
+  }
+
+  for (let i = 0; i < RECTANGLE_HEIGHT; i++) {
+    // ...goes down...
+    result['rectangle'].pixels.push([rectangleWidth - 2, i]);
+  }
+
+  for (let i = rectangleWidth - 3; i >= 2; i--) {
+    // ...goes left...
+    result['rectangle'].pixels.push([i, RECTANGLE_HEIGHT - 1]);
+  }
+
+  for (let i = RECTANGLE_HEIGHT - 1; i >= 0; i--) {
+    // ...goes up the right arm (audience left)...
+    result['rectangle'].pixels.push([0, i]);
+}
+
+  for (let i = 0; i < RECTANGLE_HEIGHT; i++) {
+    // ...and down the left arm (audience right)...
+    result['rectangle'].pixels.push([rectangleWidth - 1, i]);
   }
 
   return result;
