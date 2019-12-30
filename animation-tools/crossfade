@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+if [ "$#" -ne 2 ]; then
+    echo "Usage: crossfade [input] [output]"
+    exit 1
+fi
+
+set -x
+ffmpeg -i $1 -filter_complex \
+        "[0]split[body][pre]; \
+         [pre]trim=duration=1,format=yuva420p,fade=d=1:alpha=1,setpts=PTS+(28/TB)[jt]; \
+         [body]trim=1,setpts=PTS-STARTPTS[main]; \
+         [main][jt]overlay" $2
