@@ -6,5 +6,8 @@
 
 /media/
 
+# Pi images
+/img/
+
 # Artifact from `make pull-state`
 /device-state.json
